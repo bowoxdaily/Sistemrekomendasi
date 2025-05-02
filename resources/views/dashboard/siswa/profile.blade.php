@@ -291,11 +291,68 @@
             }
             reader.readAsDataURL(this.files[0]);
         });
+        
+        // Handle change password form submission
+        $('#changePasswordForm').on('submit', function (e) {
+            e.preventDefault();
+            
+            // Reset previous error messages
+            $('.is-invalid').removeClass('is-invalid');
+            
+            // Disable button and show loading state
+            $('#passwordUpdateBtn').attr('disabled', true).text('Processing...');
+            
+            // Get form data
+            const formData = {
+                current_password: $('#current_password').val(),
+                new_password: $('#new_password').val(),
+                new_password_confirmation: $('#new_password_confirmation').val(),
+                _token: $('input[name="_token"]').val()
+            };
+            
+            // Send AJAX request
+            $.ajax({
+                url: "{{ route('api.student.change-password') }}",
+                method: 'POST',
+                data: formData,
+                success: function (response) {
+                    if (response.success) {
+                        // Show success message
+                        toastr.success(response.message);
+                        
+                        // Clear form
+                        $('#changePasswordForm')[0].reset();
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 422) {
+                        // Validation errors
+                        const errors = xhr.responseJSON.errors;
+                        
+                        if (errors) {
+                            // Display each error with toastr
+                            for (const field in errors) {
+                                toastr.error(errors[field][0]);
+                                $(`#${field}`).addClass('is-invalid');
+                            }
+                        } else if (xhr.responseJSON.message) {
+                            // Single error message
+                            toastr.error(xhr.responseJSON.message);
+                        }
+                    } else {
+                        // General error
+                        toastr.error('An error occurred while changing your password.');
+                    }
+                },
+                complete: function () {
+                    // Re-enable button
+                    $('#passwordUpdateBtn').attr('disabled', false).text('Change Password');
+                }
+            });
+        });
     });
 </script>
-
 @endpush
-
 
 
 @endsection

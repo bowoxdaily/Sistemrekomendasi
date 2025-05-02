@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BE\AuthController as BEAuthController;
+use App\Http\Controllers\BE\ForgotPasswordController;
 use App\Http\Controllers\BE\SiswaControllerBE;
 use App\Http\Controllers\FE\AuthController;
 use App\Http\Controllers\FE\DashboardControllerFE;
@@ -22,7 +23,11 @@ Route::get('/',[AuthController::class,'viewlogin'])->name('login');
 Route::get('/register',[AuthController::class,'viewregister'])->name('register');
 Route::post('/dologin',[BEAuthController::class,'login'])->name('dologin');
 Route::post('/logout',[BEAuthController::class,'logout'])->name('logout');
-
+// Forgot Password Routes
+Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
 
 
 Route::middleware(['role:siswa,guru,operator'])->group(function () {

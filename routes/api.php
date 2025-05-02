@@ -36,6 +36,8 @@ Route::group(['middleware' => ['web', 'auth',]], function () {
         ->name('api.student.profile.get');
     Route::post('/student/profile/update', [SiswaControllerBE::class, 'updateProfile'])
         ->name('api.student.profile.update');
+        Route::post('/student/change-password', [AuthController::class, 'changePassword'])
+        ->name('api.student.change-password');
     
     // Statistics Routes
     Route::get('/stats/students', [SiswaControllerBE::class, 'getCount'])

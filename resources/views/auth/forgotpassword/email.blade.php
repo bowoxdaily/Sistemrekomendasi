@@ -1,4 +1,4 @@
-{{-- resources/views/auth/login.blade.php --}}
+{{-- resources/views/auth/passwords/email.blade.php --}}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,7 +7,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login</title>
+    <title>Forgot Password</title>
     
     <!-- jQuery harus dimuat terlebih dahulu -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -36,51 +36,27 @@
                             <div class="brand-logo">
                                 <img src="{{ asset('admin/images/logo.svg') }}" alt="logo">
                             </div>
-                            <h4>Hello! let's get started</h4>
-                            <h6 class="font-weight-light">Sign in to continue.</h6>
+                            <h4>Forgot Password</h4>
+                            <h6 class="font-weight-light">Enter your email to reset your password</h6>
 
-                            @if ($errors->any())
-                                <div class="alert alert-danger">
-                                    <ul>
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
+                            <div id="alert-container"></div>
 
-                            <form class="pt-3" action="{{ route('dologin') }}" method="POST">
+                            <form class="pt-3" id="forgot-password-form">
                                 @csrf
                                 <div class="form-group">
                                     <input type="email" name="email"
-                                        class="form-control form-control-lg @error('email') is-invalid @enderror"
-                                        id="email" placeholder="Email" value="{{ old('email') }}" required autofocus>
+                                        class="form-control form-control-lg"
+                                        id="email" placeholder="Email" required autofocus>
                                     <div class="invalid-feedback" id="email-error"></div>
                                 </div>
-                                <div class="form-group">
-                                    <input type="password" name="password"
-                                        class="form-control form-control-lg @error('password') is-invalid @enderror"
-                                        id="password" placeholder="Password" required>
-                                    <div class="invalid-feedback" id="password-error"></div>
-                                </div>
                                 <div class="mt-3">
-                                    <button type="submit"
+                                    <button type="submit" id="reset-button"
                                         class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn">
-                                        SIGN IN
+                                        Send Password Reset Link
                                     </button>
                                 </div>
-                                <div class="my-2 d-flex justify-content-between align-items-center">
-                                    <div class="form-check">
-                                        <label class="form-check-label text-muted">
-                                            <input type="checkbox" name="remember" class="form-check-input"
-                                                {{ old('remember') ? 'checked' : '' }}>
-                                            Keep me signed in
-                                        </label>
-                                    </div>
-                                    <a href="{{ route('password.request') }}" class="auth-link text-black">Forgot Password?</a>
-                                </div>
                                 <div class="text-center mt-4 font-weight-light">
-                                    Don't have an account? <a href="{{ route('register') }}" class="text-primary">Create</a>
+                                    Remember your password? <a href="{{ route('login') }}" class="text-primary">Login</a>
                                 </div>
                             </form>
                         </div>
@@ -124,7 +100,71 @@
             hideMethod: "fadeOut"
         };
 
-        // Menampilkan pesan Toastr
+        $(document).ready(function() {
+            // Set up CSRF token for AJAX requests
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            // Handle form submission with AJAX
+            $('#forgot-password-form').on('submit', function(e) {
+                e.preventDefault();
+
+                // Reset previous errors
+                $('.is-invalid').removeClass('is-invalid');
+                $('.invalid-feedback').text('');
+                $('#alert-container').html('');
+
+                // Disable button during submission
+                $('#reset-button').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
+                $('#reset-button').prop('disabled', true);
+
+                $.ajax({
+                    url: "{{ route('password.email') }}",
+                    type: "POST",
+                    data: $(this).serialize(),
+                    dataType: "json",
+                    success: function(response) {
+                        if (response.success) {
+                            // Show success message
+                            toastr.success(response.message);
+                            
+                            // Reset form
+                            $('#forgot-password-form')[0].reset();
+                            
+                            // Show success message in container
+                            $('#alert-container').html('<div class="alert alert-success">' + response.message + '</div>');
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 422) {
+                            var errors = xhr.responseJSON.errors;
+                            
+                            // Display validation errors
+                            $.each(errors, function(key, value) {
+                                $('#' + key).addClass('is-invalid');
+                                $('#' + key + '-error').text(value[0]);
+                            });
+                            
+                            toastr.error(xhr.responseJSON.message || 'Validation failed');
+                        } else {
+                            toastr.error('Error: ' + xhr.responseText);
+                        }
+                    },
+                    complete: function() {
+                        // Re-enable button
+                        $('#reset-button').html('Send Password Reset Link');
+                        $('#reset-button').prop('disabled', false);
+                    }
+                });
+            });
+        });
+
+        // Menampilkan pesan Toastr dari session
         @if (session('success'))
             toastr.success('{{ session('success') }}');
         @endif

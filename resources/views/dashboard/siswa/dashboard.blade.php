@@ -46,32 +46,7 @@
         });
 
         // Load student count statistics via AJAX
-        function loadStudentStats() {
-            $.ajax({
-                url: '{{ route("api.stats.students") }}',
-                type: 'GET',
-                dataType: 'json',
-                success: function(response) {
-                    if (response.status === 'success') {
-                        $('#student-count').text(response.data.count);
-                        
-                        // Format percentage with proper color
-                        const percentageChange = response.data.percentage_change;
-                        const percentageText = (percentageChange >= 0 ? '+' : '') + percentageChange + '% (30 days)';
-                        const textClass = percentageChange >= 0 ? 'text-success' : 'text-danger';
-                        
-                        $('#percentage-change').html(`<span class="${textClass}">${percentageText}</span>`);
-                    }
-                },
-                error: function(xhr) {
-                    $('#student-count').text('N/A');
-                    $('#percentage-change').text('Data tidak tersedia');
-                }
-            });
-        }
-
-        // Load student statistics
-        loadStudentStats();
+        
     });
 </script>
 @endsection
