@@ -15,61 +15,62 @@ class SiswaControllerBE extends Controller
 {
     public function getCount()
     {
-        // Get current count
-        $currentCount = User::where('role', 'siswa')->count();
-        
-        // Get count from 30 days ago for comparison
-        $thirtyDaysAgo = Carbon::now()->subDays(30);
-        $previousCount = User::where('role', 'siswa')
-                            ->where('created_at', '<', $thirtyDaysAgo)
-                            ->count();
-        
-        // Calculate percentage change
-        $percentageChange = 0;
-        if ($previousCount > 0) {
-            $percentageChange = (($currentCount - $previousCount) / $previousCount) * 100;
-        }
-        
+        $totalSiswa = Students::count(); // ganti dengan model yang kamu pakai
+
+        // Misal: Perhitungan perubahan persentase (optional)
+        $count30DaysAgo = Students::where('created_at', '>=', now()->subDays(30))->count();
+        $percentageChange = $totalSiswa > 0
+            ? round(($count30DaysAgo / $totalSiswa) * 100, 2)
+            : 0;
+
         return response()->json([
-            'current_count' => $currentCount,
-            'percentage_change' => round($percentageChange, 2),
-            'days' => 30
+            'status' => 'success',
+            'data' => [
+                'count' => $totalSiswa,
+                'percentage_change' => $percentageChange
+            ]
         ]);
     }
+
     public function edit()
     {
+        // Ambil user yang sedang login
         $user = Auth::user();
+
+        // Ambil data siswa berdasarkan user_id
         $student = Students::where('user_id', $user->id)->first();
-        
+
+        // Kirim data ke view edit
         return view('dashboard.siswa.edit', compact('user', 'student'));
     }
+
     public function checkProfile()
     {
         $user = Auth::user();
-        
+
         if ($user->role !== 'siswa') {
             return response()->json(['complete' => true]);
         }
-        
+
         $student = Students::where('user_id', $user->id)->first();
-        
+
         if (!$student) {
             return response()->json([
                 'complete' => false,
                 'redirect' => route('student.profile.edit')
             ]);
         }
-        
+
         $requiredFields = [
-            'nama_lengkap', 
-            'tempat_lahir', 
-            'tanggal_lahir', 
-            'alamat', 
+            'nama_lengkap',
+            'tempat_lahir',
+            'tanggal_lahir',
+            'alamat',
             'jenis_kelamin',
-            
-            
+
+
         ];
-        
+
         foreach ($requiredFields as $field) {
             if (empty($student->$field)) {
                 return response()->json([
@@ -79,115 +80,129 @@ class SiswaControllerBE extends Controller
                 ]);
             }
         }
-        
+
         return response()->json(['complete' => true]);
     }
 
     public function getProfile()
     {
+        if (!Auth::check()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+
         $user = Auth::user();
         $student = Students::where('user_id', $user->id)->first();
-        
+
         if (!$student) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Profil siswa tidak ditemukan'
+                'message' => 'Student profile not found'
             ], 404);
         }
-        
+
         return response()->json([
             'status' => 'success',
-            'data' => $student
+            'message' => 'Profile data retrieved successfully',
+            'data' => [
+                'nama_lengkap' => $student->nama_lengkap,
+                'tempat_lahir' => $student->tempat_lahir,
+                'tanggal_lahir' => $student->tanggal_lahir,
+                'nisn' => $student->nisn,
+                'alamat' => $student->alamat,
+                'jenis_kelamin' => $student->jenis_kelamin,
+                'foto' => $user->foto
+            ]
         ]);
     }
     public function updateProfile(Request $request)
-{
-    // Check if user is authenticated
-    if (!Auth::check()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'User not authenticated'
-        ], 401);
-    }
-
-    // Get authenticated user
-    $user = Auth::user();
-    if (!$user) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'User not found'
-        ], 404);
-    }
-
-    // Validate the input
-    $validator = Validator::make($request->all(), [
-        'nama_lengkap' => 'required|string|max:255',
-        'tempat_lahir' => 'required|string|max:255',
-        'tanggal_lahir' => 'required|date',
-        'nisn' => 'required|string',
-        'alamat' => 'required|string',
-        'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
-        'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => 'error',
-            'errors' => $validator->errors()
-        ], 422);
-    }
-
-    try {
-        // Get or create student record
-        $student = Students::where('user_id', $user->id)->first();
-
-        if (!$student) {
-            // Create new student record if it doesn't exist
-            $student = new Students();
-            $student->user_id = $user->id;
+    {
+        if (!Auth::check()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not authenticated'
+            ], 401);
         }
 
-        // Handle file upload if a new photo is provided
-        // Handle file upload if a new photo is provided
-if ($request->hasFile('foto')) {
-    // Delete old photo if exists
-    if ($user->foto) {
-        Storage::delete('public/user_photos/' . $user->foto);
-    }
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found'
+            ], 404);
+        }
 
-    // Store the new photo
-    $photoName = time() . '.' . $request->foto->extension();
-    $request->foto->storeAs('public/user_photos', $photoName);
-    $user->foto = $photoName;
-    $user->save(); // simpan ke tabel users
-}
-
-
-        // Update student profile
-        $student->nama_lengkap = $request->nama_lengkap;
-        $student->tempat_lahir = $request->tempat_lahir;
-        $student->tanggal_lahir = $request->tanggal_lahir;
-        $student->nisn = $request->nisn;
-        $student->alamat = $request->alamat;
-        $student->jenis_kelamin = $request->jenis_kelamin;
-        
-       
-        $student->save();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Profil berhasil diperbarui!',
-            'data' => $student
+        $validator = Validator::make($request->all(), [
+            'nama_lengkap'   => 'required|string|max:255',
+            'tempat_lahir'   => 'required|string|max:255',
+            'tanggal_lahir'  => 'required|date',
+            'nisn'           => 'required|string',
+            'alamat'         => 'required|string',
+            'jenis_kelamin'  => 'required|in:Laki-laki,Perempuan',
+            'foto'           => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
-    } catch (\Exception $e) {
-        // Log the exception
-        
-        
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Terjadi kesalahan saat memperbarui profil: ' . $e->getMessage()
-        ], 500);
-    }
-}
 
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Log input data for debugging
+
+
+            $student = Students::where('user_id', $user->id)->first();
+            if (!$student) {
+                $student = new Students();
+                $student->user_id = $user->id;
+            } else {
+            }
+
+            // Handle photo upload
+            if ($request->hasFile('foto')) {
+
+
+                if ($user->foto) {
+
+                    Storage::delete('public/user_photos/' . $user->foto);
+                }
+
+                $photoName = time() . '.' . $request->foto->extension();
+
+                $request->foto->storeAs('public/user_photos', $photoName);
+                $user->foto = $photoName;
+                $user->save(); // Save in users table
+            }
+
+            // Update student profile
+            $student->nama_lengkap  = $request->nama_lengkap;
+            $student->tempat_lahir  = $request->tempat_lahir;
+            $student->tanggal_lahir = $request->tanggal_lahir;
+            $student->nisn          = $request->nisn;
+            $student->alamat        = $request->alamat;
+            $student->jenis_kelamin = $request->jenis_kelamin;
+            $student->save();
+
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Profil berhasil diperbarui!',
+                'data'    => [
+                    'student' => $student,
+                    'foto'    => $user->foto ? asset('storage/user_photos/' . $user->foto) : null
+                ]
+            ]);
+        } catch (\Exception $e) {
+
+
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Terjadi kesalahan saat memperbarui profil: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

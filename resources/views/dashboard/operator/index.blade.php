@@ -10,7 +10,7 @@
                 <div class="col-12 col-xl-8 mb-4 mb-xl-0">
                     <h3 class="font-weight-bold">Welcome {{ Auth::user()->name ?? 'User' }}</h3>
                     <h6 class="font-weight-normal mb-0">All systems are running smoothly! You have <span
-                            class="text-primary">3 unread alerts! <p>{{ Auth::user()->role}}</p></span></h6>
+                            class="text-primary">3 unread alerts! <p>{{ Auth::user()->role }}</p></span></h6>
                 </div>
                 <div class="col-12 col-xl-4">
                     <div class="justify-content-end d-flex">
@@ -33,7 +33,8 @@
     </div>
 
     <!-- Student Profile Completion Modal -->
-    <div class="modal fade" id="profileModal" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="profileModalLabel" aria-hidden="true">
+    <div class="modal fade" id="profileModal" data-backdrop="static" tabindex="-1" role="dialog"
+        aria-labelledby="profileModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -75,8 +76,8 @@
                     <div class="card card-tale">
                         <div class="card-body">
                             <p class="mb-4">Siswa</p>
-                        <p class="fs-30 mb-2" id="student-count">Loading...</p>
-                        <p id="percentage-change">Loading...</p>
+                            <p class="fs-30 mb-2" id="student-count">Loading...</p>
+                            <p id="percentage-change">Loading...</p>
                         </div>
                     </div>
                 </div>
@@ -160,67 +161,69 @@
     </div>
 @endsection
 
-@section('scripts')
-<script>
-    $(document).ready(function() {
-        // Check if student profile is complete (only for students)
-        @if(Auth::check() && Auth::user()->role === 'siswa')
-            checkStudentProfile();
-        @endif
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            // Check if student profile is complete (only for students)
+            @if (Auth::check() && Auth::user()->role === 'siswa')
+                checkStudentProfile();
+            @endif
 
-        // Function to check if student profile is complete
-        function checkStudentProfile() {
-            $.ajax({
-                url: '{{ route("api.student.profile.check") }}',
-                type: 'GET',
-                dataType: 'json',
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    if (!response.complete) {
-                        // Show modal if profile is incomplete
-                        $('#profileModal').modal('show');
+            // Function to check if student profile is complete
+            function checkStudentProfile() {
+                $.ajax({
+                    url: '{{ route('api.student.profile.check') }}',
+                    type: 'GET',
+                    dataType: 'json',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (!response.complete) {
+                            // Show modal if profile is incomplete
+                            $('#profileModal').modal('show');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error checking profile:', xhr);
                     }
-                },
-                error: function(xhr) {
-                    console.error('Error checking profile:', xhr);
-                }
-            });
-        }
+                });
+            }
 
-        // Handle "Lengkapi Profil" button click
-        $('#goToProfileBtn').click(function() {
-            window.location.href = '{{ route("student.profile.edit") }}';
+            // Handle "Lengkapi Profil" button click
+            $('#goToProfileBtn').click(function() {
+                window.location.href = '{{ route('student.profile.edit') }}';
+            });
+
+            // Load student count statistics via AJAX
+            function loadStudentStats() {
+                $.ajax({
+                    url: '{{ route('api.stats.students') }}',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            $('#student-count').text(response.data.count);
+
+                            // Format percentage with proper color
+                            const percentageChange = response.data.percentage_change;
+                            const percentageText = (percentageChange >= 0 ? '+' : '') +
+                                percentageChange + '% (30 days)';
+                            const textClass = percentageChange >= 0 ? 'text' : 'text-danger';
+
+                            $('#percentage-change').html(
+                                `<span class="${textClass}">${percentageText}</span>`);
+                        }
+                    },
+                    error: function(xhr) {
+                        $('#student-count').text('N/A');
+                        $('#percentage-change').text('Data tidak tersedia');
+                    }
+                });
+            }
+
+            // Load student statistics
+            loadStudentStats();
         });
-
-        // Load student count statistics via AJAX
-        function loadStudentStats() {
-            $.ajax({
-                url: '{{ route("api.stats.students") }}',
-                type: 'GET',
-                dataType: 'json',
-                success: function(response) {
-                    if (response.status === 'success') {
-                        $('#student-count').text(response.data.count);
-                        
-                        // Format percentage with proper color
-                        const percentageChange = response.data.percentage_change;
-                        const percentageText = (percentageChange >= 0 ? '+' : '') + percentageChange + '% (30 days)';
-                        const textClass = percentageChange >= 0 ? 'text-success' : 'text-danger';
-                        
-                        $('#percentage-change').html(`<span class="${textClass}">${percentageText}</span>`);
-                    }
-                },
-                error: function(xhr) {
-                    $('#student-count').text('N/A');
-                    $('#percentage-change').text('Data tidak tersedia');
-                }
-            });
-        }
-
-        // Load student statistics
-        loadStudentStats();
-    });
-</script>
-@endsection
+    </script>
+@endpush

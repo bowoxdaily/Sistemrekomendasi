@@ -78,36 +78,32 @@
             </li>
             <li class="nav-item nav-profile dropdown">
                 <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
-                    <img 
-                        src="{{ Auth::user()->foto ? asset('storage/user_photos/' . Auth::user()->foto) : asset('admin/images/faces/face1.jpg') }}" 
-                        alt="profile" 
-                    />
+                    <img src="{{ Auth::user()->foto ? asset('storage/user_photos/' . Auth::user()->foto) : asset('admin/images/faces/face1.jpg') }}"
+                        alt="profile" />
 
                 </a>
                 <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-                    <a class="dropdown-item" 
-                    href="
-                        @if(Auth::user()->role === 'siswa')
-                            {{ route('siswa.profile') }}
+                    <a class="dropdown-item"
+                        href="
+                        @if (Auth::user()->role === 'siswa') {{ route('siswa.profile') }}
                         @elseif(Auth::user()->role === 'guru')
                             {{ route('siswa.profile') }}
                         @elseif(Auth::user()->role === 'operator')
-                            {{ route('siswa.profile') }}
-                        @endif
+                            {{ route('operator.profile') }} @endif
                     ">
-                    <i class="ti-user text-primary"></i>
-                    Profil Saya
+                        <i class="ti-user text-primary"></i>
+                        Profil Saya
                     </a>
 
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                         @csrf
                     </form>
-                    
+
                     <a class="dropdown-item" href="#" id="logout-btn">
                         <i class="ti-power-off text-primary"></i>
                         Logout
                     </a>
-                    
+
                 </div>
             </li>
             <li class="nav-item nav-settings d-none d-lg-flex">
@@ -121,63 +117,63 @@
             <span class="icon-menu"></span>
         </button>
     </div>
-    
+
 </nav>
 
 @push('scripts')
-<script>
-    $(document).ready(function() {
-        // Handle logout button click
-        $('#logout-btn').on('click', function(e) {
-            e.preventDefault();
-            
-            // Check if SweetAlert is available
-            if (typeof Swal !== 'undefined') {
-                // Use SweetAlert2 for confirmation
-                Swal.fire({
-                    title: 'Konfirmasi Logout',
-                    text: "Apakah Anda yakin ingin keluar dari sistem?",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Ya, Logout',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Show loading state notification
-                        Swal.fire({
-                            title: 'Logging out...',
-                            text: 'Anda akan dialihkan dalam beberapa saat',
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            showConfirmButton: false,
-                            willOpen: () => {
-                                Swal.showLoading();
-                            }
-                        });
-                        
-                        // Submit the logout form
+    <script>
+        $(document).ready(function() {
+            // Handle logout button click
+            $('#logout-btn').on('click', function(e) {
+                e.preventDefault();
+
+                // Check if SweetAlert is available
+                if (typeof Swal !== 'undefined') {
+                    // Use SweetAlert2 for confirmation
+                    Swal.fire({
+                        title: 'Konfirmasi Logout',
+                        text: "Apakah Anda yakin ingin keluar dari sistem?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Ya, Logout',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Show loading state notification
+                            Swal.fire({
+                                title: 'Logging out...',
+                                text: 'Anda akan dialihkan dalam beberapa saat',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                showConfirmButton: false,
+                                willOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+
+                            // Submit the logout form
+                            setTimeout(function() {
+                                document.getElementById('logout-form').submit();
+                            }, 1000); // Small delay for better UX
+                        }
+                    });
+                } else if (typeof toastr !== 'undefined') {
+                    // Fallback to toastr if SweetAlert is not available
+                    if (confirm('Apakah Anda yakin ingin keluar dari sistem?')) {
+                        toastr.info('Logging out...', 'Notifikasi');
                         setTimeout(function() {
                             document.getElementById('logout-form').submit();
-                        }, 1000); // Small delay for better UX
+                        }, 1000);
                     }
-                });
-            } else if (typeof toastr !== 'undefined') {
-                // Fallback to toastr if SweetAlert is not available
-                if (confirm('Apakah Anda yakin ingin keluar dari sistem?')) {
-                    toastr.info('Logging out...', 'Notifikasi');
-                    setTimeout(function() {
+                } else {
+                    // Fallback to basic confirmation if neither library is available
+                    if (confirm('Apakah Anda yakin ingin keluar dari sistem?')) {
                         document.getElementById('logout-form').submit();
-                    }, 1000);
+                    }
                 }
-            } else {
-                // Fallback to basic confirmation if neither library is available
-                if (confirm('Apakah Anda yakin ingin keluar dari sistem?')) {
-                    document.getElementById('logout-form').submit();
-                }
-            }
+            });
         });
-    });
-</script>
+    </script>
 @endpush

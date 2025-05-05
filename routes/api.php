@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BE\AuthController;
+use App\Http\Controllers\BE\OperatorControllerBE;
 use App\Http\Controllers\BE\SiswaControllerBE;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -20,13 +21,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('/register',[AuthController::class,'register']);
+Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('/get-student-count', [SiswaControllerBE::class, 'getCount']);
+
 
 Route::middleware('auth:sanctum')->group(function () {
     // Student Profile Routes
-    
+
 });
 
 Route::group(['middleware' => ['web', 'auth',]], function () {
@@ -36,11 +37,15 @@ Route::group(['middleware' => ['web', 'auth',]], function () {
         ->name('api.student.profile.get');
     Route::post('/student/profile/update', [SiswaControllerBE::class, 'updateProfile'])
         ->name('api.student.profile.update');
-        Route::post('/student/change-password', [AuthController::class, 'changePassword'])
+    Route::post('/student/change-password', [AuthController::class, 'changePassword'])
         ->name('api.student.change-password');
-    
+
+    Route::group(['prefix' => 'profile-operator'], function () {
+        Route::post('/', [OperatorControllerBE::class, 'updateProfile']);
+    });
+
+
     // Statistics Routes
     Route::get('/stats/students', [SiswaControllerBE::class, 'getCount'])
         ->name('api.stats.students');
-
 });

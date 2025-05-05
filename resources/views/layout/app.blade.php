@@ -25,6 +25,10 @@
     <link rel="shortcut icon" href="{{ asset('admin/images/favicon.png') }}" />
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <script>
+        var _baseURL = "{{ url('/') }}";
+    </script>
+
 
     @yield('styles')
 </head>
@@ -86,60 +90,11 @@
     <!-- End custom js for this page-->
     @stack('scripts')
 
-    <!-- Add this just before the closing </body> tag in your main layout file -->
 
-    <!-- Logout Confirmation Modal -->
-    
-</div>
+    </div>
 
 
-<script>
-    $(document).ready(function() {
-        // Add CSRF token to all AJAX requests
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-        
-        // Function to load student count
-        function loadStudentCount() {
-            $.ajax({
-                url: 'api/get-student-count',
-                type: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                    // Update the count
-                    $('#student-count').text(data.current_count);
-                    
-                    // Format percentage with sign and color
-                    let percentText = data.percentage_change + '% (' + data.days + ' days)';
-                    if (data.percentage_change > 0) {
-                        percentText = '↑ ' + percentText;
-                        $('#percentage-change').css('color', '#a3ffb2');
-                    } else if (data.percentage_change < 0) {
-                        percentText = '↓ ' + percentText;
-                        $('#percentage-change').css('color', '#ffadad');
-                    }
-                    
-                    $('#percentage-change').text(percentText);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching student count:', error);
-                    console.log(xhr.responseText);
-                    $('#student-count').text('Error');
-                    $('#percentage-change').text('Could not load data');
-                }
-            });
-        }
-        
-        // Load initial data
-        loadStudentCount();
-        
-        // Refresh every 5 minutes (optional)
-        setInterval(loadStudentCount, 300000);
-    });
-</script>
+
 
 </body>
 

@@ -9,12 +9,11 @@ use Illuminate\Support\Facades\Auth;
 
 class SiswaController extends Controller
 {
-    public function index (){
-        return view('dashboard.siswa.dashboard');
-    }
 
-    public function profile(){
+
+    public function profile()
+    {
         $student = Students::where('user_id', Auth::id())->first(); // contoh
-        return view('dashboard.siswa.profile',compact('student'));
+        return view('dashboard.siswa.profile', compact('student'));
     }
 }
