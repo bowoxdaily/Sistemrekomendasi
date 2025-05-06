@@ -141,6 +141,7 @@ class SiswaControllerBE extends Controller
             'nisn'           => 'required|string',
             'alamat'         => 'required|string',
             'jenis_kelamin'  => 'required|in:Laki-laki,Perempuan',
+            'no_telp'        => 'required|string|max:20',
             'foto'           => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
@@ -152,31 +153,26 @@ class SiswaControllerBE extends Controller
         }
 
         try {
-            // Log input data for debugging
-
-
             $student = Students::where('user_id', $user->id)->first();
             if (!$student) {
                 $student = new Students();
                 $student->user_id = $user->id;
-            } else {
             }
 
             // Handle photo upload
             if ($request->hasFile('foto')) {
-
-
                 if ($user->foto) {
-
                     Storage::delete('public/user_photos/' . $user->foto);
                 }
 
                 $photoName = time() . '.' . $request->foto->extension();
-
                 $request->foto->storeAs('public/user_photos', $photoName);
                 $user->foto = $photoName;
-                $user->save(); // Save in users table
             }
+
+            // Update user table (no_telp)
+            $user->no_telp = $request->no_telp;
+            $user->save();
 
             // Update student profile
             $student->nama_lengkap  = $request->nama_lengkap;
@@ -187,18 +183,16 @@ class SiswaControllerBE extends Controller
             $student->jenis_kelamin = $request->jenis_kelamin;
             $student->save();
 
-
             return response()->json([
                 'status'  => 'success',
                 'message' => 'Profil berhasil diperbarui!',
                 'data'    => [
                     'student' => $student,
-                    'foto'    => $user->foto ? asset('storage/user_photos/' . $user->foto) : null
+                    'foto'    => $user->foto ? asset('storage/user_photos/' . $user->foto) : null,
+                    'no_telp' => $user->no_telp
                 ]
             ]);
         } catch (\Exception $e) {
-
-
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Terjadi kesalahan saat memperbarui profil: ' . $e->getMessage()

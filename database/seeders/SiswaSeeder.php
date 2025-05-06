@@ -15,7 +15,7 @@ class SiswaSeeder extends Seeder
     public function run(): void
     {
         DB::table('users')->insert([
-            'username' => 'siswa',
+
             'password' => Hash::make('123'), // Menggunakan Hash::make() untuk password
             'no_telp' => '081234567890',
             'email' => 'siswa@gmail.com', // Menambahkan email

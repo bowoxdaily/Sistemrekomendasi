@@ -3,6 +3,7 @@
 use App\Http\Controllers\BE\AuthController;
 use App\Http\Controllers\BE\OperatorControllerBE;
 use App\Http\Controllers\BE\SiswaControllerBE;
+use App\Models\Operators;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +43,10 @@ Route::group(['middleware' => ['web', 'auth',]], function () {
 
     Route::group(['prefix' => 'profile-operator'], function () {
         Route::post('/', [OperatorControllerBE::class, 'updateProfile']);
+        Route::get('/get/siswa', [OperatorControllerBE::class, 'getSiswaData']);
+        Route::post('/create/siswa', [OperatorControllerBE::class, 'tambahAkunSiswa']);
+        Route::get('/download-template/siswa', [OperatorControllerBE::class, 'downloadTemplateAkunSiswa']);
+        Route::post('/import/siswa', [OperatorControllerBE::class, 'importAkunSiswa']);
     });
 
 

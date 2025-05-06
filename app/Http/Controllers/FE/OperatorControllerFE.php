@@ -14,4 +14,14 @@ class OperatorControllerFE extends Controller
         $operator = Operators::where('user_id', Auth::id())->first(); // contoh
         return view('dashboard.operator.profile.index', compact('operator'));
     }
+    public function tracer()
+    {
+        return view('dashboard.operator.tracerstudi.tracerstudi');
+    }
+
+    public function viewsiswa()
+    {
+
+        return view('dashboard.operator.management.siswa.index');
+    }
 }

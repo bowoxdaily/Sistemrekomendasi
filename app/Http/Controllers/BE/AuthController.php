@@ -84,9 +84,18 @@ class AuthController extends Controller
                 if ($user && Auth::attempt(['email' => $user->email, 'password' => $password])) {
                     // Pastikan yang login dengan NISN adalah siswa
                     if ($user->role == 'siswa') {
-                        // Simpan pesan ke session flash dengan key 'success'
+                        // Untuk mencegah redirect loop, jangan redirect ke route yang dilindungi middleware
+                        // yang melakukan pengecekan profil yang sama
                         session()->flash('success', 'Login Berhasil! Selamat Datang, Siswa!');
-                        return redirect()->route('dashboard');
+
+                        // Cek apakah profil siswa sudah diisi
+                        if (!$this->isProfileComplete($student)) {
+                            session()->flash('warning', 'Mohon lengkapi profil Anda terlebih dahulu.');
+                            // Redirect langsung ke view edit profil tanpa melalui middleware
+                            return redirect()->route('student.profile.edit')->withoutMiddleware('check.student.profile');
+                        }
+
+                        return redirect()->route('siswa.dashboard');
                     } else {
                         Auth::logout();
                         session()->flash('error', 'NISN hanya untuk login siswa');
@@ -99,26 +108,67 @@ class AuthController extends Controller
             if (Auth::attempt(['email' => $login, 'password' => $password])) {
                 $user = Auth::user();
 
-                // Semua role diarahkan ke dashboard, tapi pesan berbeda berdasarkan role
+                // Pesan berbeda berdasarkan role
                 $welcomeMessage = 'Login Berhasil! Selamat Datang';
 
                 if ($user->role == 'siswa') {
+                    // Cek profil siswa jika role = siswa
+                    $student = Students::where('user_id', $user->id)->first();
+
+                    if (!$student || !$this->isProfileComplete($student)) {
+                        session()->flash('warning', 'Mohon lengkapi profil Anda terlebih dahulu.');
+                        // Redirect langsung ke view edit profil tanpa melalui middleware
+                        return redirect()->route('student.profile.edit')->withoutMiddleware('check.student.profile');
+                    }
+
                     $welcomeMessage = 'Login Berhasil! Selamat Datang, Siswa!';
+                    session()->flash('success', $welcomeMessage);
+                    return redirect()->route('dashboard');
                 } elseif ($user->role == 'guru') {
                     $welcomeMessage = 'Login Berhasil! Selamat Datang, Guru!';
+                    session()->flash('success', $welcomeMessage);
+                    return redirect()->route('dashboard');
                 } elseif ($user->role == 'operator') {
                     $welcomeMessage = 'Login Berhasil! Selamat Datang, Operator!';
+                    session()->flash('success', $welcomeMessage);
+                    return redirect()->route('dashboard');
+                } else {
+                    session()->flash('success', $welcomeMessage);
+                    return redirect()->route('dashboard');
                 }
-
-                // Simpan pesan ke session flash dengan key 'success'
-                session()->flash('success', $welcomeMessage);
-                return redirect()->route('dashboard');
             }
         }
 
         // Jika gagal login dengan NISN atau email
         session()->flash('error', 'NISN/Email atau password tidak valid');
         return redirect()->back()->withInput($request->only('login'));
+    }
+
+    /**
+     * Memeriksa apakah profil siswa sudah lengkap
+     * 
+     * @param Students $student
+     * @return bool
+     */
+    private function isProfileComplete(Students $student)
+    {
+        // Menggunakan kriteria yang sama dengan checkProfile()
+        $requiredFields = [
+            'nama_lengkap',
+            'tempat_lahir',
+            'tanggal_lahir',
+            'alamat',
+            'jenis_kelamin'
+        ];
+
+        // Check if all required fields are filled
+        foreach ($requiredFields as $field) {
+            if (empty($student->$field)) {
+                return false;
+            }
+        }
+
+        return true;
     }
     public function changePassword(Request $request)
     {

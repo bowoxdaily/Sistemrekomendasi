@@ -25,9 +25,4 @@ class DashboardControllerFE extends Controller
             return view('dashboard.default', compact('user'));
         }
     }
-
-    public function tracer()
-    {
-        return view('dashboard.operator.tracerstudi');
-    }
 }

@@ -48,15 +48,11 @@ Route::middleware(['role:siswa,guru,operator', 'check.student.profile'])->group(
         Route::get('/edit', [SiswaControllerBE::class, 'edit'])->name('student.profile.edit');
     });
 });
-Route::middleware(['auth'])->group(function () {
-
-
-    // Other protected routes
-});
 
 Route::middleware(['role:operator'])->group(function () {
     Route::group(['prefix' => 'dashboard'], function () {
-        Route::get('/tracerstudi', [DashboardControllerFE::class, 'tracer'])->name('tracer');
+        Route::get('/tracerstudi', [OperatorControllerFE::class, 'tracer'])->name('tracer');
+        Route::get('/Data/siswa', [OperatorControllerFE::class, 'viewsiswa'])->name('view.siswa');
     });
 
 

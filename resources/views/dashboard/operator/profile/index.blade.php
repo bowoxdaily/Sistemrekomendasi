@@ -307,21 +307,17 @@
                         success: function(res) {
                             toastr.success(res.message || 'Profil berhasil diperbarui');
 
-                            // Update data yang terlihat di halaman jika tidak ingin reload
                             if (res.updatedData) {
                                 $('[data-field="nama_lengkap"]').text(res.updatedData.nama_lengkap);
                                 $('[data-field="jenis_kelamin"]').text(res.updatedData
                                     .jenis_kelamin);
                                 $('[data-field="alamat"]').text(res.updatedData.alamat);
-
-
                             }
 
                             if (res.foto_url) {
                                 $('#profilePic').attr('src', res.foto_url);
                             }
 
-                            // Reload halaman setelah delay singkat agar toastr terlihat
                             setTimeout(function() {
                                 location.reload();
                             }, 1000);
@@ -354,14 +350,9 @@
                 // Handle change password form submission
                 $('#changePasswordForm').on('submit', function(e) {
                     e.preventDefault();
-
-                    // Reset previous error messages
                     $('.is-invalid').removeClass('is-invalid');
-
-                    // Disable button and show loading state
                     $('#passwordUpdateBtn').attr('disabled', true).text('Processing...');
 
-                    // Get form data
                     const formData = {
                         current_password: $('#current_password').val(),
                         new_password: $('#new_password').val(),
@@ -369,42 +360,32 @@
                         _token: $('input[name="_token"]').val()
                     };
 
-                    // Send AJAX request
                     $.ajax({
                         url: _baseURL + '/api/student/change-password/',
                         method: 'POST',
                         data: formData,
                         success: function(response) {
                             if (response.success) {
-                                // Show success message
                                 toastr.success(response.message);
-
-                                // Clear form
                                 $('#changePasswordForm')[0].reset();
                             }
                         },
                         error: function(xhr) {
                             if (xhr.status === 422) {
-                                // Validation errors
                                 const errors = xhr.responseJSON.errors;
-
                                 if (errors) {
-                                    // Display each error with toastr
                                     for (const field in errors) {
                                         toastr.error(errors[field][0]);
                                         $(`#${field}`).addClass('is-invalid');
                                     }
                                 } else if (xhr.responseJSON.message) {
-                                    // Single error message
                                     toastr.error(xhr.responseJSON.message);
                                 }
                             } else {
-                                // General error
                                 toastr.error('An error occurred while changing your password.');
                             }
                         },
                         complete: function() {
-                            // Re-enable button
                             $('#passwordUpdateBtn').attr('disabled', false).text('Change Password');
                         }
                     });
@@ -412,6 +393,7 @@
             });
         </script>
     @endpush
+
 
 
 @endsection

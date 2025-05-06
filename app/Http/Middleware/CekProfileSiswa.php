@@ -21,7 +21,12 @@ class CekProfileSiswa
         if (Auth::check() && Auth::user()->role === 'siswa') {
             // Find the student profile related to this user
             $student = Students::where('user_id', Auth::id())->first();
-            
+
+            // Jika user mengakses halaman edit profil, kita izinkan walaupun profilnya belum lengkap
+            if ($request->route()->getName() === 'student.profile.edit') {
+                return $next($request);
+            }
+
             // If no student profile exists or it's incomplete, redirect to the profile completion page
             if (!$student || !$this->isProfileComplete($student)) {
                 return redirect()->route('student.profile.edit')
@@ -42,11 +47,11 @@ class CekProfileSiswa
     {
         // Define what fields must be filled for a complete profile
         $requiredFields = [
-            'nama_lengkap', 
-            'tempat_lahir', 
-            'tanggal_lahir', 
-            'alamat', 
-            
+            'nama_lengkap',
+            'tempat_lahir',
+            'tanggal_lahir',
+            'alamat',
+            'jenis_kelamin'
         ];
 
         // Check if all required fields are filled

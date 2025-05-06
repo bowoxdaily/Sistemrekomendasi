@@ -15,12 +15,11 @@ class operatorSeeder extends Seeder
     public function run(): void
     {
         DB::table('users')->insert([
-            'username' => 'operator1',
             'password' => Hash::make('123'), // Menggunakan Hash::make() untuk password
             'no_telp' => '081234567890',
             'email' => 'operator1@example.com', // Menambahkan email
             'role' => 'operator',
-            'foto'=> 'Default',
+            'foto' => 'Default',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

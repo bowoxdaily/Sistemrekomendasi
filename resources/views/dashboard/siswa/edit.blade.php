@@ -49,7 +49,7 @@
                         <div class="form-group">
                             <label for="nisn">NISN <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="nisn" name="nisn"
-                                placeholder="Masukkan NISN">
+                                placeholder="Masukkan NISN" readonly>
                             <div class="invalid-feedback" id="nisn_error"></div>
                         </div>
 

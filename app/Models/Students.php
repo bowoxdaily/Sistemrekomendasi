@@ -15,7 +15,7 @@ class Students extends Model
         'jenis_kelamin',
         'alamat',
         'nomor_telepon',
-        'foto',
+        'nisn',
         'is_profile_complete',
         // Add other fields as needed
     ];
@@ -23,6 +23,7 @@ class Students extends Model
     {
         return $this->belongsTo(User::class);
     }
+
 
     /**
      * Check if student profile is complete
