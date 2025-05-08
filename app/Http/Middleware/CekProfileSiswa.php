@@ -17,20 +17,29 @@ class CekProfileSiswa
      */
     public function handle(Request $request, Closure $next)
     {
-        // Check if user is authenticated and has the 'siswa' role
+        // Cek apakah user login dan memiliki role 'siswa'
         if (Auth::check() && Auth::user()->role === 'siswa') {
-            // Find the student profile related to this user
             $student = Students::where('user_id', Auth::id())->first();
 
-            // Jika user mengakses halaman edit profil, kita izinkan walaupun profilnya belum lengkap
+            // Izinkan akses ke halaman edit profil meskipun belum lengkap
             if ($request->route()->getName() === 'student.profile.edit') {
                 return $next($request);
             }
 
-            // If no student profile exists or it's incomplete, redirect to the profile completion page
+            // Redirect jika profil belum lengkap
             if (!$student || !$this->isProfileComplete($student)) {
                 return redirect()->route('student.profile.edit')
                     ->with('warning', 'Mohon lengkapi profil Anda terlebih dahulu.');
+            }
+
+            // Cek status setelah lulus, dan tentukan jika modal perlu ditampilkan
+            if ($request->route()->getName() === 'dashboard' && !$student->status_modal_shown) {
+                // Jika status setelah lulus belum diisi, set session untuk menampilkan modal
+                if (empty($student->status_setelah_lulus)) {
+                    session(['show_status_modal' => true]);
+                    $student->status_modal_shown = true;
+                    $student->save();
+                }
             }
         }
 
@@ -38,23 +47,18 @@ class CekProfileSiswa
     }
 
     /**
-     * Check if the student profile is complete.
-     *
-     * @param  \App\Models\Student  $student
-     * @return bool
+     * Cek apakah profil siswa sudah lengkap.
      */
-    private function isProfileComplete(Students $student)
+    private function isProfileComplete(Students $student): bool
     {
-        // Define what fields must be filled for a complete profile
         $requiredFields = [
             'nama_lengkap',
             'tempat_lahir',
             'tanggal_lahir',
             'alamat',
-            'jenis_kelamin'
+            'jenis_kelamin',
         ];
 
-        // Check if all required fields are filled
         foreach ($requiredFields as $field) {
             if (empty($student->$field)) {
                 return false;
@@ -62,5 +66,16 @@ class CekProfileSiswa
         }
 
         return true;
+    }
+
+    /**
+     * Cek apakah status setelah lulus sudah diisi dengan benar.
+     */
+    private function isStatusSetelahLulusCompleted(Students $student): bool
+    {
+        $validStatus = ['kuliah', 'kerja', 'belum_kerja'];
+
+        return !empty($student->status_setelah_lulus) &&
+               in_array($student->status_setelah_lulus, $validStatus);
     }
 }

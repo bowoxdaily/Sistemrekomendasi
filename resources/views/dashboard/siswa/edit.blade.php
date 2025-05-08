@@ -30,7 +30,8 @@
                         <div class="form-group">
                             <label for="nama_lengkap">Nama Lengkap <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="nama_lengkap" name="nama_lengkap"
-                                placeholder="Masukkan nama lengkap">
+                                placeholder="Masukkan nama lengkap"
+                                value="{{ old('nama_lengkap', $student->nama_lengkap ?? '') }}">
                             <div class="invalid-feedback" id="nama_lengkap_error"></div>
                         </div>
 
@@ -39,8 +40,12 @@
                             <label>Jenis Kelamin <span class="text-danger">*</span></label>
                             <select class="form-control" name="jenis_kelamin" id="jenis_kelamin">
                                 <option value="">-- Pilih Jenis Kelamin --</option>
-                                <option value="Laki-laki">Laki-laki</option>
-                                <option value="Perempuan">Perempuan</option>
+                                <option value="Laki-laki"
+                                    {{ old('jenis_kelamin', $student->jenis_kelamin ?? '') == 'Laki-laki' ? 'selected' : '' }}>
+                                    Laki-laki</option>
+                                <option value="Perempuan"
+                                    {{ old('jenis_kelamin', $student->jenis_kelamin ?? '') == 'Perempuan' ? 'selected' : '' }}>
+                                    Perempuan</option>
                             </select>
                             <div class="invalid-feedback" id="jenis_kelamin_error"></div>
                         </div>
@@ -49,7 +54,7 @@
                         <div class="form-group">
                             <label for="nisn">NISN <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="nisn" name="nisn"
-                                placeholder="Masukkan NISN" readonly>
+                                placeholder="Masukkan NISN" readonly value="{{ old('nisn', $student->nisn ?? '') }}">
                             <div class="invalid-feedback" id="nisn_error"></div>
                         </div>
 
@@ -59,14 +64,16 @@
                                 <div class="form-group">
                                     <label for="tempat_lahir">Tempat Lahir <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="tempat_lahir" name="tempat_lahir"
-                                        placeholder="Masukkan tempat lahir">
+                                        placeholder="Masukkan tempat lahir"
+                                        value="{{ old('tempat_lahir', $student->tempat_lahir ?? '') }}">
                                     <div class="invalid-feedback" id="tempat_lahir_error"></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="tanggal_lahir">Tanggal Lahir <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="tanggal_lahir" name="tanggal_lahir">
+                                    <input type="date" class="form-control" id="tanggal_lahir" name="tanggal_lahir"
+                                        value="{{ old('tanggal_lahir', $student->tanggal_lahir ?? '') }}">
                                     <div class="invalid-feedback" id="tanggal_lahir_error"></div>
                                 </div>
                             </div>
@@ -75,8 +82,58 @@
                         <!-- Alamat -->
                         <div class="form-group">
                             <label for="alamat">Alamat <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="alamat" name="alamat" rows="4" placeholder="Masukkan alamat lengkap"></textarea>
+                            <textarea class="form-control" id="alamat" name="alamat" rows="4" placeholder="Masukkan alamat lengkap">{{ old('alamat', $student->alamat ?? '') }}</textarea>
                             <div class="invalid-feedback" id="alamat_error"></div>
+                        </div>
+
+                        <!-- No Telepon -->
+                        <div class="form-group">
+                            <label for="no_telp">No Telepon <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="no_telp" name="no_telp"
+                                placeholder="+62899XXXX" value="{{ old('no_telp', $user->no_telp ?? '') }}">
+                            <div class="invalid-feedback" id="no_telp_error"></div>
+                        </div>
+
+                        <!-- Status Kelulusan -->
+                        <div class="form-group">
+                            <label>Status Kelulusan</label>
+                            <select class="form-control" name="status_lulus" id="status_lulus">
+                                <option value="belum"
+                                    {{ old('status_lulus', $student->status_lulus ?? '') == 'belum' ? 'selected' : '' }}>
+                                    Belum Lulus</option>
+                                <option value="lulus"
+                                    {{ old('status_lulus', $student->status_lulus ?? '') == 'lulus' ? 'selected' : '' }}>
+                                    Lulus</option>
+                            </select>
+                            <div class="invalid-feedback" id="status_lulus_error"></div>
+                        </div>
+
+                        <!-- Tanggal Lulus (conditionally shown) -->
+                        <div class="form-group" id="tanggal_lulus_container"
+                            style="{{ old('status_lulus', $student->status_lulus ?? '') == 'lulus' ? '' : 'display: none;' }}">
+                            <label for="tanggal_lulus">Tanggal Lulus</label>
+                            <input type="date" class="form-control" id="tanggal_lulus" name="tanggal_lulus"
+                                value="{{ old('tanggal_lulus', $student->tanggal_lulus ?? '') }}">
+                            <div class="invalid-feedback" id="tanggal_lulus_error"></div>
+                        </div>
+
+                        <!-- Status Setelah Lulus (conditionally shown) -->
+                        <div class="form-group" id="status_setelah_lulus_container"
+                            style="{{ old('status_lulus', $student->status_lulus ?? '') == 'lulus' ? '' : 'display: none;' }}">
+                            <label>Status Setelah Lulus</label>
+                            <select class="form-control" name="status_setelah_lulus" id="status_setelah_lulus">
+                                <option value="">-- Pilih Status --</option>
+                                <option value="belum_kerja"
+                                    {{ old('status_setelah_lulus', $student->status_setelah_lulus ?? '') == 'belum_kerja' ? 'selected' : '' }}>
+                                    Belum Bekerja</option>
+                                <option value="kuliah"
+                                    {{ old('status_setelah_lulus', $student->status_setelah_lulus ?? '') == 'kuliah' ? 'selected' : '' }}>
+                                    Kuliah</option>
+                                <option value="kerja"
+                                    {{ old('status_setelah_lulus', $student->status_setelah_lulus ?? '') == 'kerja' ? 'selected' : '' }}>
+                                    Bekerja</option>
+                            </select>
+                            <div class="invalid-feedback" id="status_setelah_lulus_error"></div>
                         </div>
 
                         <!-- Foto -->
@@ -84,8 +141,10 @@
                             <label>Foto Profil</label>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <img id="preview-foto" src="{{ asset('admin/images/faces/face1.jpg') }}"
-                                        class="img-thumbnail mb-2" style="width: 150px; height: 150px; object-fit: cover;">
+                                    <img id="preview-foto"
+                                        src="{{ asset('storage/user_photos/' . ($student->foto ?? 'default.jpg')) }}"
+                                        class="img-thumbnail mb-2"
+                                        style="width: 150px; height: 150px; object-fit: cover;">
                                 </div>
                                 <div class="col-md-8">
                                     <input type="file" name="foto" id="foto" class="file-upload-default">
@@ -122,6 +181,19 @@
                 timeOut: 3000,
                 positionClass: "toast-top-right"
             };
+
+            // Handle conditional fields visibility based on status_lulus
+            $('#status_lulus').on('change', function() {
+                if ($(this).val() === 'lulus') {
+                    $('#tanggal_lulus_container').show();
+                    $('#status_setelah_lulus_container').show();
+                } else {
+                    $('#tanggal_lulus_container').hide();
+                    $('#status_setelah_lulus_container').hide();
+                    $('#tanggal_lulus').val('');
+                    $('#status_setelah_lulus').val('');
+                }
+            });
 
             // File Upload Logic
             $('.file-upload-browse').on('click', function() {
@@ -162,9 +234,25 @@
                             $('#tanggal_lahir').val(data.tanggal_lahir);
                             $('#alamat').val(data.alamat);
                             $('#nisn').val(data.nisn);
+
                             if (data.jenis_kelamin) {
                                 $('#jenis_kelamin').val(data.jenis_kelamin);
                             }
+
+                            // Set user no_telp
+                            $('#no_telp').val(response.data.no_telp);
+
+                            if (data.status_lulus) {
+                                $('#status_lulus').val(data.status_lulus);
+
+                                if (data.status_lulus === 'lulus') {
+                                    $('#tanggal_lulus_container').show();
+                                    $('#status_setelah_lulus_container').show();
+                                    $('#tanggal_lulus').val(data.tanggal_lulus);
+                                    $('#status_setelah_lulus').val(data.status_setelah_lulus);
+                                }
+                            }
+
                             if (data.foto) {
                                 $('#preview-foto').attr('src', '{{ asset('storage/user_photos') }}/' +
                                     data.foto);
@@ -192,6 +280,26 @@
 
                 var formData = new FormData(this);
 
+                // Add status_terakhir_diupdate field with current timestamp
+                if ($('#status_lulus').val() === 'lulus') {
+                    formData.append('status_terakhir_diupdate', new Date().toISOString().split('T')[0]);
+                }
+
+                // Set is_profile_complete based on required fields
+                const requiredFields = ['nama_lengkap', 'jenis_kelamin', 'nisn', 'tempat_lahir',
+                    'tanggal_lahir', 'alamat'
+                ];
+                let isComplete = true;
+
+                for (const field of requiredFields) {
+                    if (!formData.get(field)) {
+                        isComplete = false;
+                        break;
+                    }
+                }
+
+                formData.append('is_profile_complete', isComplete ? '1' : '0');
+
                 $.ajax({
                     url: '{{ route('api.student.profile.update') }}',
                     type: 'POST',
@@ -202,43 +310,32 @@
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function(response) {
-                        toastr.success(response.message, 'Berhasil');
-                        setTimeout(function() {
-                            window.location.href = '{{ route('dashboard') }}';
-                        }, 2000);
+                        if (response.status === 'success') {
+                            toastr.success('Profil berhasil diperbarui');
+                            // Redirect to dashboard after successful profile update
+                            setTimeout(function() {
+                                    window.location.href =
+                                        '{{ route('dashboard') }}';
+                                },
+                                1500
+                            ); // Delay for 1.5 seconds so user can see the success message
+                        } else {
+                            toastr.error('Terjadi kesalahan, silakan coba lagi');
+                        }
                     },
                     error: function(xhr) {
-                        $('#submitBtn').html('Simpan');
-                        $('#submitBtn').prop('disabled', false);
-
-                        if (xhr.status === 422) {
-                            var errors = xhr.responseJSON.errors;
-                            $.each(errors, function(field, messages) {
-                                $('#' + field).addClass('is-invalid');
-                                $('#' + field + '_error').text(messages[0]);
-                            });
-                            toastr.error(
-                                'Terdapat kesalahan pada form. Silakan periksa kembali.',
-                                'Validasi Gagal');
-                        } else {
-                            toastr.error(
-                                xhr.responseJSON ? xhr.responseJSON.message : xhr
-                                .statusText,
-                                'Terjadi Kesalahan'
-                            );
+                        var errors = xhr.responseJSON.errors;
+                        for (var field in errors) {
+                            $('#' + field).addClass('is-invalid');
+                            $('#' + field + '_error').text(errors[field][0]);
                         }
+                        toastr.error('Periksa kembali form Anda');
                     },
                     complete: function() {
                         $('#submitBtn').html('Simpan');
                         $('#submitBtn').prop('disabled', false);
                     }
                 });
-            });
-
-            $('#cancelBtn').click(function() {
-                if (confirm('Apakah Anda yakin ingin membatalkan? Semua perubahan akan hilang.')) {
-                    window.location.href = '{{ route('dashboard') }}';
-                }
             });
         });
     </script>

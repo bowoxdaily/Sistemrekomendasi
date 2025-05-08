@@ -20,6 +20,10 @@ use PHPUnit\Framework\Constraint\Operator;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+Route::get('/login', function () {
+    return view('auth.login'); // Mengembalikan view 'hello.blade.php'
+});
+
 
 Route::get('/', [AuthController::class, 'viewlogin'])->name('login');
 Route::get('/register', [AuthController::class, 'viewregister'])->name('register');
@@ -44,7 +48,7 @@ Route::middleware(['role:siswa,guru,operator', 'check.student.profile'])->group(
 
     Route::group(['prefix' => 'siswa'], function () {
         Route::get('/profile', [SiswaController::class, 'profile'])->name('siswa.profile');
-        Route::get('/dashboard', [SiswaController::class, 'index'])->name('siswa.dashboard');
+        Route::get('/dashboard', [DashboardControllerFE::class, 'index'])->name('dashboard');
         Route::get('/edit', [SiswaControllerBE::class, 'edit'])->name('student.profile.edit');
     });
 });

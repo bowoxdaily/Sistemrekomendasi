@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\BE\AuthController;
+use App\Http\Controllers\BE\DataSiswaController;
 use App\Http\Controllers\BE\OperatorControllerBE;
 use App\Http\Controllers\BE\SiswaControllerBE;
-use App\Models\Operators;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,13 +25,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-
 Route::middleware('auth:sanctum')->group(function () {
     // Student Profile Routes
 
 });
 
-Route::group(['middleware' => ['web', 'auth',]], function () {
+Route::group(['middleware' => ['web', 'auth']], function () {
     Route::get('/student/profile/check', [SiswaControllerBE::class, 'checkProfile'])
         ->name('api.student.profile.check');
     Route::get('/student/profile', [SiswaControllerBE::class, 'getProfile'])
@@ -48,7 +47,9 @@ Route::group(['middleware' => ['web', 'auth',]], function () {
         Route::get('/download-template/siswa', [OperatorControllerBE::class, 'downloadTemplateAkunSiswa']);
         Route::post('/import/siswa', [OperatorControllerBE::class, 'importAkunSiswa']);
     });
-
+    Route::group(['prefix' => 'siswa'], function () {
+        Route::post('/insert/data/graduation', [DataSiswaController::class, 'insertData']);
+    });
 
     // Statistics Routes
     Route::get('/stats/students', [SiswaControllerBE::class, 'getCount'])

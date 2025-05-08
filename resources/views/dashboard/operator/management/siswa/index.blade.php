@@ -39,13 +39,12 @@
                                 <table class="table table-hover" id="siswa-table">
                                     <thead class="thead-light">
                                         <tr>
-                                            <th>No</th>
+                                            <th>...</th>
                                             <th>Nama Lengkap</th>
                                             <th>NISN</th>
                                             <th>Tempat Lahir</th>
                                             <th>Tanggal Lahir</th>
                                             <th>Alamat</th>
-                                            <th>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -204,10 +203,15 @@
             let currentPage = 1;
             let filteredData = [];
 
+            // Setup modal close handlers
+            $('.modal .close, .modal .btn-secondary').on('click', function() {
+                $(this).closest('.modal').modal('hide');
+            });
+
             // Load data
             function loadData() {
                 $.ajax({
-                    url: _baseURL + '/api/profile-operator/get/siswa',
+                    url: _baseURL + 'api/profile-operator/get/siswa',
                     method: 'GET',
                     success: function(data) {
                         allData = data;
@@ -232,20 +236,27 @@
                 pageData.forEach(function(siswa, index) {
                     tbody += `
                         <tr>
-                            <td>${start + index + 1}</td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionMenu${siswa.id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="mdi mdi-dots-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="actionMenu${siswa.id}">
+                                        <a class="dropdown-item btn-edit" href="#" data-id="${siswa.id}">
+                                            <i class="mdi mdi-pencil text-info mr-2"></i>Edit
+                                        </a>
+                                        <a class="dropdown-item btn-hapus" href="#" data-id="${siswa.id}">
+                                            <i class="mdi mdi-delete text-danger mr-2"></i>Hapus
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                            
                             <td>${siswa.nama_lengkap || '-'}</td>
                             <td>${siswa.nisn || '-'}</td>
                             <td>${siswa.tempat_lahir || '-'}</td>
                             <td>${siswa.tanggal_lahir || '-'}</td>
                             <td>${siswa.alamat || '-'}</td>
-                            <td>
-                                <button class="btn btn-sm btn-info btn-edit" data-id="${siswa.id}">
-                                    <i class="mdi mdi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger btn-hapus" data-id="${siswa.id}">
-                                    <i class="mdi mdi-delete"></i>
-                                </button>
-                            </td>
                         </tr>
                     `;
                 });
@@ -323,7 +334,7 @@
             // Download template
             $('#download-template').click(function(e) {
                 e.preventDefault();
-                window.location.href = _baseURL + '/api/profile-operator/download-template/siswa';
+                window.location.href = _baseURL + 'api/profile-operator/download-template/siswa';
             });
 
             // Process import
@@ -349,7 +360,7 @@
                 });
 
                 $.ajax({
-                    url: _baseURL + '/api/profile-operator/import/siswa',
+                    url: _baseURL + 'api/profile-operator/import/siswa',
                     method: 'POST',
                     data: formData,
                     processData: false,
@@ -418,7 +429,7 @@
                 }
 
                 $.ajax({
-                    url: _baseURL + '/api/profile-operator/create/siswa',
+                    url: _baseURL + 'api/profile-operator/create/siswa',
                     method: 'POST',
                     data: formData,
                     success: function(response) {
@@ -438,11 +449,12 @@
             });
 
             // Edit siswa
-            $(document).on('click', '.btn-edit', function() {
+            $(document).on('click', '.btn-edit', function(e) {
+                e.preventDefault();
                 const id = $(this).data('id');
 
                 $.ajax({
-                    url: _baseURL + '/api/profile-operator/get/siswa/' + id,
+                    url: _baseURL + 'api/profile-operator/get/siswa/' + id,
                     method: 'GET',
                     success: function(data) {
                         $('#edit-id').val(id);
@@ -480,7 +492,7 @@
                 }
 
                 $.ajax({
-                    url: _baseURL + '/api/profile-operator/siswa/' + id,
+                    url: _baseURL + 'api/profile-operator/siswa/' + id,
                     method: 'POST', // Using POST with _method: 'PUT'
                     data: formData,
                     success: function(response) {

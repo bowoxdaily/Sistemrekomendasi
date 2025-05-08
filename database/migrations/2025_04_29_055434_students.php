@@ -20,6 +20,10 @@ return new class extends Migration
             $table->date('tanggal_lahir')->nullable();
             $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan'])->nullable();
             $table->text('alamat')->nullable();
+            $table->enum('status_lulus', ['belum', 'lulus'])->default('belum');
+            $table->date('tanggal_lulus')->nullable();
+            $table->enum('status_setelah_lulus', ['belum_kerja', 'kuliah', 'kerja'])->nullable();
+            $table->timestamp('status_terakhir_diupdate')->nullable();
             $table->boolean('is_profile_complete')->default(false);
             $table->timestamps();
         });

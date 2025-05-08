@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
 
     <script>
-        var _baseURL = "{{ url('/') }}";
+        var _baseURL = "{{ url('/') }}/";
     </script>
 
 

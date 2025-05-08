@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -25,7 +24,7 @@ class User extends Authenticatable
         'password',
         'no_telp',
         'role',
-        'foto'
+        'foto',
     ];
 
     /**
@@ -45,7 +44,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
+        'password'          => 'hashed',
     ];
 
     public function hasRole($role)
@@ -60,5 +59,17 @@ class User extends Authenticatable
     public function student()
     {
         return $this->hasOne(Students::class);
+    }
+    public function DataBelumKerja()
+    {
+        return $this->hasOne(DataBelumKerja::class);
+    }
+    public function DataKerja()
+    {
+        return $this->hasOne(DataKerja::class);
+    }
+    public function Datakuliah()
+    {
+        return $this->hasOne(DataKuliah::class);
     }
 }
