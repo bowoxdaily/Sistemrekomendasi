@@ -86,56 +86,64 @@ class OperatorControllerBE extends Controller
 
     public function getSiswaData()
     {
-        $data = Students::select('nama_lengkap', 'nisn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'alamat', 'created_at')->get();
+        $data = Students::select('nama_lengkap', 'nisn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin','jurusan_id', 'alamat', 'created_at','tanggal_lulus')->get();
 
         return response()->json($data);
     }
 
     public function tambahAkunSiswa(Request $request)
-    {
-        try {
-            // Validasi input
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email|unique:users,email',
-                'password' => 'required|min:6',
-                'nisn' => 'required|unique:students,nisn'
-            ]);
+{
+    try {
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'nama_lengkap' => 'required',
+            'jurusan_id' => 'required|exists:jurusan,id', 
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6',
+            'nisn' => 'required|unique:students,nisn',
+            'tanggal_lulus' => 'required|date',
+        ]);
 
-            if ($validator->fails()) {
-                return response()->json(['message' => $validator->errors()->first()], 422);
-            }
-
-            // Mulai transaksi database
-            DB::beginTransaction();
-
-            // Buat user baru
-            $user = new User();
-
-            $user->email = $request->email;
-            $user->password = Hash::make($request->password);
-            $user->role = 'siswa'; // Assuming role column exists
-            $user->save();
-
-            // Buat data siswa baru
-            $student = new Students();
-            $student->user_id = $user->id;
-            $student->nisn = $request->nisn;
-            $student->save();
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Akun siswa berhasil dibuat',
-                'data' => [
-                    'user_id' => $user->id,
-                    'student_id' => $student->id
-                ]
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Gagal membuat akun siswa: ' . $e->getMessage()], 500);
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->first()], 422);
         }
+
+        // Mulai transaksi database
+        DB::beginTransaction();
+
+        // Buat user baru
+        $user = new User();
+        $user->email = $request->email;
+        $user->password = Hash::make($request->password);
+        $user->role = 'siswa'; // Assuming role column exists
+        $user->name = $request->nama_lengkap; // Make sure User model has 'name' field
+        $user->save();
+
+        // Buat data siswa baru
+        $student = new Students();
+        $student->user_id = $user->id;
+        $student->nama_lengkap = $request->nama_lengkap; // Add this line
+        $student->nisn = $request->nisn;
+        $student->jurusan_id = $request->jurusan_id;
+        $student->tanggal_lulus = $request->tanggal_lulus;
+        $student->save();
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Akun siswa berhasil dibuat',
+            'data' => [
+                'user_id' => $user->id,
+                'student_id' => $student->id
+            ]
+        ], 201);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Error creating student account: ' . $e->getMessage());
+        return response()->json(['message' => 'Gagal membuat akun siswa: ' . $e->getMessage()], 500);
     }
+}
+
 
     public function downloadTemplateAkunSiswa()
     {
@@ -189,4 +197,5 @@ class OperatorControllerBE extends Controller
             ], 500);
         }
     }
+
 }

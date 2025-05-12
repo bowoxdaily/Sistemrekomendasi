@@ -32,23 +32,7 @@
         </div>
     </div>
 
-    <!-- Student Profile Completion Modal -->
-    <div class="modal fade" id="profileModal" data-backdrop="static" tabindex="-1" role="dialog"
-        aria-labelledby="profileModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="profileModalLabel">Profil Belum Lengkap</h5>
-                </div>
-                <div class="modal-body">
-                    <p>Anda harus melengkapi profil siswa terlebih dahulu sebelum mengakses dashboard.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="goToProfileBtn">Lengkapi Profil</button>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Statistics Cards -->
     <div class="row">

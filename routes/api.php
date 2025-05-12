@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\BE\AuthController;
 use App\Http\Controllers\BE\DataSiswaController;
+use App\Http\Controllers\BE\JurusanController;
 use App\Http\Controllers\BE\OperatorControllerBE;
 use App\Http\Controllers\BE\SiswaControllerBE;
+use App\Models\Jurusan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -42,10 +44,18 @@ Route::group(['middleware' => ['web', 'auth']], function () {
 
     Route::group(['prefix' => 'profile-operator'], function () {
         Route::post('/', [OperatorControllerBE::class, 'updateProfile']);
+        // Route Siswa
         Route::get('/get/siswa', [OperatorControllerBE::class, 'getSiswaData']);
         Route::post('/create/siswa', [OperatorControllerBE::class, 'tambahAkunSiswa']);
         Route::get('/download-template/siswa', [OperatorControllerBE::class, 'downloadTemplateAkunSiswa']);
         Route::post('/import/siswa', [OperatorControllerBE::class, 'importAkunSiswa']);
+        // RouteJurusan 
+        Route::get('/get/jurusan',[JurusanController::class,'index']);
+        Route::post('/create/jurusan',[JurusanController::class,'store']);
+        Route::get('get/jurusan', [JurusanController::class, 'getAllJurusan']);
+        Route::get('get/jurusan/{id}', [JurusanController::class, 'getJurusanById']);
+        Route::put('/jurusan/{id}', [JurusanController::class, 'update']);
+        Route::delete('/delete/jurusan/{id}', [JurusanController::class, 'destroy']);
     });
     Route::group(['prefix' => 'siswa'], function () {
         Route::post('/insert/data/graduation', [DataSiswaController::class, 'insertData']);

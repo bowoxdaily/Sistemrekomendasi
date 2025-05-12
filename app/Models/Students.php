@@ -17,11 +17,16 @@ class Students extends Model
         'nomor_telepon',
         'nisn',
         'is_profile_complete',
+        'jurusan_id',
         // Add other fields as needed
     ];
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    public function jurusan()
+    {
+        return $this->belongsTo(Jurusan::class);
     }
 
 

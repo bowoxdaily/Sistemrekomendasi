@@ -22,7 +22,7 @@
                             <a class="nav-link" href="{{ route('view.siswa') }}">Manajemen User</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Manajemen Kelas</a>
+                            <a class="nav-link" href="{{ route('view.jurusan') }}">Manajemen Jurusan</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">Pengaturan Sistem</a>

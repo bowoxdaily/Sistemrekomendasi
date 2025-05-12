@@ -23,7 +23,7 @@
                                 </div>
                             </div>
                             <div class="row mb-3">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="input-group">
                                         <input type="text" id="search-input" class="form-control"
                                             placeholder="Cari siswa..." aria-label="Cari siswa">
@@ -34,6 +34,18 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="col-md-3">
+                                    <select class="form-control" id="filter-jurusan">
+                                        <option value="">Semua Jurusan</option>
+                                        <!-- Options will be loaded dynamically -->
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-control" id="filter-tahun-lulus">
+                                        <option value="">Semua Tahun Lulus</option>
+                                        <!-- Options will be loaded dynamically -->
+                                    </select>
+                                </div>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-hover" id="siswa-table">
@@ -42,9 +54,11 @@
                                             <th>...</th>
                                             <th>Nama Lengkap</th>
                                             <th>NISN</th>
+                                            <th>Jurusan</th>
                                             <th>Tempat Lahir</th>
                                             <th>Tanggal Lahir</th>
                                             <th>Alamat</th>
+                                            <th>Tahun Lulus</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -80,12 +94,28 @@
                     <form id="form-tambah-akun-siswa">
                         @csrf
                         <div class="form-group">
+                            <label for="email">Nama Lengkap</label>
+                            <input type="text" class="form-control" id="nama_lengkap" required>
+                        </div>
+                        <div class="form-group">
                             <label for="email">Email</label>
                             <input type="email" class="form-control" id="email" required>
                         </div>
                         <div class="form-group">
                             <label for="nisn">NISN</label>
                             <input type="text" class="form-control" id="nisn" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="jurusan_id">Jurusan</label>
+                            <select class="form-control" id="jurusan_id" required>
+                                <option value="">Pilih Jurusan</option>
+                                <!-- Options will be loaded dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tahun_lulus">Tahun Lulus</label>
+                            <input type="number" class="form-control" id="tahun_lulus" min="2000" max="2099"
+                                required>
                         </div>
                         <div class="form-group">
                             <label for="password">Password</label>
@@ -166,6 +196,18 @@
                             <input type="text" class="form-control" id="edit-nisn" required>
                         </div>
                         <div class="form-group">
+                            <label for="edit-jurusan">Jurusan</label>
+                            <select class="form-control" id="edit-jurusan" required>
+                                <option value="">Pilih Jurusan</option>
+                                <!-- Options will be loaded dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-tahun-lulus">Tahun Lulus</label>
+                            <input type="number" class="form-control" id="edit-tahun-lulus" min="2000"
+                                max="2099" required>
+                        </div>
+                        <div class="form-group">
                             <label for="edit-tempat-lahir">Tempat Lahir</label>
                             <input type="text" class="form-control" id="edit-tempat-lahir" required>
                         </div>
@@ -199,6 +241,8 @@
             });
 
             let allData = [];
+            let jurusanData = [];
+            let tahunLulusOptions = [];
             const perPage = 10;
             let currentPage = 1;
             let filteredData = [];
@@ -208,17 +252,93 @@
                 $(this).closest('.modal').modal('hide');
             });
 
+            // Load jurusan data
+            function loadJurusan() {
+                $.ajax({
+                    url: _baseURL + 'api/profile-operator/get/jurusan',
+                    method: 'GET',
+                    success: function(data) {
+                        jurusanData = data;
+                        populateJurusanDropdowns();
+                    },
+                    error: function(xhr) {
+                        toastr.error('Gagal memuat data jurusan: ' + xhr.responseText);
+                    }
+                });
+            }
+
+            // Populate jurusan dropdowns
+            function populateJurusanDropdowns() {
+                let options = '<option value="">Pilih Jurusan</option>';
+                let filterOptions = '<option value="">Semua Jurusan</option>';
+
+                jurusanData.forEach(function(jurusan) {
+                    options += `<option value="${jurusan.id}">${jurusan.nama}</option>`;
+                    filterOptions += `<option value="${jurusan.id}">${jurusan.nama}</option>`;
+                });
+
+                $('#jurusan_id').html(options);
+                $('#edit-jurusan').html(options);
+                $('#filter-jurusan').html(filterOptions);
+            }
+
+            // Extract year from tanggal_lulus and populate tahun lulus filter
+            function populateTahunLulusFilter() {
+                // Extract unique tahun lulus from allData
+                const uniqueYears = [...new Set(allData.map(siswa => {
+                    // Extract year from tanggal_lulus
+                    if (siswa.tanggal_lulus) {
+                        return new Date(siswa.tanggal_lulus).getFullYear();
+                    }
+                    return null;
+                }))].filter(year => year);
+
+                uniqueYears.sort((a, b) => b - a); // Sort descending (newest first)
+
+                let options = '<option value="">Semua Tahun Lulus</option>';
+                uniqueYears.forEach(year => {
+                    options += `<option value="${year}">${year}</option>`;
+                });
+
+                $('#filter-tahun-lulus').html(options);
+                tahunLulusOptions = uniqueYears;
+            }
+
+            // Helper function to get jurusan name by id
+            function getJurusanNameById(jurusanId) {
+                const jurusan = jurusanData.find(j => j.id == jurusanId);
+                return jurusan ? jurusan.nama : '-';
+            }
+
             // Load data
             function loadData() {
                 $.ajax({
                     url: _baseURL + 'api/profile-operator/get/siswa',
                     method: 'GET',
                     success: function(data) {
+                        // Process data to extract year from tanggal_lulus
+                        data.forEach(siswa => {
+                            if (siswa.tanggal_lulus) {
+                                siswa.tahun_lulus = new Date(siswa.tanggal_lulus).getFullYear();
+                            } else {
+                                siswa.tahun_lulus = null;
+                            }
+
+                            // Add jurusan name based on jurusan_id
+                            if (siswa.jurusan_id) {
+                                const jurusan = jurusanData.find(j => j.id == siswa.jurusan_id);
+                                siswa.jurusan_nama = jurusan ? jurusan.nama : '-';
+                            } else {
+                                siswa.jurusan_nama = '-';
+                            }
+                        });
+
                         allData = data;
                         filteredData = [...allData];
                         updateTable();
                         updatePagination();
                         updateDataCount();
+                        populateTahunLulusFilter();
                     },
                     error: function(xhr) {
                         toastr.error('Gagal memuat data siswa: ' + xhr.responseText);
@@ -234,31 +354,39 @@
 
                 let tbody = '';
                 pageData.forEach(function(siswa, index) {
+                    // Extract year from tanggal_lulus for display
+                    const tahunLulus = siswa.tanggal_lulus ? new Date(siswa.tanggal_lulus).getFullYear() :
+                        '-';
+
+                    // Get jurusan name
+                    const jurusanNama = siswa.jurusan_id ? getJurusanNameById(siswa.jurusan_id) : '-';
+
                     tbody += `
-                        <tr>
-                            <td>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionMenu${siswa.id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <i class="mdi mdi-dots-vertical"></i>
-                                    </button>
-                                    <div class="dropdown-menu" aria-labelledby="actionMenu${siswa.id}">
-                                        <a class="dropdown-item btn-edit" href="#" data-id="${siswa.id}">
-                                            <i class="mdi mdi-pencil text-info mr-2"></i>Edit
-                                        </a>
-                                        <a class="dropdown-item btn-hapus" href="#" data-id="${siswa.id}">
-                                            <i class="mdi mdi-delete text-danger mr-2"></i>Hapus
-                                        </a>
-                                    </div>
-                                </div>
-                            </td>
-                            
-                            <td>${siswa.nama_lengkap || '-'}</td>
-                            <td>${siswa.nisn || '-'}</td>
-                            <td>${siswa.tempat_lahir || '-'}</td>
-                            <td>${siswa.tanggal_lahir || '-'}</td>
-                            <td>${siswa.alamat || '-'}</td>
-                        </tr>
-                    `;
+                <tr>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionMenu${siswa.id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="mdi mdi-dots-vertical"></i>
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="actionMenu${siswa.id}">
+                                <a class="dropdown-item btn-edit" href="#" data-id="${siswa.id}">
+                                    <i class="mdi mdi-pencil text-info mr-2"></i>Edit
+                                </a>
+                                <a class="dropdown-item btn-hapus" href="#" data-id="${siswa.id}">
+                                    <i class="mdi mdi-delete text-danger mr-2"></i>Hapus
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${siswa.nama_lengkap || '-'}</td>
+                    <td>${siswa.nisn || '-'}</td>
+                    <td>${jurusanNama}</td>
+                    <td>${siswa.tempat_lahir || '-'}</td>
+                    <td>${siswa.tanggal_lahir || '-'}</td>
+                    <td>${siswa.alamat || '-'}</td>
+                    <td>${tahunLulus}</td>
+                </tr>
+            `;
                 });
 
                 $('#siswa-table tbody').html(tbody);
@@ -271,20 +399,20 @@
 
                 // Previous button
                 paginationHtml += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
-                </li>`;
+            <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+        </li>`;
 
                 // Page numbers
                 for (let i = 1; i <= totalPages; i++) {
                     paginationHtml += `<li class="page-item ${i === currentPage ? 'active' : ''}">
-                        <a class="page-link" href="#" data-page="${i}">${i}</a>
-                    </li>`;
+                <a class="page-link" href="#" data-page="${i}">${i}</a>
+            </li>`;
                 }
 
                 // Next button
                 paginationHtml += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                    <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
-                </li>`;
+            <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+        </li>`;
 
                 $('#pagination').html(paginationHtml);
             }
@@ -298,20 +426,33 @@
                 $('#data-count').text(`Menampilkan ${start} sampai ${end} dari ${total} data`);
             }
 
-            // Search functionality
+            // Search functionality with filters
             function performSearch() {
                 const searchTerm = $('#search-input').val().toLowerCase();
+                const selectedJurusan = $('#filter-jurusan').val();
+                const selectedTahunLulus = $('#filter-tahun-lulus').val();
 
-                if (searchTerm === '') {
-                    filteredData = [...allData];
-                } else {
-                    filteredData = allData.filter(siswa =>
+                filteredData = allData.filter(siswa => {
+                    // Search term filter
+                    const matchesSearch = searchTerm === '' ||
                         (siswa.nama_lengkap && siswa.nama_lengkap.toLowerCase().includes(searchTerm)) ||
                         (siswa.nisn && siswa.nisn.toString().includes(searchTerm)) ||
                         (siswa.tempat_lahir && siswa.tempat_lahir.toLowerCase().includes(searchTerm)) ||
-                        (siswa.alamat && siswa.alamat.toLowerCase().includes(searchTerm))
-                    );
-                }
+                        (siswa.jurusan_nama && siswa.jurusan_nama.toLowerCase().includes(searchTerm)) ||
+                        (siswa.alamat && siswa.alamat.toLowerCase().includes(searchTerm));
+
+                    // Jurusan filter
+                    const matchesJurusan = selectedJurusan === '' ||
+                        (siswa.jurusan_id && siswa.jurusan_id.toString() === selectedJurusan);
+
+                    // Tahun lulus filter - comparing with extracted year
+                    const tahunLulus = siswa.tanggal_lulus ? new Date(siswa.tanggal_lulus).getFullYear()
+                        .toString() : '';
+                    const matchesTahunLulus = selectedTahunLulus === '' || tahunLulus ===
+                        selectedTahunLulus;
+
+                    return matchesSearch && matchesJurusan && matchesTahunLulus;
+                });
 
                 currentPage = 1;
                 updateTable();
@@ -414,35 +555,75 @@
                 });
             });
 
-            // Save new siswa
+            // Save new siswa - REVISED FUNCTION
             $('#simpan-akun-siswa').click(function() {
+                // Collect all form data
                 const formData = {
                     email: $('#email').val(),
+                    nama_lengkap: $('#nama_lengkap').val(),
                     password: $('#password').val(),
-                    nisn: $('#nisn').val()
+                    nisn: $('#nisn').val(),
+                    jurusan_id: $('#jurusan_id').val(),
+                    tanggal_lulus: $('#tanggal_lulus').val()
                 };
 
-                // Validate form
-                if (!formData.email || !formData.password || !formData.nisn) {
+                // Log the data being sent (for debugging)
+                console.log('Sending data:', formData);
+
+                // Validate form - ensure all required fields are filled
+                if (!formData.email || !formData.password || !formData.nisn ||
+                    !formData.jurusan_id || !formData.tanggal_lulus || !formData.nama_lengkap) {
                     toastr.warning('Harap isi semua field yang diperlukan!');
                     return;
                 }
+
+                // Show loading indicator
+                Swal.fire({
+                    title: 'Sedang Memproses',
+                    html: 'Mohon tunggu, sedang menyimpan data...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
 
                 $.ajax({
                     url: _baseURL + 'api/profile-operator/create/siswa',
                     method: 'POST',
                     data: formData,
                     success: function(response) {
+                        // Close loading indicator
+                        Swal.close();
+
+                        // Close modal and reset form
                         $('#tambahSiswaModal').modal('hide');
                         $('#form-tambah-akun-siswa')[0].reset();
-                        loadData();
+
+                        // Show success message
                         toastr.success('Akun siswa berhasil ditambahkan!');
+
+                        // Reload data table
+                        loadData();
                     },
-                    error: function(xhr) {
+                    error: function(xhr, status, error) {
+                        // Close loading indicator
+                        Swal.close();
+
+                        // Handle error response
                         let errorMessage = 'Gagal menambahkan akun siswa.';
+
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMessage = xhr.responseJSON.message;
                         }
+
+                        // Log detailed error for debugging
+                        console.error('Error adding student:', {
+                            status: xhr.status,
+                            statusText: xhr.statusText,
+                            responseText: xhr.responseText,
+                            error: error
+                        });
+
                         toastr.error(errorMessage);
                     }
                 });
@@ -460,6 +641,8 @@
                         $('#edit-id').val(id);
                         $('#edit-nama-lengkap').val(data.nama_lengkap);
                         $('#edit-nisn').val(data.nisn);
+                        $('#edit-jurusan').val(data.jurusan_id);
+                        $('#edit-tanggal-lulus').val(data.tanggal_lulus);
                         $('#edit-tempat-lahir').val(data.tempat_lahir);
                         $('#edit-tanggal-lahir').val(data.tanggal_lahir);
                         $('#edit-alamat').val(data.alamat);
@@ -478,6 +661,8 @@
                 const formData = {
                     nama_lengkap: $('#edit-nama-lengkap').val(),
                     nisn: $('#edit-nisn').val(),
+                    jurusan_id: $('#edit-jurusan').val(),
+                    tanggal_lulus: $('#edit-tanggal-lulus').val(),
                     tempat_lahir: $('#edit-tempat-lahir').val(),
                     tanggal_lahir: $('#edit-tanggal-lahir').val(),
                     alamat: $('#edit-alamat').val(),
@@ -485,22 +670,35 @@
                 };
 
                 // Validate form
-                if (!formData.nama_lengkap || !formData.nisn || !formData.tempat_lahir ||
-                    !formData.tanggal_lahir || !formData.alamat) {
+                if (!formData.nama_lengkap || !formData.nisn || !formData.jurusan_id || !formData
+                    .tanggal_lulus || !formData.tempat_lahir || !formData.tanggal_lahir || !formData.alamat
+                ) {
                     toastr.warning('Harap isi semua field yang diperlukan!');
                     return;
                 }
 
+                // Show loading indicator
+                Swal.fire({
+                    title: 'Sedang Memproses',
+                    html: 'Mohon tunggu, sedang menyimpan perubahan...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
                 $.ajax({
                     url: _baseURL + 'api/profile-operator/siswa/' + id,
-                    method: 'POST', // Using POST with _method: 'PUT'
+                    method: 'POST',
                     data: formData,
                     success: function(response) {
+                        Swal.close();
                         $('#editSiswaModal').modal('hide');
                         loadData();
                         toastr.success('Data siswa berhasil diperbarui!');
                     },
                     error: function(xhr) {
+                        Swal.close();
                         let errorMessage = 'Gagal memperbarui data siswa.';
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMessage = xhr.responseJSON.message;
@@ -552,6 +750,7 @@
             });
 
             $('#search-button').on('click', performSearch);
+            $('#filter-jurusan, #filter-tahun-lulus').on('change', performSearch);
 
             $(document).on('click', '.page-link', function(e) {
                 e.preventDefault();
@@ -565,49 +764,8 @@
             });
 
             // Initial load
+            loadJurusan();
             loadData();
         });
     </script>
-@endpush
-
-@push('styles')
-    <style>
-        .table th {
-            font-weight: 600;
-        }
-
-        .table td {
-            vertical-align: middle;
-        }
-
-        .card-title {
-            font-size: 1.5rem;
-            margin-bottom: 0;
-        }
-
-        .pagination {
-            margin-bottom: 0;
-        }
-
-        .dataTables_info {
-            padding-top: 0.85rem;
-        }
-
-        .btn-icon-text .btn-icon-prepend {
-            margin-right: 8px;
-        }
-
-        .btn-edit,
-        .btn-hapus {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-        }
-
-        /* Toastr notification position */
-        #toast-container {
-            min-width: 350px;
-            top: 70px;
-            right: 20px;
-        }
-    </style>
 @endpush

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\BE;
 
 use App\Http\Controllers\Controller;
+use App\Models\DataKuliah;
 use App\Models\Students;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -124,6 +125,7 @@ class SiswaControllerBE extends Controller
                 'alamat' => $student->alamat,
                 'jenis_kelamin' => $student->jenis_kelamin,
                 'foto' => $user->foto,
+                'tangal_lulus' => $student->tanggal_lulus,
             ],
         ]);
     }

@@ -16,15 +16,8 @@
                                     style="width: 150px; height: 150px; object-fit: cover;">
                             </div>
                             <h4 class="mb-1">{{ $student->nama_lengkap }}</h4>
+                            <p class="text-muted mb-6">{{ $student->jurusan->nama ?? 'Web Designer' }}</p>
                             <p class="text-muted mb-6">{{ $student->user->email ?? 'Web Designer' }}</p>
-
-                            <!-- Social Media Icons -->
-                            <div class="d-flex justify-content-center mt-3">
-                                <a href="#" class="text-secondary mx-2"><i class="mdi mdi-twitter h5"></i></a>
-                                <a href="#" class="text-secondary mx-2"><i class="mdi mdi-facebook h5"></i></a>
-                                <a href="#" class="text-secondary mx-2"><i class="mdi mdi-instagram h5"></i></a>
-                                <a href="#" class="text-secondary mx-2"><i class="mdi mdi-linkedin h5"></i></a>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -118,8 +111,8 @@
                                                         onclick="document.getElementById('newProfilePhoto').click()">
                                                         <i class="mdi mdi-upload"></i> Upload
                                                     </button>
-                                                    <input type="file" name="foto" id="newProfilePhoto"
-                                                        class="d-none" accept="image/*">
+                                                    <input type="file" name="foto" id="newProfilePhoto" class="d-none"
+                                                        accept="image/*">
                                                 </div>
                                             </div>
                                         </div>
@@ -142,7 +135,9 @@
                                                 Lengkap</label>
                                             <div class="col-md-9">
                                                 <input type="text" class="form-control" id="nama_lengkap"
-                                                    name="nama_lengkap" value="{{ $student->nama_lengkap }}">
+                                                    name="nama_lengkap" value="{{ $student->nama_lengkap }}" readonly>
+                                                <small class="text-muted">Jika ada Kesalahan Nama, Hubungi Wali
+                                                    Kelas</small>
                                             </div>
                                         </div>
 

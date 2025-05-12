@@ -299,7 +299,7 @@
                     $('#profileUpdateBtn').attr('disabled', true).text('Saving...');
 
                     $.ajax({
-                        url: _baseURL + '/api/profile-operator/',
+                        url: _baseURL + 'api/profile-operator/',
                         method: 'POST',
                         data: formData,
                         contentType: false,
@@ -361,7 +361,7 @@
                     };
 
                     $.ajax({
-                        url: _baseURL + '/api/student/change-password/',
+                        url: _baseURL + 'api/student/change-password/',
                         method: 'POST',
                         data: formData,
                         success: function(response) {

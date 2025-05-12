@@ -2,8 +2,7 @@
 
 @section('title', 'Lengkapi Profil')
 
-@section('content')
-    <div class="row">
+@section('content') <div class="row">
         <div class="col-md-10 grid-margin">
             <div class="row">
                 <div class="col-10 col-xl-8 mb-4 mb-xl-0">
@@ -31,9 +30,11 @@
                             <label for="nama_lengkap">Nama Lengkap <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="nama_lengkap" name="nama_lengkap"
                                 placeholder="Masukkan nama lengkap"
-                                value="{{ old('nama_lengkap', $student->nama_lengkap ?? '') }}">
+                                value="{{ old('nama_lengkap', $student->nama_lengkap ?? '') }}" readonly>
+                            <small class="form-text text-muted">Jika ada kesalahan nama, tolong hubungi Wali Kelas.</small>
                             <div class="invalid-feedback" id="nama_lengkap_error"></div>
                         </div>
+
 
                         <!-- Jenis Kelamin -->
                         <div class="form-group">
@@ -93,6 +94,15 @@
                                 placeholder="+62899XXXX" value="{{ old('no_telp', $user->no_telp ?? '') }}">
                             <div class="invalid-feedback" id="no_telp_error"></div>
                         </div>
+                        <div class="form-group">
+                            <label for="jurusan">Jurusan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="jurusan" name="jurusan_id"
+                                placeholder="Masukkan jurusan" value="{{ old('jurusan', $student->jurusan->nama ?? '') }}"
+                                readonly>
+                            <small class="form-text text-muted">Jika ada kesalahan jurusan, hubungi Wali Kelas.</small>
+                            <div class="invalid-feedback" id="jurusan_error"></div>
+                        </div>
+
 
                         <!-- Status Kelulusan -->
                         <div class="form-group">
@@ -111,7 +121,7 @@
                         <!-- Tanggal Lulus (conditionally shown) -->
                         <div class="form-group" id="tanggal_lulus_container"
                             style="{{ old('status_lulus', $student->status_lulus ?? '') == 'lulus' ? '' : 'display: none;' }}">
-                            <label for="tanggal_lulus">Tanggal Lulus</label>
+                            <label for="tanggal_lulus">Tanggal Lulus <span class="text-danger">*</span></label>
                             <input type="date" class="form-control" id="tanggal_lulus" name="tanggal_lulus"
                                 value="{{ old('tanggal_lulus', $student->tanggal_lulus ?? '') }}">
                             <div class="invalid-feedback" id="tanggal_lulus_error"></div>
@@ -142,10 +152,11 @@
                             <div class="row">
                                 <div class="col-md-4">
                                     <img id="preview-foto"
-                                        src="{{ asset('storage/user_photos/' . ($student->foto ?? 'default.jpg')) }}"
+                                        src="{{ $student->foto ? asset('storage/user_photos/' . $student->foto) : asset('admin/images/faces/face1.jpg') }}"
                                         class="img-thumbnail mb-2"
                                         style="width: 150px; height: 150px; object-fit: cover;">
                                 </div>
+
                                 <div class="col-md-8">
                                     <input type="file" name="foto" id="foto" class="file-upload-default">
                                     <div class="input-group col-xs-12">
@@ -169,6 +180,7 @@
             </div>
         </div>
     </div>
+
 @endsection
 
 @push('scripts')
@@ -267,6 +279,8 @@
 
             loadProfileData();
 
+            // No additional validation needed for date input as browser handles it
+
             // Submit Form
             $('#profileForm').submit(function(e) {
                 e.preventDefault();
@@ -295,6 +309,18 @@
                     if (!formData.get(field)) {
                         isComplete = false;
                         break;
+                    }
+                }
+
+                // Validation for tanggal_lulus when status is 'lulus'
+                if ($('#status_lulus').val() === 'lulus') {
+                    const tanggalLulus = $('#tanggal_lulus').val();
+                    if (!tanggalLulus) {
+                        $('#tanggal_lulus').addClass('is-invalid');
+                        $('#tanggal_lulus_error').text('Tanggal lulus harus diisi');
+                        $('#submitBtn').html('Simpan');
+                        $('#submitBtn').prop('disabled', false);
+                        return false;
                     }
                 }
 

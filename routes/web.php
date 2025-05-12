@@ -5,6 +5,7 @@ use App\Http\Controllers\BE\ForgotPasswordController;
 use App\Http\Controllers\BE\SiswaControllerBE;
 use App\Http\Controllers\FE\AuthController;
 use App\Http\Controllers\FE\DashboardControllerFE;
+use App\Http\Controllers\FE\JurusanControllerFE;
 use App\Http\Controllers\FE\OperatorControllerFE;
 use App\Http\Controllers\FE\SiswaController;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +45,12 @@ Route::middleware(['role:siswa,guru,operator', 'check.student.profile'])->group(
     Route::group(['prefix' => 'operator'], function () {
         Route::get('/dashboard', [DashboardControllerFE::class, 'index'])->name('dashboard');
         Route::get('/profile', [OperatorControllerFE::class, 'profile'])->name('operator.profile');
+        Route::group(['prefix' => 'dashboard'], function () {
+        Route::get('/tracerstudi', [OperatorControllerFE::class, 'tracer'])->name('tracer');
+        Route::get('/data/siswa', [OperatorControllerFE::class, 'viewsiswa'])->name('view.siswa');
+        Route::get('/data/jurusan',[JurusanControllerFE::class,'index'])->name('view.jurusan');
+    });
+
     });
 
     Route::group(['prefix' => 'siswa'], function () {
@@ -53,14 +60,4 @@ Route::middleware(['role:siswa,guru,operator', 'check.student.profile'])->group(
     });
 });
 
-Route::middleware(['role:operator'])->group(function () {
-    Route::group(['prefix' => 'dashboard'], function () {
-        Route::get('/tracerstudi', [OperatorControllerFE::class, 'tracer'])->name('tracer');
-        Route::get('/Data/siswa', [OperatorControllerFE::class, 'viewsiswa'])->name('view.siswa');
-    });
 
-
-
-    // Tambahkan rute user lainnya
-
-});
