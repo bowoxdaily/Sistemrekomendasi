@@ -46,12 +46,14 @@ Route::group(['middleware' => ['web', 'auth']], function () {
         Route::post('/', [OperatorControllerBE::class, 'updateProfile']);
         // Route Siswa
         Route::get('/get/siswa', [OperatorControllerBE::class, 'getSiswaData']);
+        Route::get('/get/siswa/{id}', [OperatorControllerBE::class, 'getSiswaById']);
         Route::post('/create/siswa', [OperatorControllerBE::class, 'tambahAkunSiswa']);
         Route::get('/download-template/siswa', [OperatorControllerBE::class, 'downloadTemplateAkunSiswa']);
         Route::post('/import/siswa', [OperatorControllerBE::class, 'importAkunSiswa']);
+        Route::delete('/delete/siswa/{id}', [OperatorControllerBE::class, 'destroy']);
         // RouteJurusan 
-        Route::get('/get/jurusan',[JurusanController::class,'index']);
-        Route::post('/create/jurusan',[JurusanController::class,'store']);
+        Route::get('/get/jurusan', [JurusanController::class, 'index']);
+        Route::post('/create/jurusan', [JurusanController::class, 'store']);
         Route::get('get/jurusan', [JurusanController::class, 'getAllJurusan']);
         Route::get('get/jurusan/{id}', [JurusanController::class, 'getJurusanById']);
         Route::put('/jurusan/{id}', [JurusanController::class, 'update']);

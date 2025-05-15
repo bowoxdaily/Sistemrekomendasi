@@ -268,5 +268,4 @@ class SiswaControllerBE extends Controller
 
         return redirect()->route('dashboard')->with('success', 'Data kuliah berhasil disimpan');
     }
-    
 }

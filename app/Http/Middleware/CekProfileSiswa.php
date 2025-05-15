@@ -3,9 +3,11 @@
 namespace App\Http\Middleware;
 
 use App\Models\Students;
+use App\Models\Questionnaire;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class CekProfileSiswa
@@ -21,25 +23,53 @@ class CekProfileSiswa
         if (Auth::check() && Auth::user()->role === 'siswa') {
             $student = Students::where('user_id', Auth::id())->first();
 
-            // Izinkan akses ke halaman edit profil meskipun belum lengkap
-            if ($request->route()->getName() === 'student.profile.edit') {
-                return $next($request);
-            }
+            // Log untuk debugging
+            Log::info('Middleware CekProfileSiswa executing for route: ' . $request->route()->getName());
 
-            // Redirect jika profil belum lengkap
-            if (!$student || !$this->isProfileComplete($student)) {
+            // Jika siswa tidak ditemukan, redirect ke edit profil
+            if (!$student) {
+                Log::info('Student not found, redirecting to profile edit');
                 return redirect()->route('student.profile.edit')
                     ->with('warning', 'Mohon lengkapi profil Anda terlebih dahulu.');
             }
 
-            // Cek status setelah lulus, dan tentukan jika modal perlu ditampilkan
-            if ($request->route()->getName() === 'dashboard' && !$student->status_modal_shown) {
-                // Jika status setelah lulus belum diisi, set session untuk menampilkan modal
-                if (empty($student->status_setelah_lulus)) {
-                    session(['show_status_modal' => true]);
-                    $student->status_modal_shown = true;
-                    $student->save();
-                }
+            // Log status siswa untuk debugging
+            Log::info('Student status: ' . $student->status_setelah_lulus);
+            Log::info('Has completed questionnaire: ' . ($student->has_completed_questionnaire ? 'Yes' : 'No'));
+
+            // Route-route yang selalu diizinkan, terlepas dari kelengkapan profil
+            $allowedRoutes = [
+                'student.profile.edit',
+                'student.profile.update',
+                'student.kuis',
+                'student.questionnaire.submit',
+                'student.logout'
+            ];
+
+            // Izinkan akses ke route yang selalu diizinkan
+            if (in_array($request->route()->getName(), $allowedRoutes)) {
+                return $next($request);
+            }
+
+            // PENTING: Cek apakah ada kuesioner aktif dari operator
+            $activeQuestionnaire = Questionnaire::where('is_active', true)->first();
+
+            // PENTING: Cek status setelah lulus untuk redirect ke kuesioner SEBELUM cek kelengkapan profil
+            if (
+                $this->isStatusBelumKerja($student->status_setelah_lulus) &&
+                !$student->has_completed_questionnaire &&
+                $activeQuestionnaire
+            ) {
+                Log::info('Redirecting to questionnaire from middleware');
+                return redirect()->route('student.kuis')
+                    ->with('info', 'Silahkan isi kuesioner untuk mendapatkan rekomendasi pekerjaan.');
+            }
+
+            // Redirect jika profil belum lengkap
+            if (!$this->isProfileComplete($student)) {
+                Log::info('Profile incomplete, redirecting to profile edit');
+                return redirect()->route('student.profile.edit')
+                    ->with('warning', 'Mohon lengkapi profil Anda terlebih dahulu.');
             }
         }
 
@@ -57,6 +87,7 @@ class CekProfileSiswa
             'tanggal_lahir',
             'alamat',
             'jenis_kelamin',
+            'status_setelah_lulus' // Pastikan status setelah lulus diisi
         ];
 
         foreach ($requiredFields as $field) {
@@ -69,13 +100,18 @@ class CekProfileSiswa
     }
 
     /**
-     * Cek apakah status setelah lulus sudah diisi dengan benar.
+     * Cek apakah status setelah lulus adalah "belum kerja" dengan lebih fleksibel.
      */
-    private function isStatusSetelahLulusCompleted(Students $student): bool
+    private function isStatusBelumKerja($status): bool
     {
-        $validStatus = ['kuliah', 'kerja', 'belum_kerja'];
+        if (empty($status)) {
+            return false;
+        }
 
-        return !empty($student->status_setelah_lulus) &&
-               in_array($student->status_setelah_lulus, $validStatus);
+        $status = trim(strtolower($status));
+        return $status === 'belum_kerja' ||
+            $status === 'belum bekerja' ||
+            $status === 'belum kerja' ||
+            $status === 'menganggur';
     }
 }

@@ -15,7 +15,7 @@ class SiswaController extends Controller
     public function profile()
     {
         $student = Students::where('user_id', Auth::id())->first(); // contoh
-        $jurusan =Jurusan::where('jurusan_id',Auth::id())->first();
-        return view('dashboard.siswa.profile', compact('student','jurusan'));
+        $jurusan = Jurusan::where('id', Auth::id())->first();
+        return view('dashboard.siswa.profile', compact('student', 'jurusan'));
     }
 }

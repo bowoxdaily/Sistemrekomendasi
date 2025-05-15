@@ -94,7 +94,7 @@
                     <form id="form-tambah-akun-siswa">
                         @csrf
                         <div class="form-group">
-                            <label for="email">Nama Lengkap</label>
+                            <label for="nama_lengkap">Nama Lengkap</label>
                             <input type="text" class="form-control" id="nama_lengkap" required>
                         </div>
                         <div class="form-group">
@@ -113,9 +113,17 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label for="status_lulus">Status Kelulusan</label>
+                            <select class="form-control" id="status_lulus" required>
+                                <option value="">Pilih Status</option>
+                                <option value="belum">Belum Lulus</option>
+                                <option value="lulus">Lulus</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="tahun-lulus-container">
                             <label for="tahun_lulus">Tahun Lulus</label>
-                            <input type="number" class="form-control" id="tahun_lulus" min="2000" max="2099"
-                                required>
+                            <input type="number" class="form-control" id="tahun_lulus" min="2000" max="2099">
+                            <small class="form-text text-muted">Diisi jika status kelulusan "Lulus"</small>
                         </div>
                         <div class="form-group">
                             <label for="password">Password</label>
@@ -252,6 +260,28 @@
                 $(this).closest('.modal').modal('hide');
             });
 
+            // Toggle tahun_lulus requirement based on status_lulus selection
+            $('#status_lulus').on('change', function() {
+                const status = $(this).val();
+                if (status === 'lulus') {
+                    $('#tahun_lulus').prop('required', true);
+                    $('#tahun-lulus-container').show();
+                } else {
+                    $('#tahun_lulus').prop('required', false);
+                    $('#tahun-lulus-container').hide();
+                }
+            });
+
+            // Hide tahun_lulus field on initial load
+            $('#tahun-lulus-container').hide();
+
+            // Clear form fields and reset validation when modal is opened
+            $('#tambah-siswa').click(function() {
+                $('#tambahSiswaModal').modal('show');
+                $('#form-tambah-akun-siswa')[0].reset();
+                $('#tahun-lulus-container').hide();
+            });
+
             // Load jurusan data
             function loadJurusan() {
                 $.ajax({
@@ -310,8 +340,13 @@
                 return jurusan ? jurusan.nama : '-';
             }
 
-            // Load data
+            // Load data with loading animation
             function loadData() {
+                // Show loading spinner in table
+                $('#siswa-table tbody').html(
+                    '<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div></td></tr>'
+                );
+
                 $.ajax({
                     url: _baseURL + 'api/profile-operator/get/siswa',
                     method: 'GET',
@@ -341,6 +376,10 @@
                         populateTahunLulusFilter();
                     },
                     error: function(xhr) {
+                        // Show error in table body
+                        $('#siswa-table tbody').html(
+                            '<tr><td colspan="8" class="text-center text-danger">Gagal memuat data. Silakan coba lagi.</td></tr>'
+                        );
                         toastr.error('Gagal memuat data siswa: ' + xhr.responseText);
                     }
                 });
@@ -353,41 +392,49 @@
                 const pageData = filteredData.slice(start, end);
 
                 let tbody = '';
-                pageData.forEach(function(siswa, index) {
-                    // Extract year from tanggal_lulus for display
-                    const tahunLulus = siswa.tanggal_lulus ? new Date(siswa.tanggal_lulus).getFullYear() :
-                        '-';
 
-                    // Get jurusan name
-                    const jurusanNama = siswa.jurusan_id ? getJurusanNameById(siswa.jurusan_id) : '-';
+                if (pageData.length === 0) {
+                    tbody = '<tr><td colspan="8" class="text-center">Tidak ada data yang ditemukan</td></tr>';
+                } else {
+                    pageData.forEach(function(siswa, index) {
+                        // Extract year from tanggal_lulus for display
+                        const tahunLulus = siswa.tanggal_lulus ? new Date(siswa.tanggal_lulus)
+                            .getFullYear() : '-';
 
-                    tbody += `
-                <tr>
-                    <td>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionMenu${siswa.id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="mdi mdi-dots-vertical"></i>
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="actionMenu${siswa.id}">
-                                <a class="dropdown-item btn-edit" href="#" data-id="${siswa.id}">
-                                    <i class="mdi mdi-pencil text-info mr-2"></i>Edit
-                                </a>
-                                <a class="dropdown-item btn-hapus" href="#" data-id="${siswa.id}">
-                                    <i class="mdi mdi-delete text-danger mr-2"></i>Hapus
-                                </a>
-                            </div>
+                        // Get jurusan name
+                        const jurusanNama = siswa.jurusan_id ? getJurusanNameById(siswa.jurusan_id) : '-';
+
+                        // IMPORTANT: Make sure student ID is properly displayed for debugging
+                        console.log("Rendering row for student ID:", siswa.id);
+
+                        tbody += `
+            <tr data-id="${siswa.id}">
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionMenu${siswa.id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="mdi mdi-dots-vertical"></i>
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="actionMenu${siswa.id}">
+                            <a class="dropdown-item btn-edit" href="javascript:void(0);" data-id="${siswa.id}">
+                                <i class="mdi mdi-pencil text-info mr-2"></i>Edit
+                            </a>
+                            <a class="dropdown-item btn-hapus" href="javascript:void(0);" data-id="${siswa.id}">
+                                <i class="mdi mdi-delete text-danger mr-2"></i>Hapus
+                            </a>
                         </div>
-                    </td>
-                    <td>${siswa.nama_lengkap || '-'}</td>
-                    <td>${siswa.nisn || '-'}</td>
-                    <td>${jurusanNama}</td>
-                    <td>${siswa.tempat_lahir || '-'}</td>
-                    <td>${siswa.tanggal_lahir || '-'}</td>
-                    <td>${siswa.alamat || '-'}</td>
-                    <td>${tahunLulus}</td>
-                </tr>
-            `;
-                });
+                    </div>
+                </td>
+                <td>${siswa.nama_lengkap || '-'}</td>
+                <td>${siswa.nisn || '-'}</td>
+                <td>${jurusanNama}</td>
+                <td>${siswa.tempat_lahir || '-'}</td>
+                <td>${siswa.tanggal_lahir || '-'}</td>
+                <td>${siswa.alamat || '-'}</td>
+                <td>${tahunLulus}</td>
+            </tr>
+        `;
+                    });
+                }
 
                 $('#siswa-table tbody').html(tbody);
             }
@@ -419,7 +466,7 @@
 
             // Update data count info
             function updateDataCount() {
-                const start = (currentPage - 1) * perPage + 1;
+                const start = filteredData.length > 0 ? (currentPage - 1) * perPage + 1 : 0;
                 const end = Math.min(currentPage * perPage, filteredData.length);
                 const total = filteredData.length;
 
@@ -428,6 +475,11 @@
 
             // Search functionality with filters
             function performSearch() {
+                // Show loading spinner while filtering
+                $('#siswa-table tbody').html(
+                    '<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div></td></tr>'
+                );
+
                 const searchTerm = $('#search-input').val().toLowerCase();
                 const selectedJurusan = $('#filter-jurusan').val();
                 const selectedTahunLulus = $('#filter-tahun-lulus').val();
@@ -555,24 +607,39 @@
                 });
             });
 
-            // Save new siswa - REVISED FUNCTION
+            // Save new siswa
             $('#simpan-akun-siswa').click(function() {
                 // Collect all form data
+                const statusLulus = $('#status_lulus').val();
+                const tahunLulus = $('#tahun_lulus').val();
+
+                // Create base form data
                 const formData = {
                     email: $('#email').val(),
                     nama_lengkap: $('#nama_lengkap').val(),
                     password: $('#password').val(),
                     nisn: $('#nisn').val(),
                     jurusan_id: $('#jurusan_id').val(),
-                    tanggal_lulus: $('#tanggal_lulus').val()
+                    status_lulus: statusLulus
                 };
+
+                // Only add tahun_lulus and set tanggal_lulus if status is "lulus"
+                if (statusLulus === 'lulus') {
+                    if (!tahunLulus) {
+                        toastr.warning('Harap isi tahun lulus karena status kelulusan "Lulus"!');
+                        return;
+                    }
+                    formData.tahun_lulus = tahunLulus;
+                    formData.tanggal_lulus = tahunLulus +
+                        '-01-01'; // Convert year to date format YYYY-01-01
+                }
 
                 // Log the data being sent (for debugging)
                 console.log('Sending data:', formData);
 
                 // Validate form - ensure all required fields are filled
                 if (!formData.email || !formData.password || !formData.nisn ||
-                    !formData.jurusan_id || !formData.tanggal_lulus || !formData.nama_lengkap) {
+                    !formData.jurusan_id || !formData.nama_lengkap || !formData.status_lulus) {
                     toastr.warning('Harap isi semua field yang diperlukan!');
                     return;
                 }
@@ -629,20 +696,55 @@
                 });
             });
 
-            // Edit siswa
+            // IMPORTANT CHANGE: Use event delegation for .btn-edit and .btn-hapus
+            // This ensures the events are captured even for dynamically added elements
             $(document).on('click', '.btn-edit', function(e) {
                 e.preventDefault();
                 const id = $(this).data('id');
+
+                // Debug log to check if ID is captured correctly
+                console.log('Edit button clicked, ID:', id);
+
+                if (!id) {
+                    console.error('No student ID found for edit button');
+                    toastr.error('ID siswa tidak ditemukan');
+                    return;
+                }
+
+                // Show loading indicator on the button
+                const $editButton = $(this);
+                const originalContent = $editButton.html();
+                $editButton.html('<i class="spinner-border spinner-border-sm mr-1"></i> Loading...');
+                $editButton.prop('disabled', true);
+
+                // Also show loading indicator on the whole page for better user experience
+                Swal.fire({
+                    title: 'Memuat Data',
+                    html: 'Mohon tunggu, sedang memuat data siswa...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
 
                 $.ajax({
                     url: _baseURL + 'api/profile-operator/get/siswa/' + id,
                     method: 'GET',
                     success: function(data) {
+                        console.log('Retrieved student data:', data);
+
+                        // Close the loading indicator
+                        Swal.close();
+
+                        // Restore button state
+                        $editButton.html(originalContent);
+                        $editButton.prop('disabled', false);
+
                         $('#edit-id').val(id);
                         $('#edit-nama-lengkap').val(data.nama_lengkap);
                         $('#edit-nisn').val(data.nisn);
                         $('#edit-jurusan').val(data.jurusan_id);
-                        $('#edit-tanggal-lulus').val(data.tanggal_lulus);
+                        $('#edit-tahun-lulus').val(data.tahun_lulus);
                         $('#edit-tempat-lahir').val(data.tempat_lahir);
                         $('#edit-tanggal-lahir').val(data.tanggal_lahir);
                         $('#edit-alamat').val(data.alamat);
@@ -650,6 +752,14 @@
                         $('#editSiswaModal').modal('show');
                     },
                     error: function(xhr) {
+                        // Close the loading indicator
+                        Swal.close();
+
+                        // Restore button state
+                        $editButton.html(originalContent);
+                        $editButton.prop('disabled', false);
+
+                        console.error('Error fetching student data:', xhr);
                         toastr.error('Gagal memuat data siswa: ' + xhr.responseText);
                     }
                 });
@@ -658,6 +768,15 @@
             // Update siswa data
             $('#update-siswa').click(function() {
                 const id = $('#edit-id').val();
+
+                console.log('Updating student with ID:', id);
+
+                if (!id) {
+                    console.error('No student ID found for update operation');
+                    toastr.error('ID siswa tidak ditemukan');
+                    return;
+                }
+
                 const formData = {
                     nama_lengkap: $('#edit-nama-lengkap').val(),
                     nisn: $('#edit-nisn').val(),
@@ -670,14 +789,20 @@
                 };
 
                 // Validate form
-                if (!formData.nama_lengkap || !formData.nisn || !formData.jurusan_id || !formData
-                    .tanggal_lulus || !formData.tempat_lahir || !formData.tanggal_lahir || !formData.alamat
+                if (!formData.nama_lengkap || !formData.nisn || !formData.jurusan_id ||
+                    !formData.tempat_lahir || !formData.tanggal_lahir || !formData.alamat
                 ) {
                     toastr.warning('Harap isi semua field yang diperlukan!');
                     return;
                 }
 
                 // Show loading indicator
+                const $updateButton = $(this);
+                const originalUpdateText = $updateButton.text();
+                $updateButton.html('<i class="spinner-border spinner-border-sm mr-1"></i> Menyimpan...');
+                $updateButton.prop('disabled', true);
+
+                // Also show loading indicator on the whole page
                 Swal.fire({
                     title: 'Sedang Memproses',
                     html: 'Mohon tunggu, sedang menyimpan perubahan...',
@@ -692,13 +817,34 @@
                     method: 'POST',
                     data: formData,
                     success: function(response) {
+                        console.log('Student updated successfully:', response);
+
+                        // Close loading indicators
                         Swal.close();
+                        $updateButton.html(originalUpdateText);
+                        $updateButton.prop('disabled', false);
+
                         $('#editSiswaModal').modal('hide');
+
+                        // Show success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: 'Data siswa berhasil diperbarui',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+
                         loadData();
-                        toastr.success('Data siswa berhasil diperbarui!');
                     },
                     error: function(xhr) {
+                        console.error('Error updating student:', xhr);
+
+                        // Close loading indicators
                         Swal.close();
+                        $updateButton.html(originalUpdateText);
+                        $updateButton.prop('disabled', false);
+
                         let errorMessage = 'Gagal memperbarui data siswa.';
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMessage = xhr.responseJSON.message;
@@ -708,9 +854,23 @@
                 });
             });
 
-            // Delete siswa with confirmation dialog
-            $(document).on('click', '.btn-hapus', function() {
+            // Delete siswa with confirmation dialog and loading animation
+            $(document).on('click', '.btn-hapus', function(e) {
+                e.preventDefault();
                 const id = $(this).data('id');
+
+                // Debug log to check if ID is captured correctly
+                console.log('Delete button clicked, ID:', id);
+
+                if (!id) {
+                    console.error('No student ID found for delete button');
+                    toastr.error('ID siswa tidak ditemukan');
+                    return;
+                }
+
+                // Get reference to the delete button
+                const $deleteButton = $(this);
+                const originalDeleteText = $deleteButton.html();
 
                 Swal.fire({
                     title: 'Apakah Anda yakin?',
@@ -723,14 +883,56 @@
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        // Show loading animation on the button
+                        $deleteButton.html(
+                            '<i class="spinner-border spinner-border-sm mr-1"></i> Menghapus...'
+                        );
+                        $deleteButton.prop('disabled', true);
+
+                        // Also show loading indicator on the whole page
+                        Swal.fire({
+                            title: 'Sedang Memproses',
+                            html: 'Mohon tunggu, sedang menghapus data...',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
                         $.ajax({
-                            url: _baseURL + '/api/profile-operator/siswa/' + id,
+                            url: _baseURL + `api/profile-operator/delete/siswa/${id}`,
                             method: 'DELETE',
                             success: function(response) {
+                                console.log('Student deleted successfully:', response);
+
+                                // Close loading indicator
+                                Swal.close();
+
+                                // Restore button (though it will be removed from DOM when the table reloads)
+                                $deleteButton.html(originalDeleteText);
+                                $deleteButton.prop('disabled', false);
+
+                                // Show success message
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil!',
+                                    text: 'Data siswa berhasil dihapus',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+
                                 loadData();
-                                toastr.success('Data siswa berhasil dihapus!');
                             },
                             error: function(xhr) {
+                                console.error('Error deleting student:', xhr);
+
+                                // Close loading indicator
+                                Swal.close();
+
+                                // Restore button
+                                $deleteButton.html(originalDeleteText);
+                                $deleteButton.prop('disabled', false);
+
                                 let errorMessage = 'Gagal menghapus data siswa.';
                                 if (xhr.responseJSON && xhr.responseJSON.message) {
                                     errorMessage = xhr.responseJSON.message;

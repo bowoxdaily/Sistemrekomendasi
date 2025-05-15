@@ -95,7 +95,7 @@ class AuthController extends Controller
                             return redirect()->route('student.profile.edit')->withoutMiddleware('check.student.profile');
                         }
 
-                        return redirect()->route('siswa.dashboard');
+                        return redirect()->route('dashboard');
                     } else {
                         Auth::logout();
                         session()->flash('error', 'NISN hanya untuk login siswa');

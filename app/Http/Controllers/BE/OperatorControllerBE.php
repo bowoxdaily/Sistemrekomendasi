@@ -86,64 +86,76 @@ class OperatorControllerBE extends Controller
 
     public function getSiswaData()
     {
-        $data = Students::select('nama_lengkap', 'nisn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin','jurusan_id', 'alamat', 'created_at','tanggal_lulus')->get();
+        $data = Students::select('id', 'nama_lengkap', 'nisn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'jurusan_id', 'alamat', 'created_at', 'tanggal_lulus')->get();
 
         return response()->json($data);
     }
 
     public function tambahAkunSiswa(Request $request)
-{
-    try {
-        // Validasi input
-        $validator = Validator::make($request->all(), [
-            'nama_lengkap' => 'required',
-            'jurusan_id' => 'required|exists:jurusan,id', 
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
-            'nisn' => 'required|unique:students,nisn',
-            'tanggal_lulus' => 'required|date',
-        ]);
+    {
+        try {
+            // Validasi input
+            $validator = Validator::make($request->all(), [
+                'nama_lengkap' => 'required',
+                'jurusan_id' => 'required|exists:jurusans,id',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:6',
+                'nisn' => 'required|unique:students,nisn',
+                'status_lulus' => 'required|in:belum,lulus',
+                'tanggal_lulus' => 'nullable|required_if:status_lulus,lulus', // Only required if status is "lulus"
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()->first()], 422);
+            if ($validator->fails()) {
+                return response()->json(['message' => $validator->errors()->first()], 422);
+            }
+
+            // Mulai transaksi database
+            DB::beginTransaction();
+
+            // Buat user baru
+            $user = new User();
+            $user->email = $request->email;
+            $user->password = Hash::make($request->password);
+            $user->role = 'siswa';
+            $user->save();
+
+            // Buat data siswa baru
+            $student = new Students();
+            $student->user_id = $user->id;
+            $student->nama_lengkap = $request->nama_lengkap;
+            $student->nisn = $request->nisn;
+            $student->jurusan_id = $request->jurusan_id;
+            $student->status_lulus = $request->status_lulus;
+
+            // Handle tanggal_lulus conditionally
+            if ($request->status_lulus === 'lulus') {
+                $tanggal_lulus = $request->tanggal_lulus;
+                // If it's just a year, convert to YYYY-01-01 format
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal_lulus) && is_numeric($tanggal_lulus)) {
+                    $tanggal_lulus = $tanggal_lulus . '-01-01';
+                }
+                $student->tanggal_lulus = $tanggal_lulus;
+            } else {
+                $student->tanggal_lulus = null; // Set to null if status is "belum"
+            }
+
+            $student->save();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Akun siswa berhasil dibuat',
+                'data' => [
+                    'user_id' => $user->id,
+                    'student_id' => $student->id
+                ]
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json(['message' => 'Gagal membuat akun siswa: ' . $e->getMessage()], 500);
         }
-
-        // Mulai transaksi database
-        DB::beginTransaction();
-
-        // Buat user baru
-        $user = new User();
-        $user->email = $request->email;
-        $user->password = Hash::make($request->password);
-        $user->role = 'siswa'; // Assuming role column exists
-        $user->name = $request->nama_lengkap; // Make sure User model has 'name' field
-        $user->save();
-
-        // Buat data siswa baru
-        $student = new Students();
-        $student->user_id = $user->id;
-        $student->nama_lengkap = $request->nama_lengkap; // Add this line
-        $student->nisn = $request->nisn;
-        $student->jurusan_id = $request->jurusan_id;
-        $student->tanggal_lulus = $request->tanggal_lulus;
-        $student->save();
-
-        DB::commit();
-
-        return response()->json([
-            'message' => 'Akun siswa berhasil dibuat',
-            'data' => [
-                'user_id' => $user->id,
-                'student_id' => $student->id
-            ]
-        ], 201);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error('Error creating student account: ' . $e->getMessage());
-        return response()->json(['message' => 'Gagal membuat akun siswa: ' . $e->getMessage()], 500);
     }
-}
-
 
     public function downloadTemplateAkunSiswa()
     {
@@ -198,4 +210,52 @@ class OperatorControllerBE extends Controller
         }
     }
 
+    public function getSiswaById($id)
+    {
+        try {
+            // Log the incoming ID for debugging
+
+
+            // Try to fetch the student
+            $siswa = Students::find($id);
+
+            // Log whether student was found
+            if (!$siswa) {
+
+                return response()->json(['message' => 'Data siswa tidak ditemukan'], 404);
+            }
+
+
+            return response()->json($siswa, 200);
+        } catch (\Exception $e) {
+
+            return response()->json(['message' => 'Gagal mengambil data siswa: ' . $e->getMessage()], 500);
+        }
+    }
+
+
+
+
+
+    public function destroy($id)
+    {
+        DB::beginTransaction();
+        try {
+            $siswa = Students::findOrFail($id);
+
+            // Delete the associated user account if it exists
+            if ($siswa->user_id) {
+                User::where('id', $siswa->user_id)->delete();
+            }
+
+            // Delete the student record
+            $siswa->delete();
+
+            DB::commit();
+            return response()->json(['message' => 'Data siswa berhasil dihapus'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Gagal menghapus data siswa: ' . $e->getMessage()], 500);
+        }
+    }
 }

@@ -10,6 +10,15 @@
         </div>
     @endif
 
+    <!-- Alert untuk info -->
+    @if (session('info'))
+        <div class="alert alert-info">
+            {{ session('info') }}
+        </div>
+    @endif
+
+    <!-- Modal untuk kuesioner telah dihapus karena siswa langsung diarahkan ke halaman kuesioner -->
+
     <!-- Modal input data kuliah jika status lulus dan kuliah -->
     @if (Auth::check() &&
             Auth::user()->role === 'siswa' &&
@@ -144,10 +153,11 @@
         </div>
     @endif
 
-    <!-- Modal input data belum kerja jika status belum kerja -->
+    <!-- Modal input data belum kerja jika status belum kerja dan belum mengisi kuesioner tidak ada di sini lagi karena langsung dialihkan ke halaman kuesioner oleh middleware -->
     @if (Auth::check() &&
             Auth::user()->role === 'siswa' &&
             Auth::user()->student->status_setelah_lulus === 'belum_kerja' &&
+            !Auth::user()->student->has_completed_questionnaire &&
             !Auth::user()->student->is_profile_complete)
         <div class="modal fade" id="belumKerjaModal" tabindex="-1" role="dialog"
             aria-labelledby="belumKerjaModalLabel" aria-hidden="true">
@@ -185,21 +195,24 @@
         </div>
     @endif
 
-
-
 @endsection
 
 @push('scripts')
     <script>
         $(document).ready(function() {
             // ======= SHOW MODAL SESUAI STATUS =======
-            @if (Auth::check() && Auth::user()->role === 'siswa' && !Auth::user()->student->is_profile_complete)
-                @if (Auth::user()->student->status_setelah_lulus === 'kuliah')
-                    $('#kuliahModal').modal('show');
-                @elseif (Auth::user()->student->status_setelah_lulus === 'kerja')
-                    $('#kerjaModal').modal('show');
-                @elseif (Auth::user()->student->status_setelah_lulus === 'belum_kerja')
-                    $('#belumKerjaModal').modal('show');
+            @if (Auth::check() && Auth::user()->role === 'siswa')
+                // Siswa dengan status belum_bekerja sudah dialihkan oleh middleware
+                // Jadi kita hanya perlu menampilkan modal untuk status lainnya
+                @if (!Auth::user()->student->is_profile_complete)
+                    @if (Auth::user()->student->status_setelah_lulus === 'kuliah')
+                        $('#kuliahModal').modal('show');
+                    @elseif (Auth::user()->student->status_setelah_lulus === 'kerja')
+                        $('#kerjaModal').modal('show');
+                        // Modal untuk belum_kerja sudah dimodifikasi untuk menyertakan kondisi has_completed_questionnaire
+                    @elseif (Auth::user()->student->status_setelah_lulus === 'belum_kerja' && Auth::user()->student->has_completed_questionnaire)
+                        $('#belumKerjaModal').modal('show');
+                    @endif
                 @endif
             @endif
 
