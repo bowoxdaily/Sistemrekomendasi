@@ -25,7 +25,12 @@
                             <a class="nav-link" href="{{ route('view.jurusan') }}">Manajemen Jurusan</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Pengaturan Sistem</a>
+                            <a class="nav-link" href="{{ route('operator.questionnaires.index') }}">Pengaturan
+                                kuisioner</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('operator.jobs.index') }}">Pengaturan
+                                Rekomendasi Kerja</a>
                         </li>
                     </ul>
                 </div>

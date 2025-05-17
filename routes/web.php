@@ -54,20 +54,12 @@ Route::middleware(['role:siswa,guru,operator', 'check.student.profile'])->group(
         Route::get('/data/siswa', [OperatorControllerFE::class, 'viewsiswa'])->name('view.siswa');
         Route::get('/data/jurusan', [JurusanControllerFE::class, 'index'])->name('view.jurusan');
         Route::get('/jobs', [JobRecommendataionController::class, 'index'])->name('operator.jobs.index');
-        Route::post('/jobs', [JobRecommendataionController::class, 'store'])->name('operator.jobs.store');
-        Route::put('/jobs/{job}', [JobRecommendataionController::class, 'update'])->name('operator.jobs.update');
-        Route::delete('/jobs/{job}', [JobRecommendataionController::class, 'destroy'])->name('operator.jobs.destroy');
+
+        // Fix questionnaire routes with correct prefix
+        Route::get('/kuisioner', [QuestionnaireControllerOpe::class, 'index'])->name('operator.questionnaires.index');
+        Route::get('/kuisioner/{questionnaire}/edit', [QuestionnaireControllerOpe::class, 'edit'])->name('operator.questionnaires.edit');
     });
-    Route::group(['prefix' => 'operator/questionnaires', 'middleware' => ['auth', 'role:operator']], function () {
-        Route::get('/dashboard', [DashboardControllerFE::class, 'index'])->name('dashboard');
-        Route::get('/', [QuestionnaireControllerOpe::class, 'index'])->name('operator.questionnaires.index');
-        Route::post('/', [QuestionnaireControllerOpe::class, 'store'])->name('operator.questionnaires.store');
-        Route::get('/{questionnaire}/edit', [QuestionnaireControllerOpe::class, 'edit'])->name('operator.questionnaires.edit');
-        Route::put('/{questionnaire}', [QuestionnaireControllerOpe::class, 'update'])->name('operator.questionnaires.update');
-        Route::delete('/{questionnaire}', [QuestionnaireControllerOpe::class, 'destroy'])->name('operator.questionnaires.destroy');
-        Route::post('/{questionnaire}/questions', [QuestionnaireControllerOpe::class, 'addQuestion'])->name('operator.questionnaires.questions.add');
-        Route::delete('/questions/{question}', [QuestionnaireControllerOpe::class, 'removeQuestion'])->name('operator.questionnaires.questions.remove');
-    });
+
 
     Route::group(['prefix' => 'siswa'], function () {
         Route::get('/profile', [SiswaController::class, 'profile'])->name('siswa.profile');

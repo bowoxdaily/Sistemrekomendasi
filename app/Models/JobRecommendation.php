@@ -16,20 +16,27 @@ class JobRecommendation extends Model
         'skills_needed',
         'average_salary',
         'industry_type',
-        'criteria_values' // JSON field untuk menyimpan nilai kriteria untuk perhitungan SAW
+        'criteria_values'
     ];
 
     protected $casts = [
-        'criteria_values' => 'array',
         'requirements' => 'array',
-        'skills_needed' => 'array'
+        'skills_needed' => 'array',
+        'criteria_values' => 'array'
     ];
 
-    // Relasi dengan rekomendasi hasil kuesioner
-    public function questionnaireResults()
+    public function getFormattedSalaryAttribute()
     {
-        return $this->belongsToMany(QuestionnaireResponse::class, 'job_recommendation_results')
-            ->withPivot('score', 'rank')
-            ->withTimestamps();
+        return 'Rp ' . number_format($this->average_salary, 0, ',', '.');
+    }
+
+    public function getCriteriaValuesAttribute($value)
+    {
+        return json_decode($value, true) ?? [];
+    }
+
+    public function setCriteriaValuesAttribute($value)
+    {
+        $this->attributes['criteria_values'] = json_encode($value);
     }
 }

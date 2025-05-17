@@ -12,6 +12,7 @@ use App\Services\SawRecommendationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class QuestionnaireControllerSiswa extends Controller
 {
@@ -34,16 +35,14 @@ class QuestionnaireControllerSiswa extends Controller
                 ->with('error', 'Profil siswa tidak ditemukan.');
         }
 
-        // Jika siswa sudah mengisi kuesioner, tampilkan hasil rekomendasinya
-        if ($student->has_completed_questionnaire) {
-            $response = QuestionnaireResponse::where('student_id', $student->id)
-                ->orderBy('created_at', 'desc')
-                ->first();
+        // Cek apakah siswa memiliki respon kuesioner
+        $response = QuestionnaireResponse::where('student_id', $student->id)
+            ->orderBy('created_at', 'desc')
+            ->first();
 
-            if ($response) {
-                return redirect()->route('student.recommendation.show')
-                    ->with('info', 'Anda sudah mengisi kuesioner. Berikut adalah rekomendasi pekerjaan untuk Anda.');
-            }
+        if ($response && $student->has_completed_questionnaire) {
+            return redirect()->route('student.recommendation.show')
+                ->with('info', 'Anda sudah mengisi kuesioner. Berikut adalah rekomendasi pekerjaan untuk Anda.');
         }
 
         // Ambil kuesioner aktif
@@ -63,75 +62,64 @@ class QuestionnaireControllerSiswa extends Controller
      */
     public function submitQuestionnaire(Request $request)
     {
-        // Validasi input
-        $request->validate([
-            'questionnaire_id' => 'required|exists:questionnaires,id',
-            'answers' => 'required|array',
-            'answers.*' => 'required',
-        ]);
-
-        // Ambil data siswa
-        $student = Students::where('user_id', Auth::id())->first();
-        if (!$student) {
-            return redirect()->route('student.profile.edit')
-                ->with('error', 'Profil siswa tidak ditemukan.');
-        }
-
-        // Ambil kuesioner dan pertanyaannya
-        $questionnaire = Questionnaire::findOrFail($request->questionnaire_id);
-        $questions = $questionnaire->questions;
-
-        // Mulai transaksi database
-        DB::beginTransaction();
-
         try {
-            // Buat respons kuesioner baru
-            $response = QuestionnaireResponse::create([
-                'questionnaire_id' => $questionnaire->id,
-                'student_id' => $student->id,
-                'completion_date' => now(),
-                'recommendation_result' => null, // Akan diisi setelah perhitungan SAW
+            // Validate input
+            $validated = $request->validate([
+                'questionnaire_id' => 'required|exists:questionnaires,id',
+                'answers' => 'required|array',
+                'answers.*' => 'required',
             ]);
 
-            // Simpan jawaban untuk setiap pertanyaan
-            foreach ($request->answers as $questionId => $answerValue) {
-                $question = $questions->where('id', $questionId)->first();
+            $student = Students::where('user_id', Auth::id())->firstOrFail();
+            $questionnaire = Questionnaire::findOrFail($request->questionnaire_id);
 
-                if (!$question) {
-                    continue;
-                }
+            DB::beginTransaction();
 
-                // Konversi nilai jawaban sesuai dengan tipe pertanyaan
-                $normalizedValue = $this->normalizeAnswerValue($question, $answerValue);
+            // Create response
+            $response = QuestionnaireResponse::create([
+                'questionnaire_id' => $request->questionnaire_id,
+                'student_id' => $student->id,
+                'completion_date' => now(),
+                'recommendation_result' => null // Will be updated after calculation
+            ]);
 
+            // Save all answers first
+            foreach ($request->answers as $questionId => $answer) {
                 QuestionnaireAnswer::create([
                     'questionnaire_response_id' => $response->id,
                     'questionnaire_question_id' => $questionId,
-                    'answer_value' => $normalizedValue,
-                    'answer_text' => $answerValue,
+                    'answer_value' => $this->normalizeAnswerValue($questionnaire->questions->find($questionId), $answer),
+                    'answer_text' => $answer,
                 ]);
             }
 
-            // Hitung rekomendasi pekerjaan menggunakan metode SAW
-            $recommendationResults = $this->sawService->calculateRecommendations($response);
+            // Calculate recommendations
+            $recommendations = $this->sawService->calculateRecommendations($response);
 
-            // Update respons dengan hasil rekomendasi
+            if (empty($recommendations)) {
+                throw new \Exception('Tidak dapat menghasilkan rekomendasi. Silahkan coba lagi.');
+            }
+
+            // Update response with recommendations
             $response->update([
-                'recommendation_result' => $recommendationResults
+                'recommendation_result' => $recommendations
             ]);
 
-            // Update status siswa
-            $student->update([
-                'has_completed_questionnaire' => true
-            ]);
+            // Mark student as completed
+            $student->update(['has_completed_questionnaire' => true]);
 
             DB::commit();
 
-            return redirect()->route('student.recommendation.show')
-                ->with('success', 'Terima kasih! Kuesioner berhasil diisi. Berikut adalah rekomendasi pekerjaan untuk Anda.');
+            // Use absolute URL and ensure session data is saved
+            session()->flash('success', 'Kuesioner berhasil disubmit.');
+            return redirect()->route('student.recommendation.show');
         } catch (\Exception $e) {
+            Log::error('Questionnaire submission error: ' . $e->getMessage());
             DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+
+            return back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
+                ->withInput();
         }
     }
 
@@ -140,35 +128,32 @@ class QuestionnaireControllerSiswa extends Controller
      */
     public function showRecommendation()
     {
-        // Ambil siswa yang login
-        $student = Students::where('user_id', Auth::id())->first();
-        if (!$student || !$student->has_completed_questionnaire) {
-            return redirect()->route('student.kuis')
-                ->with('info', 'Anda belum mengisi kuesioner.');
-        }
+        try {
+            $student = Students::where('user_id', Auth::id())->firstOrFail();
 
-        // Ambil respons kuesioner terbaru
-        $response = QuestionnaireResponse::where('student_id', $student->id)
-            ->orderBy('created_at', 'desc')
-            ->first();
+            $response = QuestionnaireResponse::where('student_id', $student->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
 
-        if (!$response) {
-            return redirect()->route('student.kuis')
-                ->with('info', 'Rekomendasi tidak ditemukan. Silahkan isi kuesioner terlebih dahulu.');
-        }
+            if (!$response || empty($response->recommendation_result)) {
+                return redirect()->route('student.kuis')
+                    ->with('error', 'Rekomendasi tidak ditemukan. Silahkan isi kuesioner terlebih dahulu.');
+            }
 
-        // Ambil 5 rekomendasi pekerjaan dengan nilai tertinggi
-        $recommendations = $response->recommendation_result ?? [];
-
-        // Ambil detail pekerjaan
-        $jobDetails = [];
-        if (!empty($recommendations)) {
+            $recommendations = $response->recommendation_result;
             $jobIds = array_column($recommendations, 'job_id');
-            $jobDetails = JobRecommendation::whereIn('id', $jobIds)->get()
-                ->keyBy('id');
-        }
+            $jobDetails = JobRecommendation::whereIn('id', $jobIds)->get()->keyBy('id');
 
-        return view('dashboard.siswa.rekomendasi.rekomendasi', compact('student', 'response', 'recommendations', 'jobDetails'));
+            if ($jobDetails->isEmpty()) {
+                throw new \Exception('Data pekerjaan tidak ditemukan.');
+            }
+
+            return view('dashboard.siswa.rekomendasi.rekomendasi', compact('student', 'response', 'recommendations', 'jobDetails'));
+        } catch (\Exception $e) {
+            Log::error('Show recommendation error: ' . $e->getMessage());
+            return redirect()->route('student.kuis')
+                ->with('error', 'Terjadi kesalahan saat menampilkan rekomendasi.');
+        }
     }
 
     /**
@@ -178,21 +163,21 @@ class QuestionnaireControllerSiswa extends Controller
     {
         switch ($question->question_type) {
             case 'scale':
-                // Skala 1-5 atau 1-10, digunakan langsung
+                // Use the scale value directly (1-5)
                 return (float) $answerValue;
 
             case 'multiple_choice':
-                // Untuk pilihan ganda, nilai harus dipetakan
+                // For multiple choice, look up the mapped value
                 $options = $question->options ?? [];
-                foreach ($options as $index => $option) {
+                foreach ($options as $option) {
                     if (isset($option['text']) && $option['text'] == $answerValue) {
-                        return isset($option['value']) ? (float) $option['value'] : $index + 1;
+                        return isset($option['value']) ? (float) $option['value'] : 5;
                     }
                 }
-                return 1; // Nilai default
+                return 1; // Default value
 
             case 'text':
-                // Untuk jawaban teks, tidak digunakan dalam perhitungan SAW
+                // Text answers aren't used in calculation
                 return 0;
 
             default:

@@ -43,7 +43,8 @@ class CekProfileSiswa
                 'student.profile.update',
                 'student.kuis',
                 'student.questionnaire.submit',
-                'student.logout'
+                'student.logout',
+                'student.dashboard' // Tambahkan dashboard ke allowed routes
             ];
 
             // Izinkan akses ke route yang selalu diizinkan
@@ -51,21 +52,8 @@ class CekProfileSiswa
                 return $next($request);
             }
 
-            // PENTING: Cek apakah ada kuesioner aktif dari operator
-            $activeQuestionnaire = Questionnaire::where('is_active', true)->first();
-
-            // PENTING: Cek status setelah lulus untuk redirect ke kuesioner SEBELUM cek kelengkapan profil
-            if (
-                $this->isStatusBelumKerja($student->status_setelah_lulus) &&
-                !$student->has_completed_questionnaire &&
-                $activeQuestionnaire
-            ) {
-                Log::info('Redirecting to questionnaire from middleware');
-                return redirect()->route('student.kuis')
-                    ->with('info', 'Silahkan isi kuesioner untuk mendapatkan rekomendasi pekerjaan.');
-            }
-
-            // Redirect jika profil belum lengkap
+            // Remove questionnaire redirect and let dashboard handle it
+            // Only check profile completion
             if (!$this->isProfileComplete($student)) {
                 Log::info('Profile incomplete, redirecting to profile edit');
                 return redirect()->route('student.profile.edit')

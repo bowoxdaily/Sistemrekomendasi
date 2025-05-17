@@ -22,13 +22,22 @@ class QuestionnaireControllerOpe extends Controller
         return view('dashboard.operator.kuisioner.show', compact('questionnaires'));
     }
 
+    public function getQuestionnaires()
+    {
+        $questionnaires = Questionnaire::where('created_by', Auth::id())
+            ->orWhere('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $questionnaires
+        ]);
+    }
+
     /**
      * Tampilkan form untuk membuat kuesioner baru
      */
-    public function create()
-    {
-        return view('operator.questionnaires.create');
-    }
 
     /**
      * Simpan kuesioner baru
@@ -61,11 +70,17 @@ class QuestionnaireControllerOpe extends Controller
 
             DB::commit();
 
-            return redirect()->route('operator.questionnaires.edit', $questionnaire)
-                ->with('success', 'Kuesioner berhasil dibuat. Silahkan tambahkan pertanyaan.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Kuesioner berhasil dibuat',
+                'data' => $questionnaire
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -91,33 +106,40 @@ class QuestionnaireControllerOpe extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'is_active' => 'boolean',
+            'is_active' => 'required|in:true,false,0,1', // Terima berbagai format boolean
         ]);
 
-        // Mulai transaksi database
         DB::beginTransaction();
-
         try {
+            // Convert to boolean properly
+            $isActive = filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN);
+
             // Update kuesioner
             $questionnaire->update([
                 'title' => $request->title,
                 'description' => $request->description,
-                'is_active' => $request->has('is_active'),
+                'is_active' => $isActive,
             ]);
 
-            // Jika kuesioner ini diaktifkan, nonaktifkan kuesioner lain
-            if ($request->has('is_active')) {
+            // If this questionnaire is being activated, deactivate others
+            if ($isActive) {
                 Questionnaire::where('id', '!=', $questionnaire->id)
                     ->update(['is_active' => false]);
             }
 
             DB::commit();
 
-            return redirect()->route('operator.questionnaires.index')
-                ->with('success', 'Kuesioner berhasil diperbarui.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Kuesioner berhasil diperbarui' . ($isActive ? ' dan diaktifkan' : ''),
+                'data' => $questionnaire->fresh()
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -129,16 +151,24 @@ class QuestionnaireControllerOpe extends Controller
         try {
             // Periksa apakah kuesioner sudah memiliki respons
             if ($questionnaire->responses()->count() > 0) {
-                return back()->with('error', 'Kuesioner tidak dapat dihapus karena sudah memiliki respons dari siswa.');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kuesioner tidak dapat dihapus karena sudah memiliki respons dari siswa.'
+                ]);
             }
 
             $questionnaire->questions()->delete();
             $questionnaire->delete();
 
-            return redirect()->route('operator.questionnaires.index')
-                ->with('success', 'Kuesioner berhasil dihapus.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Kuesioner berhasil dihapus'
+            ]);
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -166,10 +196,16 @@ class QuestionnaireControllerOpe extends Controller
 
             $questionnaire->questions()->save($question);
 
-            return redirect()->route('operator.questionnaires.edit', $questionnaire)
-                ->with('success', 'Pertanyaan berhasil ditambahkan.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Pertanyaan berhasil ditambahkan',
+                'data' => $question
+            ]);
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -183,15 +219,23 @@ class QuestionnaireControllerOpe extends Controller
         try {
             // Periksa apakah pertanyaan sudah memiliki jawaban
             if ($question->answers()->count() > 0) {
-                return back()->with('error', 'Pertanyaan tidak dapat dihapus karena sudah memiliki jawaban dari siswa.');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pertanyaan tidak dapat dihapus karena sudah memiliki jawaban dari siswa.'
+                ]);
             }
 
             $question->delete();
 
-            return redirect()->route('operator.questionnaires.edit', $questionnaire)
-                ->with('success', 'Pertanyaan berhasil dihapus.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Pertanyaan berhasil dihapus'
+            ]);
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -202,6 +246,9 @@ class QuestionnaireControllerOpe extends Controller
     {
         $questionnaire->load(['responses.student', 'responses.answers']);
 
-        return view('operator.questionnaires.results', compact('questionnaire'));
+        return response()->json([
+            'success' => true,
+            'data' => $questionnaire
+        ]);
     }
 }

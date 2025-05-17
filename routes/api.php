@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\BE\AuthController;
 use App\Http\Controllers\BE\DataSiswaController;
+use App\Http\Controllers\BE\JobRecommendataionController;
 use App\Http\Controllers\BE\JurusanController;
 use App\Http\Controllers\BE\OperatorControllerBE;
+use App\Http\Controllers\BE\QuestionnaireControllerOpe;
 use App\Http\Controllers\BE\SiswaControllerBE;
 use App\Models\Jurusan;
 use Illuminate\Http\Request;
@@ -58,6 +60,25 @@ Route::group(['middleware' => ['web', 'auth']], function () {
         Route::get('get/jurusan/{id}', [JurusanController::class, 'getJurusanById']);
         Route::put('/jurusan/{id}', [JurusanController::class, 'update']);
         Route::delete('/delete/jurusan/{id}', [JurusanController::class, 'destroy']);
+
+        // Route Job
+        Route::get('/get/job', [JobRecommendataionController::class, 'getdata']);
+        Route::get('/get/job/{id}', [JobRecommendataionController::class, 'getById']);
+        Route::put('/update/job/{id}', [JobRecommendataionController::class, 'update']);
+        Route::post('/create/job', [JobRecommendataionController::class, 'store']);
+        Route::delete('/delete/job/{id}', [JobRecommendataionController::class, 'destroy']);
+
+        // Update Route Questionnaire prefix
+        Route::group(['prefix' => 'kuisioner'], function () {
+            Route::get('/get', [QuestionnaireControllerOpe::class, 'getQuestionnaires']);
+            Route::post('/create', [QuestionnaireControllerOpe::class, 'store']);
+            Route::get('/get/{id}', [QuestionnaireControllerOpe::class, 'getById']);
+            Route::put('/update/{questionnaire}', [QuestionnaireControllerOpe::class, 'update']); // Ubah ini
+            Route::delete('/delete/{id}', [QuestionnaireControllerOpe::class, 'destroy']);
+            Route::post('/{questionnaire}/questions', [QuestionnaireControllerOpe::class, 'addQuestion']);
+            Route::delete('/questions/{question}', [QuestionnaireControllerOpe::class, 'removeQuestion']);
+            Route::get('/{questionnaire}/questions', [QuestionnaireControllerOpe::class, 'getQuestions']);
+        });
     });
     Route::group(['prefix' => 'siswa'], function () {
         Route::post('/insert/data/graduation', [DataSiswaController::class, 'insertData']);

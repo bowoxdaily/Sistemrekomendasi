@@ -17,7 +17,82 @@
         </div>
     @endif
 
-    <!-- Modal untuk kuesioner telah dihapus karena siswa langsung diarahkan ke halaman kuesioner -->
+    <!-- Modal untuk belum kerja - Dengan pengecekan has_completed_questionnaire -->
+    @if (Auth::check() &&
+            Auth::user()->role === 'siswa' &&
+            Auth::user()->student->status_setelah_lulus === 'belum_kerja' &&
+            !Auth::user()->student->has_completed_questionnaire)
+        <div class="modal fade" id="belumKerjaModal" tabindex="-1" role="dialog" aria-labelledby="belumKerjaModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <form id="belumKerjaForm">
+                    @csrf
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="belumKerjaModalLabel">Lengkapi Data Anda</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Alasan Belum Bekerja</label>
+                                <textarea class="form-control" name="alasan" rows="3" required></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Keterampilan yang Dimiliki (opsional)</label>
+                                <textarea class="form-control" name="keterampilan" rows="2"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Minat Bidang Kerja (opsional)</label>
+                                <textarea class="form-control" name="minat" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Simpan</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+
+        <!-- Modal Rekomendasi Pekerjaan - Kondisi disederhanakan -->
+        <div class="modal fade" id="rekomendasiModal" data-backdrop="static" data-keyboard="false" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-lightbulb mr-2"></i>Rekomendasi Pekerjaan
+                        </h5>
+                    </div>
+                    <div class="modal-body text-center py-4">
+                        <div class="mb-4">
+                            <h4 class="font-weight-bold">Butuh Saran Karir?</h4>
+                            <p class="text-muted">
+                                Kami akan membantu Anda menemukan pekerjaan yang sesuai dengan kemampuan dan minat Anda
+                                melalui kuesioner singkat.
+                            </p>
+                        </div>
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Dengan mengisi kuesioner, Anda akan mendapatkan rekomendasi pekerjaan yang lebih akurat.
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-center border-top-0">
+                        <button type="button" class="btn btn-outline-secondary btn-lg px-4" id="btnSkipRekomendasi2">
+                            <i class="fas fa-times mr-2"></i>Nanti Saja
+                        </button>
+                        <button type="button" class="btn btn-primary btn-lg px-4" id="btnMauRekomendasi">
+                            <i class="fas fa-check mr-2"></i>Dapatkan Rekomendasi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <!-- Modal input data kuliah jika status lulus dan kuliah -->
     @if (Auth::check() &&
@@ -77,7 +152,8 @@
 
                             <div class="form-group" id="beasiswa_nama_group" style="display: none;">
                                 <label>Nama Beasiswa</label>
-                                <input type="text" class="form-control" placeholder="BEASISWA KIP" name="nama_beasiswa">
+                                <input type="text" class="form-control" placeholder="BEASISWA KIP"
+                                    name="nama_beasiswa">
                             </div>
                             <div class="form-group mt-3">
                                 <label>Prestasi Akademik</label>
@@ -153,44 +229,41 @@
         </div>
     @endif
 
-    <!-- Modal input data belum kerja jika status belum kerja dan belum mengisi kuesioner tidak ada di sini lagi karena langsung dialihkan ke halaman kuesioner oleh middleware -->
+    <!-- Modal Rekomendasi Pekerjaan -->
     @if (Auth::check() &&
             Auth::user()->role === 'siswa' &&
             Auth::user()->student->status_setelah_lulus === 'belum_kerja' &&
-            !Auth::user()->student->has_completed_questionnaire &&
-            !Auth::user()->student->is_profile_complete)
-        <div class="modal fade" id="belumKerjaModal" tabindex="-1" role="dialog"
-            aria-labelledby="belumKerjaModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <form id="belumKerjaForm">
-                    @csrf
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="belumKerjaModalLabel">Lengkapi Data Anda</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span>&times;</span>
-                            </button>
+            !Auth::user()->student->has_completed_questionnaire)
+        <div class="modal fade" id="rekomendasiModal" data-backdrop="static" data-keyboard="false" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-lightbulb mr-2"></i>Rekomendasi Pekerjaan
+                        </h5>
+                    </div>
+                    <div class="modal-body text-center py-4">
+                        <div class="mb-4">
+                            <h4 class="font-weight-bold">Butuh Saran Karir?</h4>
+                            <p class="text-muted">
+                                Kami dapat membantu Anda menemukan pekerjaan yang sesuai dengan kemampuan dan minat Anda
+                                melalui kuesioner singkat.
+                            </p>
                         </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label>Alasan Belum Bekerja</label>
-                                <textarea class="form-control" name="alasan" rows="3" required></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Keterampilan yang Dimiliki (opsional)</label>
-                                <textarea class="form-control" name="keterampilan" rows="2"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Minat Bidang Kerja (opsional)</label>
-                                <textarea class="form-control" name="minat" rows="2"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Simpan</button>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Dengan mengisi kuesioner, Anda akan mendapatkan rekomendasi pekerjaan yang lebih akurat.
                         </div>
                     </div>
-                </form>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-outline-secondary btn-lg px-4" id="btnSkipRekomendasi">
+                            <i class="fas fa-times mr-2"></i>Nanti Saja
+                        </button>
+                        <button type="button" class="btn btn-primary btn-lg px-4" id="btnMauRekomendasi">
+                            <i class="fas fa-check mr-2"></i>Dapatkan Rekomendasi
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     @endif
@@ -200,18 +273,57 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+            // Tampilkan modal konfirmasi untuk siswa dengan status belum kerja
+            @if (Auth::check() && Auth::user()->role === 'siswa' && Auth::user()->student->status_setelah_lulus === 'belum_kerja')
+                $('#konfirmasiRekomendasiModal').modal('show');
+
+                // Handle tombol "Ya, Saya Mau"
+                $('#btnGetRekomendasi').click(function() {
+                    $('#konfirmasiRekomendasiModal').modal('hide');
+                    window.location.href = _baseURL + 'student/kuis';
+                });
+
+                // Handle tombol "Nanti Saja"
+                $('#btnSkipRekomendasi, #btnSkipRekomendasi2').click(function() {
+                    $('#konfirmasiRekomendasiModal').modal('hide');
+                    $('#rekomendasiModal').modal('hide');
+                    $('#belumKerjaModal').modal('show');
+                });
+
+                // Handler untuk tombol di modal rekomendasi
+                $('#btnMauRekomendasi').click(function() {
+                    window.location.href = _baseURL + 'student/kuis';
+                });
+            @endif
+
+            // Show recommendation modal for unemployed users
+            @if (Auth::check() &&
+                    Auth::user()->role === 'siswa' &&
+                    Auth::user()->student->status_setelah_lulus === 'belum_kerja' &&
+                    !Auth::user()->student->has_completed_questionnaire)
+
+                // Show recommendation modal first
+                $('#rekomendasiModal').modal('show');
+
+                // Handle recommendation buttons
+                $('#btnMauRekomendasi').click(function() {
+                    window.location.href = _baseURL + 'siswa/questionnaire';
+                });
+
+                $('#btnSkipRekomendasi').click(function() {
+                    $('#rekomendasiModal').modal('hide');
+                    // Show form for those who skip recommendation
+                    $('#belumKerjaModal').modal('show');
+                });
+            @endif
+
             // ======= SHOW MODAL SESUAI STATUS =======
             @if (Auth::check() && Auth::user()->role === 'siswa')
-                // Siswa dengan status belum_bekerja sudah dialihkan oleh middleware
-                // Jadi kita hanya perlu menampilkan modal untuk status lainnya
                 @if (!Auth::user()->student->is_profile_complete)
                     @if (Auth::user()->student->status_setelah_lulus === 'kuliah')
                         $('#kuliahModal').modal('show');
                     @elseif (Auth::user()->student->status_setelah_lulus === 'kerja')
                         $('#kerjaModal').modal('show');
-                        // Modal untuk belum_kerja sudah dimodifikasi untuk menyertakan kondisi has_completed_questionnaire
-                    @elseif (Auth::user()->student->status_setelah_lulus === 'belum_kerja' && Auth::user()->student->has_completed_questionnaire)
-                        $('#belumKerjaModal').modal('show');
                     @endif
                 @endif
             @endif

@@ -1,4 +1,6 @@
 @extends('layout.app')
+@section('title', 'Dashboard | Edit Kuesioner')
+
 
 @section('content')
     <div class="container">
@@ -149,6 +151,9 @@
                                 <div class="input-group mb-2">
                                     <input type="text" class="form-control option-input" name="options[][text]"
                                         placeholder="Pilihan 1">
+                                    <input type="number" class="form-control option-value" name="options[][value]"
+                                        placeholder="Nilai (1-5)" min="1" max="5" required
+                                        style="max-width: 120px;">
                                     <button type="button" class="btn btn-outline-danger remove-option">×</button>
                                 </div>
                             </div>
@@ -158,8 +163,9 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Bobot (0-1)</label>
-                            <input type="number" class="form-control" name="weight" min="0" max="1"
+                            <input type="number" class="form-control" name="weight" min="1" max="5"
                                 step="0.1" required>
+                            <small class="text-muted">Masukkan bobot antara 1-5</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Tipe Kriteria</label>
@@ -182,16 +188,40 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            // Function to show alerts
-            function showAlert(container, type, message) {
-                const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-                $(`#${container}`).html(alertHtml);
+            // Toastr configuration
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "3000"
+            };
+
+            // Function to show alerts using Toastr
+            function showAlert(type, message) {
+                switch (type) {
+                    case 'success':
+                        toastr.success(message);
+                        break;
+                    case 'info':
+                        toastr.info(message);
+                        break;
+                    case 'warning':
+                        toastr.warning(message);
+                        break;
+                    case 'danger':
+                        toastr.error(message);
+                        break;
+                }
             }
+
+            // Setup CSRF token for all AJAX requests
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            const questionnaireId = {{ $questionnaire->id }};
 
             // Toggle options container and required attribute
             $('#questionType').on('change', function() {
@@ -214,7 +244,9 @@
                 const newOption = `
             <div class="input-group mb-2">
                 <input type="text" class="form-control option-input" name="options[][text]" 
-                       placeholder="Pilihan ${optionCount}" ${$('#questionType').val() === 'multiple_choice' ? 'required' : ''}>
+                    placeholder="Pilihan ${optionCount}" required>
+                <input type="number" class="form-control option-value" name="options[][value]" 
+                    placeholder="Nilai (1-5)" min="1" max="5" required style="max-width: 120px;">
                 <button type="button" class="btn btn-outline-danger remove-option">×</button>
             </div>
         `;
@@ -227,7 +259,7 @@
                 if (optionsCount > 1) {
                     $(this).closest('.input-group').remove();
                 } else {
-                    showAlert('modal-alert', 'warning',
+                    showAlert('warning',
                         'Minimal harus ada satu pilihan jawaban untuk tipe pilihan ganda');
                 }
             });
@@ -240,27 +272,34 @@
                 submitBtn.prop('disabled', true).html(
                     '<span class="spinner-border spinner-border-sm"></span> Menyimpan...');
 
-                const formData = new FormData(form[0]);
-                formData.set('is_active', $('#is_active').is(':checked') ? '1' : '0');
+                const data = {
+                    title: form.find('input[name="title"]').val(),
+                    description: form.find('textarea[name="description"]').val(),
+                    is_active: $('#is_active').prop(
+                        'checked'), // Menggunakan prop('checked') untuk mendapatkan true/false
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                };
 
                 $.ajax({
-                    url: "{{ route('operator.questionnaires.update', $questionnaire->id) }}",
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
+                    url: `/api/profile-operator/kuisioner/update/${questionnaireId}`,
+                    method: 'PUT',
+                    data: data,
                     success: function(response) {
-                        showAlert('alert-container', 'success',
+                        showAlert('success',
                             'Kuesioner berhasil diperbarui');
-                        if (formData.get('is_active') === '1') {
-                            showAlert('alert-container', 'info',
+                        if (data.is_active) {
+                            showAlert('info',
                                 'Kuesioner ini telah diaktifkan dan kuesioner lain telah dinonaktifkan'
                             );
                         }
                     },
                     error: function(xhr) {
-                        showAlert('alert-container', 'danger',
-                            xhr.responseJSON?.message || 'Terjadi kesalahan');
+                        const errors = xhr.responseJSON?.errors || {};
+                        let errorMessage = 'Terjadi kesalahan:';
+                        Object.keys(errors).forEach(key => {
+                            errorMessage += `\n- ${errors[key][0]}`;
+                        });
+                        showAlert('danger', errorMessage);
                     },
                     complete: function() {
                         submitBtn.prop('disabled', false).text('Simpan Perubahan');
@@ -282,7 +321,7 @@
                     }).get();
 
                     if (options.length === 0 || options.some(opt => !opt)) {
-                        showAlert('modal-alert', 'danger', 'Semua pilihan jawaban harus diisi');
+                        showAlert('danger', 'Semua pilihan jawaban harus diisi');
                         return false;
                     }
                 }
@@ -292,18 +331,18 @@
                 $('#modal-alert').empty();
 
                 $.ajax({
-                    url: "{{ route('operator.questionnaires.questions.add', $questionnaire->id) }}",
+                    url: `/api/profile-operator/kuisioner/${questionnaireId}/questions`,
                     method: 'POST',
                     data: form.serialize(),
                     success: function(response) {
                         $('#addQuestionModal').modal('hide');
                         form[0].reset();
-                        showAlert('alert-container', 'success',
+                        showAlert('success',
                             'Pertanyaan berhasil ditambahkan');
                         setTimeout(() => location.reload(), 1000);
                     },
                     error: function(xhr) {
-                        showAlert('modal-alert', 'danger',
+                        showAlert('danger',
                             xhr.responseJSON?.message || 'Terjadi kesalahan');
                     },
                     complete: function() {
@@ -317,40 +356,60 @@
                 const btn = $(this);
                 const questionId = btn.data('id');
 
-                if (confirm('Apakah Anda yakin ingin menghapus pertanyaan ini?')) {
-                    btn.prop('disabled', true).html(
-                        '<span class="spinner-border spinner-border-sm"></span>');
+                Swal.fire({
+                    title: 'Apakah Anda yakin?',
+                    text: "Pertanyaan yang dihapus tidak dapat dikembalikan!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Ya, hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        btn.prop('disabled', true).html(
+                            '<span class="spinner-border spinner-border-sm"></span>'
+                        );
 
-                    $.ajax({
-                        url: `/operator/questionnaires/questions/${questionId}`,
-                        method: 'DELETE',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function() {
-                            $(`div.question-item[data-id="${questionId}"]`).fadeOut(400,
-                                function() {
-                                    $(this).remove();
-                                    showAlert('alert-container', 'success',
-                                        'Pertanyaan berhasil dihapus');
-
-                                    if ($('.question-item').length === 0) {
-                                        $('#questions-list').html(`
-                                <div class="text-center py-3">
-                                    <p class="text-muted">Belum ada pertanyaan. Silakan tambah pertanyaan baru.</p>
-                                </div>
-                            `);
-                                    }
-                                });
-                        },
-                        error: function(xhr) {
-                            showAlert('alert-container', 'danger',
-                                xhr.responseJSON?.message || 'Terjadi kesalahan');
-                            btn.prop('disabled', false).html(
-                                '<i class="fas fa-trash"></i> Hapus');
-                        }
-                    });
-                }
+                        $.ajax({
+                            url: `/api/profile-operator/kuisioner/questions/${questionId}`,
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire(
+                                        'Terhapus!',
+                                        'Pertanyaan berhasil dihapus.',
+                                        'success'
+                                    ).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire(
+                                        'Gagal!',
+                                        response.message ||
+                                        'Gagal menghapus pertanyaan',
+                                        'error'
+                                    );
+                                    btn.prop('disabled', false).html(
+                                        '<i class="fas fa-trash"></i>');
+                                }
+                            },
+                            error: function(xhr) {
+                                Swal.fire(
+                                    'Error!',
+                                    xhr.responseJSON?.message ||
+                                    'Terjadi kesalahan saat menghapus pertanyaan',
+                                    'error'
+                                );
+                                btn.prop('disabled', false).html(
+                                    '<i class="fas fa-trash"></i>');
+                            }
+                        });
+                    }
+                });
             });
         });
     </script>

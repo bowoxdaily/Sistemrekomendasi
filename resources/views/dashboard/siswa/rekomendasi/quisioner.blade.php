@@ -19,7 +19,14 @@
                             {{ $questionnaire->description }}
                         </div>
 
-                        <form id="questionnaireForm" method="POST" action="{{ route('student.questionnaire.submit') }}">
+                        @if (session('error'))
+                            <div class="alert alert-danger mb-4">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                {{ session('error') }}
+                            </div>
+                        @endif
+
+                        <form method="POST" action="{{ route('student.questionnaire.submit') }}" id="questionnaireForm">
                             @csrf
                             <input type="hidden" name="questionnaire_id" value="{{ $questionnaire->id }}">
 
@@ -34,17 +41,18 @@
                                         @switch($question->question_type)
                                             @case('multiple_choice')
                                                 <div class="row g-3">
-                                                    @foreach ($question->options as $option)
+                                                    @foreach ($question->options ?? [] as $option)
                                                         <div class="col-md-6">
                                                             <div class="form-check custom-radio">
                                                                 <input class="form-check-input question-input" type="radio"
                                                                     name="answers[{{ $question->id }}]"
                                                                     id="question_{{ $question->id }}_option_{{ $loop->index }}"
-                                                                    value="{{ $option['text'] }}" required>
+                                                                    value="{{ is_array($option) ? $option['text'] ?? ($option['value'] ?? '') : $option }}"
+                                                                    required>
                                                                 <label class="form-check-label w-100"
                                                                     for="question_{{ $question->id }}_option_{{ $loop->index }}">
                                                                     <div class="p-3 rounded border">
-                                                                        {{ $option['text'] }}
+                                                                        {{ is_array($option) ? $option['text'] ?? ($option['value'] ?? '') : $option }}
                                                                     </div>
                                                                 </label>
                                                             </div>
@@ -87,10 +95,16 @@
                             <div class="mt-4 d-grid gap-2">
                                 <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                                     <i class="fas fa-paper-plane me-2"></i>
-                                    Kirim Jawaban dan Dapatkan Rekomendasi
+                                    Kirim Jawaban
                                 </button>
                             </div>
                         </form>
+
+                        @if (session('error'))
+                            <div class="alert alert-danger mt-3">
+                                {{ session('error') }}
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -130,38 +144,57 @@
             // Progress bar update
             function updateProgress() {
                 const totalQuestions = {{ $questionnaire->questions->count() }};
-                const answeredQuestions = $('.question-input:valid').length;
+                let answeredQuestions = 0;
+
+                $('.question-card').each(function() {
+                    const $card = $(this);
+                    const $radio = $card.find('input[type="radio"]:checked');
+                    const $textarea = $card.find('textarea');
+
+                    if ($radio.length > 0 || ($textarea.length > 0 && $textarea.val().trim() !== '')) {
+                        answeredQuestions++;
+                    }
+                });
+
                 const progress = (answeredQuestions / totalQuestions) * 100;
                 $('#questionProgress').css('width', progress + '%');
             }
 
             // Monitor input changes
-            $('.question-input').on('change', updateProgress);
+            $('.question-input').on('change keyup', updateProgress);
 
-            // Form submission
+            // Form validation and submission
             $('#questionnaireForm').on('submit', function(e) {
-                e.preventDefault();
-                const form = $(this);
-                const submitBtn = $('#submitBtn');
+                const $form = $(this);
+                const $submitBtn = $('#submitBtn');
+                let hasEmptyFields = false;
 
-                submitBtn.prop('disabled', true)
-                    .html('<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...');
+                // Check each question card
+                $('.question-card').each(function() {
+                    const $card = $(this);
+                    const $radio = $card.find('input[type="radio"]:checked');
+                    const $textarea = $card.find('textarea');
 
-                $.ajax({
-                    url: form.attr('action'),
-                    method: 'POST',
-                    data: form.serialize(),
-                    success: function(response) {
-                        window.location.href = "{{ route('student.recommendation.show') }}";
-                    },
-                    error: function(xhr) {
-                        alert('Terjadi kesalahan. Silakan coba lagi.');
-                        submitBtn.prop('disabled', false)
-                            .html(
-                                '<i class="fas fa-paper-plane me-2"></i>Kirim Jawaban dan Dapatkan Rekomendasi'
-                            );
+                    if (($radio.length === 0 && !$textarea.length) ||
+                        ($textarea.length > 0 && $textarea.val().trim() === '')) {
+                        hasEmptyFields = true;
+                        return false; // break the loop
                     }
                 });
+
+                if (hasEmptyFields) {
+                    e.preventDefault();
+                    alert('Mohon jawab semua pertanyaan sebelum mengirim.');
+                    return false;
+                }
+
+                // Disable button and show loading state
+                $submitBtn
+                    .prop('disabled', true)
+                    .html('<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...');
+
+                // Allow form submission
+                return true;
             });
         });
     </script>
