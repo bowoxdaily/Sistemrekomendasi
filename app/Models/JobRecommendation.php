@@ -16,13 +16,15 @@ class JobRecommendation extends Model
         'skills_needed',
         'average_salary',
         'industry_type',
-        'criteria_values'
+        'criteria_values',
+        'criteria_weights'  // Tambahkan field untuk bobot kriteria
     ];
 
     protected $casts = [
         'requirements' => 'array',
         'skills_needed' => 'array',
-        'criteria_values' => 'array'
+        'criteria_values' => 'array',
+        'criteria_weights' => 'array'
     ];
 
     public function getFormattedSalaryAttribute()

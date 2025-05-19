@@ -1,4 +1,3 @@
-php
 @extends('layout.app')
 
 @section('title', 'Dashboard | Pekerjaan')
@@ -175,23 +174,17 @@ php
                         </div>
 
                         <div class="form-group mb-0">
-                            <label>Nilai Kriteria (1-5) <span class="text-danger">*</span></label>
-                            <div class="row">
-                                <div class="col-4">
-                                    <label class="small">Pendidikan</label>
-                                    <input type="number" class="form-control form-control-sm"
-                                        name="criteria_values[education]" min="1" max="5" required>
-                                </div>
-                                <div class="col-4">
-                                    <label class="small">Pengalaman</label>
-                                    <input type="number" class="form-control form-control-sm"
-                                        name="criteria_values[experience]" min="1" max="5" required>
-                                </div>
-                                <div class="col-4">
-                                    <label class="small">Keahlian</label>
-                                    <input type="number" class="form-control form-control-sm"
-                                        name="criteria_values[technical]" min="1" max="5" required>
-                                </div>
+                            <label class="d-flex justify-content-between align-items-center">
+                                <span>Kriteria & Nilai (1-5) <span class="text-danger">*</span></span>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 add-criteria">
+                                    <i class="mdi mdi-plus"></i> Tambah Kriteria
+                                </button>
+                            </label>
+                            <small class="text-muted d-block mb-2">
+                                Tambahkan kriteria dan nilai yang dibutuhkan untuk pekerjaan ini
+                            </small>
+                            <div id="criteria-container">
+                                <!-- Kriteria akan ditambahkan di sini -->
                             </div>
                         </div>
                     </div>
@@ -488,6 +481,16 @@ php
                 }
 
                 response.data.forEach(job => {
+                    const criteriaHtml = Object.entries(job.criteria_values).map(([criteria, value]) => {
+                        const weight = job.criteria_weights?.[criteria] || 1;
+                        return `<div class="mb-1">
+                            <span class="badge bg-info">
+                                ${capitalizeFirstLetter(criteria)}: ${value} 
+                                <small>(Bobot: ${weight})</small>
+                            </span>
+                        </div>`;
+                    }).join('');
+
                     const row = `
                         <tr>
                             <td>
@@ -522,11 +525,7 @@ php
                                 ).join(' ')}
                             </td>
                             <td>
-                                ${Object.entries(job.criteria_values).map(([criteria, value]) => 
-                                    `<span class="badge bg-info">
-                                                                                                                                                                                                                                        ${capitalizeFirstLetter(criteria)}: ${value}
-                                                                                                                                                                                                                                    </span>`
-                                ).join(' ')}
+                                ${criteriaHtml}
                             </td>
                         </tr>
                     `;
@@ -681,11 +680,8 @@ php
                     average_salary: form.find('[name="average_salary"]').val(),
                     requirements: [],
                     skills_needed: [],
-                    criteria_values: {
-                        education: form.find('[name="criteria_values[education]"]').val(),
-                        experience: form.find('[name="criteria_values[experience]"]').val(),
-                        technical: form.find('[name="criteria_values[technical]"]').val(),
-                    }
+                    criteria_values: {},
+                    criteria_weights: {}
                 };
 
                 // Kumpulkan requirements
@@ -700,6 +696,16 @@ php
                     if ($(this).val()) {
                         formData.skills_needed.push($(this).val());
                     }
+                });
+
+                // Kumpulkan criteria dan bobot
+                form.find('.criteria-item').each(function() {
+                    const name = $(this).find('[name="criteria_names[]"]').val().toLowerCase();
+                    const value = parseInt($(this).find('[name="criteria_values[]"]').val());
+                    const weight = parseInt($(this).find('[name="criteria_weights[]"]').val());
+
+                    formData.criteria_values[name] = value;
+                    formData.criteria_weights[name] = weight;
                 });
 
                 submitBtn.prop('disabled', true)
@@ -779,9 +785,14 @@ php
                             $('#skills-container input:last').val(skill);
                         });
 
-                        Object.entries(data.criteria_values).forEach(([key, value]) => {
-                            $(`[name="criteria_values[${key}]"]`).val(value);
-                        });
+                        $('#criteria-container').empty();
+                        if (data.criteria_values) {
+                            Object.entries(data.criteria_values).forEach(([name, value]) => {
+                                const weight = data.criteria_weights?.[name] || 1;
+                                addCriteriaField($('#criteria-container'), name, value,
+                                    weight);
+                            });
+                        }
 
                         jobModal.show();
                     },
@@ -862,7 +873,53 @@ php
                         </button>
                     </div>
                 `);
+
+                $('#criteria-container').html('');
             }
+
+            // Fungsi untuk menambah kriteria
+            function addCriteriaField(container, name = '', value = '', weight = 1) {
+                const criteriaField = `
+                    <div class="row mb-2 criteria-item">
+                        <div class="col-5">
+                            <input type="text" class="form-control form-control-sm" 
+                                   name="criteria_names[]" 
+                                   placeholder="Nama Kriteria"
+                                   value="${name}" required>
+                        </div>
+                        <div class="col-3">
+                            <input type="number" class="form-control form-control-sm" 
+                                   name="criteria_values[]" 
+                                   placeholder="Nilai (1-5)"
+                                   min="1" max="5"
+                                   value="${value}" required>
+                        </div>
+                        <div class="col-3">
+                            <input type="number" class="form-control form-control-sm" 
+                                   name="criteria_weights[]" 
+                                   placeholder="Bobot (1-5)"
+                                   min="1" max="5"
+                                   value="${weight}" required>
+                        </div>
+                        <div class="col-1">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-criteria">
+                                <i class="mdi mdi-close"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.append(criteriaField);
+            }
+
+            // Tambah kriteria baru
+            $('.add-criteria').click(function() {
+                addCriteriaField($('#criteria-container'));
+            });
+
+            // Hapus kriteria
+            $(document).on('click', '.remove-criteria', function() {
+                $(this).closest('.criteria-item').remove();
+            });
         });
     </script>
 @endpush

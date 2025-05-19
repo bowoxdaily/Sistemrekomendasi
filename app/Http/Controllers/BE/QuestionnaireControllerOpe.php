@@ -143,6 +143,7 @@ class QuestionnaireControllerOpe extends Controller
         }
     }
 
+
     /**
      * Hapus kuesioner
      */
@@ -179,17 +180,29 @@ class QuestionnaireControllerOpe extends Controller
     {
         $request->validate([
             'question_text' => 'required|string',
-            'question_type' => 'required|in:multiple_choice,scale,text',
+            'question_type' => 'required|in:multiple_choice,scale',
+            'weight' => 'required|numeric|min:1|max:5',
+            'criteria_type' => 'required|in:education,experience,technical',
             'options' => 'required_if:question_type,multiple_choice|array',
-            'weight' => 'required|numeric|min:0|max:1',
-            'criteria_type' => 'required|in:benefit,cost',
         ]);
 
         try {
+            $options = [];
+            if ($request->question_type === 'multiple_choice' && is_array($request->options)) {
+                foreach ($request->options as $option) {
+                    if (isset($option['text'], $option['value'])) {
+                        $options[] = [
+                            'text' => $option['text'],
+                            'value' => (int) $option['value']
+                        ];
+                    }
+                }
+            }
+
             $question = new QuestionnaireQuestion([
                 'question_text' => $request->question_text,
                 'question_type' => $request->question_type,
-                'options' => $request->options,
+                'options' => $options,
                 'weight' => $request->weight,
                 'criteria_type' => $request->criteria_type,
             ]);

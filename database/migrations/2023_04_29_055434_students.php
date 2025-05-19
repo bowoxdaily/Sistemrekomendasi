@@ -26,6 +26,8 @@ return new class extends Migration
             $table->enum('status_setelah_lulus', ['belum_kerja', 'kuliah', 'kerja'])->nullable();
             $table->timestamp('status_terakhir_diupdate')->nullable();
             $table->boolean('is_profile_complete')->default(false);
+            $table->boolean('has_completed_questionnaire')->default(false);
+
             $table->timestamps();
         });
     }

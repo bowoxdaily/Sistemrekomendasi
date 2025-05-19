@@ -4,71 +4,120 @@ namespace App\Services;
 
 use App\Models\QuestionnaireResponse;
 use App\Models\JobRecommendation;
-use Illuminate\Support\Facades\Log;
 
 class SawRecommendationService
 {
     public function calculateRecommendations(QuestionnaireResponse $response)
     {
-        $answers = $response->answers()->with('question')->get();
+        // Ambil jawaban kuesioner dan kelompokkan berdasarkan kriteria
+        $answers = $response->answers()->with(['question' => function ($q) {
+            $q->select('id', 'question_text', 'question_type', 'criteria_type', 'weight');
+        }])->get();
+
+        $groupedAnswers = $answers->groupBy('question.criteria_type');
+
+        // Ambil semua data pekerjaan
         $jobs = JobRecommendation::all();
 
         if ($jobs->isEmpty()) {
             return [];
         }
 
-        // Get student answers and weights
-        $criteria = [];
-        foreach ($answers as $answer) {
-            $question = $answer->question;
-            if (in_array($question->question_type, ['scale', 'multiple_choice'])) {
-                $criteria[$question->id] = [
-                    'value' => $answer->answer_value,
-                    'weight' => $question->weight ?? 1,
-                    'type' => $question->criteria_type ?? 'benefit'
-                ];
+        // Ambil semua kriteria unik dari pekerjaan
+        $allCriteria = [];
+        foreach ($jobs as $job) {
+            foreach ($job->criteria_values as $criteria => $value) {
+                if (!in_array($criteria, $allCriteria)) {
+                    $allCriteria[] = $criteria;
+                }
             }
         }
 
+        // Hitung skor rata-rata untuk setiap kriteria
+        $studentScores = [];
+        foreach ($allCriteria as $criteriaType) {
+            $criteriaAnswers = $groupedAnswers->get($criteriaType, collect());
+            if ($criteriaAnswers->isEmpty()) {
+                $studentScores[$criteriaType] = 0;
+                continue;
+            }
+
+            $totalWeightedScore = 0;
+            $totalWeight = 0;
+
+            foreach ($criteriaAnswers as $answer) {
+                $weight = $answer->question->weight;
+                $totalWeightedScore += $answer->answer_value * $weight;
+                $totalWeight += $weight;
+            }
+
+            $studentScores[$criteriaType] = $totalWeight > 0 ?
+                ($totalWeightedScore / $totalWeight) : 0;
+        }
+
+        // Hitung skor untuk setiap pekerjaan
         $jobScores = [];
         foreach ($jobs as $job) {
             $totalScore = 0;
-            $maxScore = 0;
+            $criteriaDetails = [];
+            $totalWeight = array_sum($job->criteria_weights ?? array_fill_keys($allCriteria, 1));
 
-            foreach ($criteria as $id => $criterion) {
-                $jobValue = $job->criteria_values[$id] ?? 0;
-                $studentValue = $criterion['value'];
-                $weight = $criterion['weight'];
+            foreach ($job->criteria_values as $criteria => $value) {
+                $studentValue = $studentScores[$criteria] ?? 0;
+                $weight = ($job->criteria_weights[$criteria] ?? 1) / $totalWeight;
 
-                // Calculate similarity score (0-1)
-                $similarity = 1 - (abs($studentValue - $jobValue) / 5);
-                $similarityScore = max(0, min(1, $similarity));
+                // Normalisasi dan perhitungan similarity
+                $normalizedStudentValue = $studentValue / 5;
+                $normalizedJobValue = $value / 5;
+                $similarity = 1 - abs($normalizedJobValue - $normalizedStudentValue);
+                $weightedScore = $similarity * $weight;
 
-                $totalScore += $similarityScore * $weight;
-                $maxScore += $weight;
+                $criteriaDetails[$criteria] = [
+                    'student_value' => $studentValue,
+                    'job_value' => $value,
+                    'normalized_student' => round($normalizedStudentValue, 4),
+                    'normalized_job' => round($normalizedJobValue, 4),
+                    'similarity' => round($similarity, 4),
+                    'weighted_score' => round($weightedScore, 4),
+                    'weight' => $weight
+                ];
+
+                $totalScore += $weightedScore;
             }
 
-            // Calculate final normalized score
-            $finalScore = $maxScore > 0 ? ($totalScore / $maxScore) : 0;
+            // Konversi ke persentase dan bulatkan ke 1 desimal
+            $matchPercentage = round($totalScore * 100, 1);
+
+            // Pastikan tidak melebihi 100%
+            $matchPercentage = min(100, max(0, $matchPercentage));
 
             $jobScores[] = [
                 'job_id' => $job->id,
                 'name' => $job->name,
-                'score' => round($finalScore, 4),
-                'match_percentage' => round($finalScore * 100, 1),
+                'match_percentage' => $matchPercentage,
                 'salary' => $job->average_salary,
                 'description' => $job->description,
+                'industry_type' => $job->industry_type,
                 'skills_needed' => $job->skills_needed,
-                'industry_type' => $job->industry_type
+                'requirements' => $job->requirements,
+                'criteria_detail' => $criteriaDetails
             ];
         }
 
-        // Sort by match percentage in descending order
+        // Urutkan berdasarkan persentase kecocokan
         usort($jobScores, function ($a, $b) {
+            if ($b['match_percentage'] == $a['match_percentage']) {
+                // Jika persentase sama, urutkan berdasarkan gaji
+                return $b['salary'] - $a['salary'];
+            }
             return $b['match_percentage'] <=> $a['match_percentage'];
         });
 
-        // Return top 5 matches
-        return array_slice($jobScores, 0, 5);
+        // Ambil 3 rekomendasi teratas dengan minimal 50% kecocokan
+        $recommendations = array_filter($jobScores, function ($job) {
+            return $job['match_percentage'] >= 50;
+        });
+
+        return array_slice($recommendations, 0, 3);
     }
 }

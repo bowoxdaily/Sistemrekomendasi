@@ -70,7 +70,7 @@ Route::group(['middleware' => ['web', 'auth']], function () {
 
         // Update Route Questionnaire prefix
         Route::group(['prefix' => 'kuisioner'], function () {
-            Route::get('/get', [QuestionnaireControllerOpe::class, 'getQuestionnaires']);
+            Route::get('/get', [QuestionnaireControllerOpe::class, 'getQue/stionnaires']);
             Route::post('/create', [QuestionnaireControllerOpe::class, 'store']);
             Route::get('/get/{id}', [QuestionnaireControllerOpe::class, 'getById']);
             Route::put('/update/{questionnaire}', [QuestionnaireControllerOpe::class, 'update']); // Ubah ini
