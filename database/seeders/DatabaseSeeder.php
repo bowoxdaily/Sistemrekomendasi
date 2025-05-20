@@ -23,5 +23,12 @@ class DatabaseSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        // Add our new seeders to the seeding process
+        $this->call([
+            JobRecommendationSeeder::class,
+            QuestionnaireQuestionSeeder::class,
+            JurusanSeeder::class,
+        ]);
     }
 }

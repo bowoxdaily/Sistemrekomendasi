@@ -85,6 +85,25 @@
                 </div>
             @endforelse
         </div>
+
+        <!-- Add this somewhere appropriate in your recommendation view - 
+             perhaps near the end before closing the main container -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Opsi Tambahan</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    Ingin mengambil ulang kuesioner? Anda dapat mengisi kembali kuesioner untuk mendapatkan rekomendasi yang lebih sesuai.
+                </p>
+                <a href="{{ route('student.kuis', ['retake' => true]) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-sync-alt me-2"></i> Ambil Ulang Kuesioner
+                </a>
+                <small class="d-block mt-2 text-muted">
+                    <i class="fas fa-info-circle me-1"></i> Mengambil ulang kuesioner akan menggantikan hasil rekomendasi sebelumnya.
+                </small>
+            </div>
+        </div>
     </div>
 
     <style>

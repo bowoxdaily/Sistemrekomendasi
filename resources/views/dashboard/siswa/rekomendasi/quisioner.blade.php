@@ -54,6 +54,15 @@
                         <form method="POST" action="{{ route('student.questionnaire.submit') }}" id="questionnaireForm">
                             @csrf
                             <input type="hidden" name="questionnaire_id" value="{{ $questionnaire->id }}">
+                            
+                            <!-- Add this line to indicate if this is a retake -->
+                            @if(isset($isRetake) && $isRetake)
+                                <input type="hidden" name="is_retake" value="1">
+                                <div class="alert alert-info mb-4">
+                                    <i class="fas fa-sync-alt me-2"></i>
+                                    Anda sedang mengisi ulang kuesioner. Jawaban baru Anda akan menggantikan rekomendasi sebelumnya.
+                                </div>
+                            @endif
 
                             @foreach ($questionnaire->questions as $index => $question)
                                 <div class="question-card mb-4 p-4 border rounded"
@@ -71,52 +80,54 @@
                                     <div class="mt-3">
                                         @switch($question->question_type)
                                             @case('multiple_choice')
-                                                <div class="row g-3">
-                                                    @if (is_array($question->options) && count($question->options) > 0)
-                                                        @foreach ($question->options as $optionIndex => $option)
-                                                            @php
-                                                                // Handle different option formats
-                                                                if (is_array($option)) {
-                                                                    $optionText =
-                                                                        $option['text'] ?? ($option['label'] ?? '');
-                                                                    $optionValue =
-                                                                        $option['text'] ??
-                                                                        ($option['label'] ??
-                                                                            ($option['value'] ?? $optionText));
-                                                                } else {
-                                                                    $optionText = $option;
-                                                                    $optionValue = $option;
-                                                                }
-
-                                                                // Skip empty options
-                                                                if (empty($optionText)) {
-                                                                    continue;
-                                                                }
-                                                            @endphp
-                                                            <div class="col-md-6">
-                                                                <div class="form-check custom-radio">
-                                                                    <input class="form-check-input question-input" type="radio"
-                                                                        name="answers[{{ $question->id }}]"
-                                                                        id="question_{{ $question->id }}_option_{{ $optionIndex }}"
-                                                                        value="{{ $optionValue }}"
-                                                                        {{ $question->is_required ?? true ? 'required' : '' }}
-                                                                        data-question-id="{{ $question->id }}">
-                                                                    <label class="form-check-label w-100"
-                                                                        for="question_{{ $question->id }}_option_{{ $optionIndex }}">
-                                                                        <div
-                                                                            class="option-box p-3 rounded h-100 d-flex align-items-center">
-                                                                            <span>{{ $optionText }}</span>
+                                                <div class="multiple-choice-container">
+                                                    @php
+                                                        $hasOptions = is_array($question->options) && count($question->options) > 0;
+                                                    @endphp
+                                                    
+                                                    @if ($hasOptions)
+                                                        <div class="row g-3">
+                                                            @foreach ($question->options as $optionIndex => $option)
+                                                                @php
+                                                                    // Determine option text and value correctly
+                                                                    $optionText = '';
+                                                                    $optionValue = '';
+                                                                    
+                                                                    if (is_array($option) && isset($option['text'])) {
+                                                                        $optionText = $option['text'];
+                                                                        $optionValue = $option['value'] ?? $optionText;
+                                                                    } elseif (is_string($option)) {
+                                                                        $optionText = $option;
+                                                                        $optionValue = $option;
+                                                                    }
+                                                                @endphp
+                                                                
+                                                                @if (!empty($optionText))
+                                                                    <div class="col-md-6 mb-3">
+                                                                        <div class="option-card">
+                                                                            <input class="option-input question-input" type="radio"
+                                                                                name="answers[{{ $question->id }}]"
+                                                                                id="question_{{ $question->id }}_option_{{ $optionIndex }}"
+                                                                                value="{{ $optionText }}"
+                                                                                {{ $question->is_required ?? true ? 'required' : '' }}
+                                                                                data-question-id="{{ $question->id }}">
+                                                                            <label class="option-label" 
+                                                                                for="question_{{ $question->id }}_option_{{ $optionIndex }}">
+                                                                                <div class="option-icon">{{ chr(65 + $optionIndex) }}</div>
+                                                                                <div class="option-text">{{ $optionText }}</div>
+                                                                                <div class="option-check">
+                                                                                    <i class="fas fa-check-circle"></i>
+                                                                                </div>
+                                                                            </label>
                                                                         </div>
-                                                                    </label>
-                                                                </div>
-                                                            </div>
-                                                        @endforeach
+                                                                    </div>
+                                                                @endif
+                                                            @endforeach
+                                                        </div>
                                                     @else
-                                                        <div class="col-12">
-                                                            <div class="alert alert-warning">
-                                                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                                                Opsi pertanyaan tidak tersedia.
-                                                            </div>
+                                                        <div class="alert alert-warning">
+                                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                                            Opsi pertanyaan tidak tersedia.
                                                         </div>
                                                     @endif
                                                 </div>
@@ -124,23 +135,42 @@
 
                                             @case('scale')
                                                 <div class="scale-container">
-                                                    <div class="d-flex justify-content-center mb-2">
-                                                        <div class="btn-group btn-group-scale" role="group">
-                                                            @for ($i = 1; $i <= 5; $i++)
-                                                                <input type="radio" class="btn-check question-input"
+                                                    <div class="scale-values">
+                                                        @for ($i = 1; $i <= 5; $i++)
+                                                            <div class="scale-option">
+                                                                <input type="radio" class="scale-input question-input"
                                                                     name="answers[{{ $question->id }}]"
                                                                     id="question_{{ $question->id }}_scale_{{ $i }}"
                                                                     value="{{ $i }}" required>
-                                                                <label class="btn btn-outline-primary scale-btn"
+                                                                <label class="scale-label" 
                                                                     for="question_{{ $question->id }}_scale_{{ $i }}">
-                                                                    {{ $i }}
+                                                                    <div class="scale-number">{{ $i }}</div>
+                                                                    <div class="scale-icon">
+                                                                        @switch($i)
+                                                                            @case(1)
+                                                                                <i class="fas fa-frown"></i>
+                                                                                @break
+                                                                            @case(2)
+                                                                                <i class="fas fa-meh"></i>
+                                                                                @break
+                                                                            @case(3)
+                                                                                <i class="fas fa-meh-blank"></i>
+                                                                                @break
+                                                                            @case(4)
+                                                                                <i class="fas fa-smile"></i>
+                                                                                @break
+                                                                            @case(5)
+                                                                                <i class="fas fa-grin-stars"></i>
+                                                                                @break
+                                                                        @endswitch
+                                                                    </div>
                                                                 </label>
-                                                            @endfor
-                                                        </div>
+                                                            </div>
+                                                        @endfor
                                                     </div>
-                                                    <div class="d-flex justify-content-between scale-labels">
-                                                        <small>Rendah</small>
-                                                        <small class="text-muted">Tinggi</small>
+                                                    <div class="scale-endpoints">
+                                                        <span class="scale-start">Rendah</span>
+                                                        <span class="scale-end">Tinggi</span>
                                                     </div>
                                                 </div>
                                             @break
@@ -218,116 +248,7 @@
 @endsection
 
 @push('styles')
-    <style>
-        .question-card {
-            transition: all 0.3s ease;
-            border: 2px solid #e9ecef !important;
-        }
-
-        .question-card:hover {
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-            border-color: #dee2e6 !important;
-        }
-
-        .question-card.answered {
-            border-color: #198754 !important;
-            background-color: #f8fff9;
-        }
-
-        .custom-radio .form-check-label {
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .custom-radio .option-box {
-            transition: all 0.2s ease;
-            border: 2px solid transparent;
-            background-color: #f8f9fa;
-        }
-
-        .custom-radio .form-check-input:checked+.form-check-label .option-box {
-            background-color: #e7f3ff;
-            border-color: #0d6efd;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
-        }
-
-        .custom-radio .option-box:hover {
-            border-color: #0d6efd;
-            background-color: #f8f9fa;
-        }
-
-        .scale-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 10px;
-        }
-
-        .btn-group-scale {
-            width: auto;
-            max-width: 300px;
-        }
-
-        .scale-btn {
-            padding: 8px 15px;
-            min-width: 45px;
-            font-size: 0.95rem;
-        }
-
-        .btn-check:checked+.scale-btn {
-            transform: scale(1.05);
-        }
-
-        .scale-labels {
-            width: 300px;
-            margin: 5px auto 0;
-            padding: 0 10px;
-            font-size: 0.8rem;
-            color: #6c757d;
-        }
-
-        .question-input:invalid {
-            border-color: #dc3545;
-        }
-
-        .form-control:focus {
-            border-color: #86b7fe;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-        }
-
-        .progress-bar {
-            transition: width 0.6s ease;
-        }
-
-        #submitBtn:disabled {
-            opacity: 0.65;
-        }
-
-        .modal-body .review-item {
-            border-bottom: 1px solid #dee2e6;
-            padding: 1rem 0;
-        }
-
-        .modal-body .review-item:last-child {
-            border-bottom: none;
-        }
-
-        .review-question {
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 0.5rem;
-        }
-
-        .review-answer {
-            color: #0d6efd;
-            font-weight: 500;
-        }
-
-        .review-answer.empty {
-            color: #dc3545;
-            font-style: italic;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/questionnaire.css') }}">
 @endpush
 
 @push('scripts')
@@ -569,6 +490,32 @@
                 autoSaveTimer = setTimeout(function() {
                     console.log('Auto-saving...'); // Replace with actual auto-save logic
                 }, 2000);
+            });
+
+            // Enhance multiple choice selection experience
+            $('.option-input').on('change', function() {
+                const questionId = $(this).data('question-id');
+                
+                // Add a visual feedback on selection
+                if ($(this).is(':checked')) {
+                    $(this).closest('.option-card').addClass('selected')
+                        .find('.option-label').append('<span class="option-ripple"></span>');
+                    
+                    // Remove ripple effect after animation completes
+                    setTimeout(function() {
+                        $('.option-ripple').remove();
+                    }, 800);
+                    
+                    // Smoothly update progress bar
+                    updateProgress();
+                }
+            });
+
+            // Make entire option card clickable 
+            $('.option-card').on('click', function(e) {
+                if (!$(e.target).is('input')) {
+                    $(this).find('input').prop('checked', true).change();
+                }
             });
         });
     </script>

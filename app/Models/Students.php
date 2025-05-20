@@ -18,6 +18,7 @@ class Students extends Model
         'nisn',
         'is_profile_complete',
         'jurusan_id',
+        'has_completed_questionnaire',
         // Add other fields as needed
     ];
     public function user()

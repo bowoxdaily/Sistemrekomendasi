@@ -9,6 +9,7 @@ use App\Models\QuestionnaireQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class QuestionnaireControllerOpe extends Controller
 {
@@ -94,8 +95,27 @@ class QuestionnaireControllerOpe extends Controller
 
         // Dapatkan daftar pekerjaan untuk rekomendasi
         $jobs = JobRecommendation::all();
+        
+        // Extract unique criteria types from job recommendations
+        $criteriaTypes = [];
+        foreach ($jobs as $job) {
+            if (isset($job->criteria_values) && is_array($job->criteria_values)) {
+                foreach ($job->criteria_values as $key => $value) {
+                    $criteriaTypes[$key] = ucfirst($key);
+                }
+            }
+        }
+        
+        // If no criteria found in jobs, use default ones
+        if (empty($criteriaTypes)) {
+            $criteriaTypes = [
+                'education' => 'Pendidikan (Education)',
+                'experience' => 'Pengalaman (Experience)',
+                'technical' => 'Teknis (Technical)'
+            ];
+        }
 
-        return view('dashboard.operator.kuisioner.edit', compact('questionnaire', 'jobs'));
+        return view('dashboard.operator.kuisioner.edit', compact('questionnaire', 'jobs', 'criteriaTypes'));
     }
 
     /**
@@ -178,24 +198,58 @@ class QuestionnaireControllerOpe extends Controller
      */
     public function addQuestion(Request $request, Questionnaire $questionnaire)
     {
+        // Get valid criteria types from job recommendations
+        $jobs = JobRecommendation::all();
+        $validCriteriaTypes = ['education', 'experience', 'technical']; // Default fallback
+        
+        foreach ($jobs as $job) {
+            if (isset($job->criteria_values) && is_array($job->criteria_values)) {
+                $validCriteriaTypes = array_merge($validCriteriaTypes, array_keys($job->criteria_values));
+            }
+        }
+        $validCriteriaTypes = array_unique($validCriteriaTypes);
+        
         $request->validate([
             'question_text' => 'required|string',
             'question_type' => 'required|in:multiple_choice,scale',
             'weight' => 'required|numeric|min:1|max:5',
-            'criteria_type' => 'required|in:education,experience,technical',
+            'criteria_type' => 'required|in:' . implode(',', $validCriteriaTypes),
             'options' => 'required_if:question_type,multiple_choice|array',
         ]);
 
         try {
+            Log::info('Request data for add question:', ['data' => $request->all()]);
+            
             $options = [];
-            if ($request->question_type === 'multiple_choice' && is_array($request->options)) {
-                foreach ($request->options as $option) {
-                    if (isset($option['text'], $option['value'])) {
-                        $options[] = [
-                            'text' => $option['text'],
-                            'value' => (int) $option['value']
-                        ];
+            if ($request->question_type === 'multiple_choice') {
+                // Process options
+                $rawOptions = $request->input('options');
+                
+                if (is_array($rawOptions)) {
+                    foreach ($rawOptions as $option) {
+                        if (is_array($option) && isset($option['text'])) {
+                            // Make sure we have a valid value
+                            $value = isset($option['value']) ? (int) $option['value'] : 1;
+                            
+                            // Make sure value is between 1-5
+                            $value = max(1, min(5, $value));
+                            
+                            $options[] = [
+                                'text' => trim($option['text']),
+                                'value' => $value
+                            ];
+                        }
                     }
+                }
+                
+                // Log processed options for debugging
+                Log::info('Processed options:', ['options' => $options]);
+                
+                if (empty($options)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Pertanyaan pilihan ganda harus memiliki minimal satu opsi'
+                    ], 422);
                 }
             }
 
@@ -208,6 +262,12 @@ class QuestionnaireControllerOpe extends Controller
             ]);
 
             $questionnaire->questions()->save($question);
+            
+            Log::info('Saved question:', [
+                'id' => $question->id,
+                'type' => $question->question_type,
+                'options' => $question->options
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -215,6 +275,10 @@ class QuestionnaireControllerOpe extends Controller
                 'data' => $question
             ]);
         } catch (\Exception $e) {
+            Log::error('Error adding question: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()

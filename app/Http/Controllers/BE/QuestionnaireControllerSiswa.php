@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class QuestionnaireControllerSiswa extends Controller
 {
@@ -26,7 +27,7 @@ class QuestionnaireControllerSiswa extends Controller
     /**
      * Tampilkan kuesioner yang aktif untuk siswa
      */
-    public function showQuestionnaire()
+    public function showQuestionnaire(Request $request)
     {
         // Ambil siswa yang login
         $student = Students::where('user_id', Auth::id())->first();
@@ -40,7 +41,8 @@ class QuestionnaireControllerSiswa extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if ($response && $student->has_completed_questionnaire) {
+        // Check if student has completed questionnaire and not requesting to retake
+        if ($response && $student->has_completed_questionnaire && !$request->has('retake')) {
             return redirect()->route('student.recommendation.show')
                 ->with('info', 'Anda sudah mengisi kuesioner. Berikut adalah rekomendasi pekerjaan untuk Anda.');
         }
@@ -54,7 +56,10 @@ class QuestionnaireControllerSiswa extends Controller
             return back()->with('info', 'Belum ada kuesioner aktif saat ini.');
         }
 
-        return view('dashboard.siswa.rekomendasi.quisioner', compact('questionnaire', 'student'));
+        // If retaking, pass this information to view
+        $isRetake = $request->has('retake') && $student->has_completed_questionnaire;
+
+        return view('dashboard.siswa.rekomendasi.quisioner', compact('questionnaire', 'student', 'isRetake'));
     }
 
     /**
@@ -68,20 +73,54 @@ class QuestionnaireControllerSiswa extends Controller
                 'questionnaire_id' => 'required|exists:questionnaires,id',
                 'answers' => 'required|array',
                 'answers.*' => 'required',
+                'is_retake' => 'boolean',
             ]);
 
             $student = Students::where('user_id', Auth::id())->firstOrFail();
             $questionnaire = Questionnaire::findOrFail($request->questionnaire_id);
+            $isRetake = $request->boolean('is_retake', false);
 
             DB::beginTransaction();
 
-            // Create response
-            $response = QuestionnaireResponse::create([
+            // If this is a retake, handle previous responses
+            if ($isRetake && $student->has_completed_questionnaire) {
+                try {
+                    // Check if archived column exists before trying to use it
+                    if (Schema::hasColumn('questionnaire_responses', 'archived')) {
+                        // Mark previous responses as archived
+                        QuestionnaireResponse::where('student_id', $student->id)
+                            ->update(['archived' => true]);
+                    } else {
+                        // If column doesn't exist, just log it - we'll proceed anyway
+                        Log::warning("The 'archived' column does not exist in questionnaire_responses table. Run the migration first.");
+                    }
+                    
+                    // Log that user is retaking the questionnaire
+                    Log::info("Student ID {$student->id} is retaking the questionnaire");
+                } catch (\Exception $e) {
+                    // Just log the exception and continue - don't let this stop the process
+                    Log::error("Error updating archived status: " . $e->getMessage());
+                }
+            }
+            // If not retake, but user already completed questionnaire, show error
+            else if (!$isRetake && $student->has_completed_questionnaire) {
+                return back()->with('error', 'Anda sudah pernah mengisi kuesioner ini. Silakan gunakan fitur "Ambil Ulang Kuesioner" untuk mengisi ulang.');
+            }
+
+            // Create response with properties we know exist
+            $responseData = [
                 'questionnaire_id' => $request->questionnaire_id,
                 'student_id' => $student->id,
                 'completion_date' => now(),
-                'recommendation_result' => null // Will be updated after calculation
-            ]);
+                'recommendation_result' => null, // Will be updated after calculation
+            ];
+            
+            // Only add archived field if the column exists
+            if (Schema::hasColumn('questionnaire_responses', 'archived')) {
+                $responseData['archived'] = false;
+            }
+            
+            $response = QuestionnaireResponse::create($responseData);
 
             // Save all answers first
             foreach ($request->answers as $questionId => $answer) {
@@ -105,9 +144,10 @@ class QuestionnaireControllerSiswa extends Controller
                 'recommendation_result' => $recommendations
             ]);
 
-            // Mark student as completed
-            $student->update(['has_completed_questionnaire' => true]);
-
+            // Mark student as completed - explicitly update with correct field name
+            Log::info('Marking student ID ' . $student->id . ' as completed questionnaire');
+            $updateResult = $student->update(['has_completed_questionnaire' => true]);
+            
             DB::commit();
 
             // Use absolute URL and ensure session data is saved
@@ -161,23 +201,33 @@ class QuestionnaireControllerSiswa extends Controller
      */
     private function normalizeAnswerValue($question, $answerValue)
     {
+        if (!$question) {
+            return 0;
+        }
+
         switch ($question->question_type) {
             case 'scale':
                 // Use the scale value directly (1-5)
-                return (float) $answerValue;
+                return min(5, max(1, (float) $answerValue));
 
             case 'multiple_choice':
-                // For multiple choice, look up the mapped value
-                $options = $question->options ?? [];
-                foreach ($options as $option) {
-                    if (isset($option['text']) && $option['text'] == $answerValue) {
-                        return isset($option['value']) ? (float) $option['value'] : 5;
+                // For multiple choice, find the corresponding value from options
+                if (!is_array($question->options)) {
+                    return 1; // Default if no options defined
+                }
+                
+                foreach ($question->options as $option) {
+                    // Match by text (what the user selected)
+                    if (is_array($option) && isset($option['text']) && $option['text'] == $answerValue) {
+                        return isset($option['value']) ? min(5, max(1, (float)$option['value'])) : 3;
                     }
                 }
-                return 1; // Default value
+                
+                // If no match found (shouldn't happen), return middle value
+                return 3;
 
             case 'text':
-                // Text answers aren't used in calculation
+                // Text answers aren't directly used in calculations
                 return 0;
 
             default:
