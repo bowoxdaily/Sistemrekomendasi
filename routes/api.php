@@ -82,9 +82,35 @@ Route::group(['middleware' => ['web', 'auth']], function () {
     });
     Route::group(['prefix' => 'siswa'], function () {
         Route::post('/insert/data/graduation', [DataSiswaController::class, 'insertData']);
+        Route::post('/update/profile', [SiswaControllerBE::class, 'updatesiswaProfile']);
     });
 
     // Statistics Routes
     Route::get('/stats/students', [SiswaControllerBE::class, 'getCount'])
         ->name('api.stats.students');
+
+    // Add settings CRUD operations
+    Route::middleware(['auth:sanctum'])->prefix('settings')->group(function() {
+        // General settings
+        Route::put('/general', [App\Http\Controllers\BE\SettingsController::class, 'updateGeneral']);
+        
+        // Logo settings
+        Route::post('/logo', [App\Http\Controllers\BE\SettingsController::class, 'updateLogo']);
+        
+        // School information
+        Route::put('/school', [App\Http\Controllers\BE\SettingsController::class, 'updateSchool']);
+        
+        // Appearance settings
+        Route::put('/appearance', [App\Http\Controllers\BE\SettingsController::class, 'updateAppearance']);
+        
+        // Mail settings
+        Route::put('/mail', [App\Http\Controllers\BE\SettingsController::class, 'updateMail']);
+        
+        // Backup & Restore operations
+        Route::post('/backup/generate', [App\Http\Controllers\BE\SettingsController::class, 'generateBackup']);
+        Route::post('/backup/restore', [App\Http\Controllers\BE\SettingsController::class, 'restoreBackup']);
+        Route::delete('/backup/delete', [App\Http\Controllers\BE\SettingsController::class, 'deleteBackup']);
+        Route::post('/backup/schedule', [App\Http\Controllers\BE\SettingsController::class, 'updateBackupSchedule']);
+        Route::post('/maintenance/toggle', [App\Http\Controllers\BE\SettingsController::class, 'toggleMaintenance']);
+    });
 });

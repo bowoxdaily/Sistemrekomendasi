@@ -60,6 +60,10 @@ class User extends Authenticatable
     {
         return $this->hasOne(Students::class);
     }
+    public function operator()
+    {
+        return $this->hasOne(Operators::class);
+    }
     public function DataBelumKerja()
     {
         return $this->hasOne(DataBelumKerja::class);

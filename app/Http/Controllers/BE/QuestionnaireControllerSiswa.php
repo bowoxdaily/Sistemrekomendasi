@@ -36,6 +36,12 @@ class QuestionnaireControllerSiswa extends Controller
                 ->with('error', 'Profil siswa tidak ditemukan.');
         }
 
+        // Check if student status is eligible for questionnaire (only belum_kerja)
+        if ($student->status_setelah_lulus !== 'belum_kerja') {
+            return redirect()->route('student.dashboard')
+                ->with('info', 'Maaf, kuesioner hanya tersedia untuk alumni yang belum bekerja.');
+        }
+
         // Cek apakah siswa memiliki respon kuesioner
         $response = QuestionnaireResponse::where('student_id', $student->id)
             ->orderBy('created_at', 'desc')
@@ -144,9 +150,12 @@ class QuestionnaireControllerSiswa extends Controller
                 'recommendation_result' => $recommendations
             ]);
 
-            // Mark student as completed - explicitly update with correct field name
-            Log::info('Marking student ID ' . $student->id . ' as completed questionnaire');
-            $updateResult = $student->update(['has_completed_questionnaire' => true]);
+            // Mark student as completed questionnaire and profile as complete
+            Log::info('Marking student ID ' . $student->id . ' as completed questionnaire and profile complete');
+            $updateResult = $student->update([
+                'has_completed_questionnaire' => true,
+                'is_profile_complete' => true
+            ]);
             
             DB::commit();
 

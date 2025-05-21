@@ -1,11 +1,20 @@
 <!-- partials/navbar.blade.php -->
+@php
+    use App\Models\Setting;
+    
+    // Get custom logos with fallbacks to defaults
+    $mainLogo = Setting::get('logo_path', asset('admin/images/logo.svg'));
+    $miniLogo = Setting::get('logo_mini_path', asset('admin/images/logo-mini.svg'));
+    $logoAlt = Setting::get('logo_alt_text', 'logo');
+@endphp
+
 <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
     <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
         <a class="navbar-brand brand-logo mr-5" href="{{ route('dashboard') }}">
-            <img src="{{ asset('admin/images/logo.svg') }}" class="mr-2" alt="logo" />
+            <img src="{{ $mainLogo }}" class="mr-2" alt="{{ $logoAlt }}" style="height: auto; max-height: 40px; width: auto; object-fit: contain;" />
         </a>
         <a class="navbar-brand brand-logo-mini" href="{{ route('dashboard') }}">
-            <img src="{{ asset('admin/images/logo-mini.svg') }}" alt="logo" />
+            <img src="{{ $miniLogo }}" alt="{{ $logoAlt }}" style="height: auto; max-height: 30px; width: auto; object-fit: contain;" />
         </a>
     </div>
     <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
@@ -171,4 +180,50 @@
             });
         });
     </script>
+@endpush
+
+@push('styles')
+<style>
+    /* Enhanced navbar logo styling */
+    .navbar .navbar-brand-wrapper {
+        transition: width 0.25s ease, background 0.25s ease;
+        padding: 0 1.75rem;
+        overflow: hidden;
+    }
+    
+    .navbar .navbar-brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .navbar .navbar-brand img {
+        transition: all 0.2s linear;
+    }
+    
+    .navbar .navbar-brand.brand-logo img {
+        max-width: 100%;
+        height: auto;
+        max-height: 40px;
+        width: auto;
+        object-fit: contain;
+    }
+    
+    .navbar .navbar-brand.brand-logo-mini img {
+        max-height: 30px;
+    }
+    
+    /* Fixes for responsive views */
+    @media (max-width: 991px) {
+        .navbar .navbar-brand-wrapper {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        .navbar .navbar-brand.brand-logo img {
+            max-height: 35px;
+        }
+    }
+</style>
 @endpush

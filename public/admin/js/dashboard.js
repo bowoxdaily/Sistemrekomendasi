@@ -1,92 +1,262 @@
 (function($) {
   'use strict';
   $(function() {
-    if ($("#order-chart").length) {
-      var areaData = {
-        labels: ["10","","","20","","","30","","","40","","", "50","","", "60","","","70"],
-        datasets: [
-          {
-            data: [200, 480, 700, 600, 620, 350, 380, 350, 850, "600", "650", "350", "590", "350", "620", "500", "990", "780", "650"],
-            borderColor: [
-              '#4747A1'
-            ],
-            borderWidth: 2,
-            fill: false,
-            label: "Orders"
+    // Ensure Chart.js is available
+    if (!window.Chart) {
+      console.error('Chart.js is not loaded!');
+      return;
+    }
+
+    // Fix for chart legend generation in Chart.js 3.x
+    const getOrCreateLegendList = (chart, id) => {
+      const legendContainer = document.getElementById(id);
+      let listContainer = legendContainer.querySelector('ul');
+
+      if (!listContainer) {
+        listContainer = document.createElement('ul');
+        listContainer.style.display = 'flex';
+        listContainer.style.flexWrap = 'wrap';
+        listContainer.style.margin = 0;
+        listContainer.style.padding = 0;
+
+        legendContainer.appendChild(listContainer);
+      }
+
+      return listContainer;
+    };
+
+    // Custom legend plugin for Chart.js 3.x
+    const customLegend = {
+      id: 'customLegend',
+      afterUpdate(chart, args, options) {
+        const id = options.containerID;
+        const ul = getOrCreateLegendList(chart, id);
+        
+        // Remove old legend items
+        while (ul.firstChild) {
+          ul.firstChild.remove();
+        }
+        
+        // Generate new legend items
+        const items = chart.options.plugins.legend.labels.generateLabels(chart);
+        
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.style.alignItems = 'center';
+          li.style.cursor = 'pointer';
+          li.style.display = 'flex';
+          li.style.flexDirection = 'row';
+          li.style.marginRight = '10px';
+          
+          li.onclick = () => {
+            const {type} = chart.config;
+            if (type === 'pie' || type === 'doughnut') {
+              chart.toggleDataVisibility(item.index);
+            } else {
+              chart.setDatasetVisibility(item.datasetIndex, !chart.isDatasetVisible(item.datasetIndex));
+            }
+            chart.update();
+          };
+          
+          // Color box
+          const boxSpan = document.createElement('span');
+          boxSpan.style.background = item.fillStyle;
+          boxSpan.style.borderColor = item.strokeStyle;
+          boxSpan.style.borderWidth = item.lineWidth + 'px';
+          boxSpan.style.display = 'inline-block';
+          boxSpan.style.height = '12px';
+          boxSpan.style.marginRight = '5px';
+          boxSpan.style.width = '12px';
+          
+          // Text
+          const textContainer = document.createElement('p');
+          textContainer.style.color = '#666';
+          textContainer.style.margin = 0;
+          textContainer.style.padding = 0;
+          textContainer.style.textDecoration = item.hidden ? 'line-through' : '';
+          
+          const text = document.createTextNode(item.text);
+          textContainer.appendChild(text);
+          
+          li.appendChild(boxSpan);
+          li.appendChild(textContainer);
+          ul.appendChild(li);
+        });
+      }
+    };
+
+    // Sales chart
+    if ($('#sales-chart').length) {
+      var SalesChart = new Chart($('#sales-chart').get(0).getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+          datasets: [{
+            label: 'Offline Sales',
+            data: [480, 230, 470, 210, 330, 400, 450, 280, 370, 510, 330, 400],
+            backgroundColor: '#4B49AC'
           },
           {
-            data: [400, 450, 410, 500, 480, 600, 450, 550, 460, "560", "450", "700", "450", "640", "550", "650", "400", "850", "800"],
-            borderColor: [
-              '#F09397'
-            ],
-            borderWidth: 2,
-            fill: false,
-            label: "Downloads"
+            label: 'Online Sales',
+            data: [400, 340, 550, 480, 170, 320, 190, 550, 280, 250, 450, 130],
+            backgroundColor: '#98BDFF'
           }
-        ]
-      };
-      var areaOptions = {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-          filler: {
-            propagate: false
-          }
+          ]
         },
-        scales: {
-          xAxes: [{
-            display: true,
-            ticks: {
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          layout: {
+            padding: {
+              left: 0,
+              right: 0,
+              top: 20,
+              bottom: 0
+            }
+          },
+          scales: {
+            // Updated syntax for Chart.js 3.x
+            y: {
               display: true,
-              padding: 10,
-              fontColor:"#6C7383"
+              grid: {
+                display: true,
+                drawBorder: false,
+                color: "#F2F2F2"
+              },
+              ticks: {
+                display: true,
+                min: 0,
+                max: 600,
+                stepSize: 100,
+                callback: function(value) {
+                  return value + 'K';
+                },
+                color: "#6C7383"
+              }
             },
-            gridLines: {
+            x: {
+              grid: {
+                display: false,
+                drawBorder: false
+              },
+              ticks: {
+                display: true,
+                color: "#6C7383"
+              }
+            }
+          },
+          plugins: {
+            legend: {
               display: false,
-              drawBorder: false,
-              color: 'transparent',
-              zeroLineColor: '#eeeeee'
-            }
-          }],
-          yAxes: [{
-            display: true,
-            ticks: {
-              display: true,
-              autoSkip: false,
-              maxRotation: 0,
-              stepSize: 200,
-              min: 200,
-              max: 1200,
-              padding: 18,
-              fontColor:"#6C7383"
+              labels: {
+                display: false
+              }
             },
-            gridLines: {
-              display: true,
-              color:"#f2f2f2",
-              drawBorder: false
+            customLegend: {
+              containerID: 'sales-legend'
             }
-          }]
+          }
         },
-        legend: {
-          display: false
-        },
-        tooltips: {
-          enabled: true
-        },
-        elements: {
-          line: {
-            tension: .35
+        plugins: [customLegend]
+      });
+    }
+
+    // Order chart
+    if ($("#order-chart").length) {
+      var OrderChart = new Chart($("#order-chart").get(0).getContext("2d"), {
+        type: 'line',
+        data: {
+          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"],
+          datasets: [{
+            label: 'Processed',
+            data: [480, 230, 470, 310, 530, 300, 640, 280, 480, 340],
+            backgroundColor: 'transparent',
+            borderColor: '#4747A1',
+            borderWidth: 2.5,
+            tension: 0.3,
+            pointBackgroundColor: '#4747A1',
+            pointBorderColor: '#F1F1F1',
+            pointBorderWidth: 2,
+            pointRadius: 4
           },
-          point: {
-            radius: 0
+          {
+            label: 'New',
+            data: [400, 370, 350, 470, 180, 400, 500, 380, 270, 390],
+            backgroundColor: 'transparent',
+            borderColor: '#F09397',
+            borderWidth: 2.5,
+            tension: 0.3,
+            pointBackgroundColor: '#F09397',
+            pointBorderColor: '#F1F1F1',
+            pointBorderWidth: 2,
+            pointRadius: 4
+          }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          layout: {
+            padding: {
+              left: 0,
+              right: 0,
+              top: 20,
+              bottom: 0
+            }
+          },
+          scales: {
+            // Updated syntax for Chart.js 3.x
+            y: {
+              display: true,
+              grid: {
+                display: true,
+                drawBorder: false,
+                color: "#F0F0F0"
+              },
+              ticks: {
+                beginAtZero: false,
+                min: 0,
+                max: 800,
+                stepSize: 200,
+                color: "#6C7383"
+              }
+            },
+            x: {
+              grid: {
+                display: false,
+                drawBorder: false,
+              },
+              ticks: {
+                color: "#6C7383"
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              titleColor: '#6C7383',
+              bodyColor: '#6C7383',
+              titleFont: {
+                size: 12,
+                weight: 'normal'
+              },
+              bodyFont: {
+                size: 12
+              },
+              backgroundColor: '#F8F9FA',
+              borderColor: '#F8F9FA',
+              borderWidth: 1,
+              displayColors: false,
+            }
+          },
+          elements: {
+            point: {
+              radius: 0
+            }
           }
         }
-      }
-      var revenueChartCanvas = $("#order-chart").get(0).getContext("2d");
-      var revenueChart = new Chart(revenueChartCanvas, {
-        type: 'line',
-        data: areaData,
-        options: areaOptions
       });
     }
     if ($("#order-chart-dark").length) {
@@ -122,21 +292,21 @@
           }
         },
         scales: {
-          xAxes: [{
+          x: {
             display: true,
             ticks: {
               display: true,
               padding: 10,
               fontColor:"#fff"
             },
-            gridLines: {
+            grid: {
               display: false,
               drawBorder: false,
               color: 'transparent',
               zeroLineColor: '#575757'
             }
-          }],
-          yAxes: [{
+          },
+          y: {
             display: true,
             ticks: {
               display: true,
@@ -148,12 +318,12 @@
               padding: 18,
               fontColor:"#fff"
             },
-            gridLines: {
+            grid: {
               display: true,
               color:"#575757",
               drawBorder: false
             }
-          }]
+          }
         },
         legend: {
           display: false
@@ -176,81 +346,6 @@
         data: areaData,
         options: areaOptions
       });
-    }
-    if ($("#sales-chart").length) {
-      var SalesChartCanvas = $("#sales-chart").get(0).getContext("2d");
-      var SalesChart = new Chart(SalesChartCanvas, {
-        type: 'bar',
-        data: {
-          labels: ["Jan", "Feb", "Mar", "Apr", "May"],
-          datasets: [{
-              label: 'Offline Sales',
-              data: [480, 230, 470, 210, 330],
-              backgroundColor: '#98BDFF'
-            },
-            {
-              label: 'Online Sales',
-              data: [400, 340, 550, 480, 170],
-              backgroundColor: '#4B49AC'
-            }
-          ]
-        },
-        options: {
-          cornerRadius: 5,
-          responsive: true,
-          maintainAspectRatio: true,
-          layout: {
-            padding: {
-              left: 0,
-              right: 0,
-              top: 20,
-              bottom: 0
-            }
-          },
-          scales: {
-            yAxes: [{
-              display: true,
-              gridLines: {
-                display: true,
-                drawBorder: false,
-                color: "#F2F2F2"
-              },
-              ticks: {
-                display: true,
-                min: 0,
-                max: 560,
-                callback: function(value, index, values) {
-                  return  value + '$' ;
-                },
-                autoSkip: true,
-                maxTicksLimit: 10,
-                fontColor:"#6C7383"
-              }
-            }],
-            xAxes: [{
-              stacked: false,
-              ticks: {
-                beginAtZero: true,
-                fontColor: "#6C7383"
-              },
-              gridLines: {
-                color: "rgba(0, 0, 0, 0)",
-                display: false
-              },
-              barPercentage: 1
-            }]
-          },
-          legend: {
-            display: false
-          },
-          elements: {
-            point: {
-              radius: 0
-            }
-          }
-        },
-      });
-      document.getElementById('sales-legend').innerHTML = SalesChart.generateLegend();
     }
     if ($("#sales-chart-dark").length) {
       var SalesChartCanvas = $("#sales-chart-dark").get(0).getContext("2d");
@@ -283,9 +378,9 @@
             }
           },
           scales: {
-            yAxes: [{
+            y: {
               display: true,
-              gridLines: {
+              grid: {
                 display: true,
                 drawBorder: false,
                 color: "#575757"
@@ -301,19 +396,19 @@
                 maxTicksLimit: 10,
                 fontColor:"#F0F0F0"
               }
-            }],
-            xAxes: [{
+            },
+            x: {
               stacked: false,
               ticks: {
                 beginAtZero: true,
                 fontColor: "#F0F0F0"
               },
-              gridLines: {
+              grid: {
                 color: "#575757",
                 display: false
               },
               barPercentage: 1
-            }]
+            }
           },
           legend: {
             display: false

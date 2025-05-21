@@ -11,13 +11,12 @@
             <!-- Menu khusus operator -->
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#admin-menu" aria-expanded="false">
-                    <i class="mdi mdi-account-cog menu-icon"></i> {{-- Ganti ikon sesuai kebutuhan --}}
+                    <i class="mdi mdi-account-cog menu-icon"></i>
                     <span class="menu-title">Manajemen</span>
                     <i class="menu-arrow"></i>
                 </a>
                 <div class="collapse" id="admin-menu">
                     <ul class="nav flex-column sub-menu">
-                        {{-- Tambahkan item submenu di sini tanpa icon jika tidak diperlukan --}}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('view.siswa') }}">Manajemen User</a>
                         </li>
@@ -35,6 +34,31 @@
                     </ul>
                 </div>
             </li>
+            
+            <!-- New Settings Menu for Operator -->
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#settings-menu" aria-expanded="false">
+                    <i class="mdi mdi-settings menu-icon"></i>
+                    <span class="menu-title">Pengaturan Sistem</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="settings-menu">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('operator.settings.general') }}">Pengaturan Umum</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('operator.settings.logo') }}">Logo & Gambar</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('operator.settings.school') }}">Informasi Sekolah</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('operator.settings.backup') }}">Backup & Restore</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
         @endif
 
 
@@ -43,15 +67,59 @@
             @if (auth()->user()->role === 'siswa')
                 <!-- Menu khusus siswa -->
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="icon-book-open menu-icon"></i>
-                        <span class="menu-title">Kelas Saya</span>
+                    <a class="nav-link" href="{{ route('siswa.profile') }}">
+                        <i class="icon-user menu-icon"></i>
+                        <span class="menu-title">Profil Saya</span>
                     </a>
                 </li>
+                
+                @if(Auth::user()->student->status_setelah_lulus === 'belum_kerja')
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('student.kuis') }}">
+                            <i class="icon-doc menu-icon"></i>
+                            <span class="menu-title">Kuesioner Karir</span>
+                            @php
+                                $hasCompleted = Auth::user()->student->has_completed_questionnaire;
+                            @endphp
+                            <span class="badge {{ $hasCompleted ? 'badge-success' : 'badge-warning' }} ml-2">
+                                {{ $hasCompleted ? 'Selesai' : 'Belum Diisi' }}
+                            </span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('student.recommendation.show') }}">
+                            <i class="icon-briefcase menu-icon"></i>
+                            <span class="menu-title">Rekomendasi Pekerjaan</span>
+                        </a>
+                    </li>
+                @endif
+                
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="collapse" href="#info-menu" aria-expanded="false">
+                        <i class="icon-info menu-icon"></i>
+                        <span class="menu-title">Informasi</span>
+                        <i class="menu-arrow"></i>
+                    </a>
+                    <div class="collapse" id="info-menu">
+                        <ul class="nav flex-column sub-menu">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Lowongan Kerja</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#}">Info Beasiswa</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Tips Karir</a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                
                 <li class="nav-item">
                     <a class="nav-link" href="#">
-                        <i class="icon-note menu-icon"></i>
-                        <span class="menu-title">Tugas</span>
+                        <i class="icon-people menu-icon"></i>
+                        <span class="menu-title">Data Alumni</span>
                     </a>
                 </li>
             @endif
@@ -72,12 +140,6 @@
                     </div>
                 </li>
             @endif
-
-
-
-
-
-
 
             @if (auth()->user()->role === 'operator')
                 <li class="nav-item">

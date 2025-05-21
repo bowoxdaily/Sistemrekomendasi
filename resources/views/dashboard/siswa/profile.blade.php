@@ -266,7 +266,7 @@
                     $('#profileUpdateBtn').attr('disabled', true).text('Saving...');
 
                     $.ajax({
-                        url: "{{ route('api.student.profile.update') }}",
+                        url: _baseURL + 'api/siswa/update/profile',
                         method: 'POST',
                         data: formData,
                         contentType: false,
@@ -276,21 +276,17 @@
 
                             // Update tampilan data di halaman
                             if (res.data) {
-                                $('[data-field="nama_lengkap"]').text(res.data.student
-                                    .nama_lengkap);
-                                $('[data-field="tempat_lahir"]').text(res.data.student
-                                    .tempat_lahir);
-                                $('[data-field="tanggal_lahir"]').text(res.data.student
-                                    .tanggal_lahir);
-                                $('[data-field="jenis_kelamin"]').text(res.data.student
-                                    .jenis_kelamin);
-                                $('[data-field="alamat"]').text(res.data.student.alamat);
+                                $('[data-field="nama_lengkap"]').text(res.data.nama_lengkap);
+                                $('[data-field="tempat_lahir"]').text(res.data.tempat_lahir);
+                                $('[data-field="tanggal_lahir"]').text(res.data.tanggal_lahir);
+                                $('[data-field="jenis_kelamin"]').text(res.data.jenis_kelamin);
+                                $('[data-field="alamat"]').text(res.data.alamat);
                                 $('[data-field="no_telp"]').text(res.data.no_telp);
                                 $('[data-field="email"]').text(res.data.email);
                             }
 
-                            if (res.data.foto) {
-                                $('#profilePic').attr('src', res.data.foto);
+                            if (res.data && res.data.foto_url) {
+                                $('#profilePic').attr('src', res.data.foto_url);
                             }
 
                             // Reload halaman setelah delay singkat agar toastr terlihat

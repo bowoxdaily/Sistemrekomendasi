@@ -268,4 +268,82 @@ class SiswaControllerBE extends Controller
 
         return redirect()->route('dashboard')->with('success', 'Data kuliah berhasil disimpan');
     }
+
+    public function updatesiswaProfile(Request $request)
+    {
+        $user = Auth::user();
+        $student = Students::where('user_id', $user->id)->first();
+
+        if (!$student) {
+            return response()->json(['status' => 'error', 'message' => 'Student not found'], 404);
+        }
+
+        // Validate the request
+        $validator = Validator::make($request->all(), [
+            'tempat_lahir' => 'required|string|max:255',
+            'tanggal_lahir' => 'required|date',
+            'alamat' => 'required|string',
+            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
+            'no_telp' => 'required|string|max:20',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Update student profile
+            $student->tempat_lahir = $request->tempat_lahir;
+            $student->tanggal_lahir = $request->tanggal_lahir;
+            $student->alamat = $request->alamat;
+            $student->jenis_kelamin = $request->jenis_kelamin;
+            $student->save();
+
+            // Update user data
+            $user->no_telp = $request->no_telp;
+            $user->email = $request->email;
+
+            // Handle photo upload
+            $foto_url = null;
+            if ($request->hasFile('foto')) {
+                // Remove old photo if exists
+                if ($user->foto) {
+                    Storage::delete('public/user_photos/' . $user->foto);
+                }
+
+                // Save new photo
+                $photoName = time() . '.' . $request->foto->extension();
+                $request->foto->storeAs('public/user_photos', $photoName);
+                $user->foto = $photoName;
+                $foto_url = asset('storage/user_photos/' . $photoName);
+            }
+
+            $user->save();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Profil berhasil diperbarui!',
+                'data' => [
+                    'nama_lengkap' => $student->nama_lengkap,
+                    'tempat_lahir' => $student->tempat_lahir,
+                    'tanggal_lahir' => $student->tanggal_lahir,
+                    'jenis_kelamin' => $student->jenis_kelamin,
+                    'alamat' => $student->alamat,
+                    'no_telp' => $user->no_telp,
+                    'email' => $user->email,
+                    'foto_url' => $foto_url,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

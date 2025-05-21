@@ -1,4 +1,13 @@
 {{-- resources/views/auth/passwords/email.blade.php --}}
+@php
+    use App\Models\Setting;
+    
+    // Get custom logo with fallback to default
+    $mainLogo = Setting::get('logo_path', asset('admin/images/logo.svg'));
+    $logoAlt = Setting::get('logo_alt_text', 'Logo Sistem');
+    $siteTitle = Setting::get('site_name', 'Forgot Password');
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,7 +16,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Forgot Password</title>
+    <title>{{ $siteTitle }} - Forgot Password</title>
     
     <!-- jQuery harus dimuat terlebih dahulu -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -23,7 +32,35 @@
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     
-    <link rel="shortcut icon" href="{{ asset('admin/images/favicon.png') }}" />
+    <link rel="shortcut icon" href="{{ Setting::get('favicon_path', asset('admin/images/favicon.png')) }}" />
+    
+    <style>
+        .brand-logo {
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .brand-logo img {
+            transition: all 0.3s ease;
+            max-width: 100%;
+            max-height: 120px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+        
+        @media (max-width: 576px) {
+            .brand-logo {
+                min-height: 100px;
+            }
+            
+            .brand-logo img {
+                max-height: 100px;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -33,8 +70,8 @@
                 <div class="row w-100 mx-0">
                     <div class="col-lg-4 mx-auto">
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
-                            <div class="brand-logo">
-                                <img src="{{ asset('admin/images/logo.svg') }}" alt="logo">
+                            <div class="brand-logo text-center mb-4">
+                                <img src="{{ $mainLogo }}" alt="{{ $logoAlt }}" class="img-fluid">
                             </div>
                             <h4>Forgot Password</h4>
                             <h6 class="font-weight-light">Enter your email to reset your password</h6>

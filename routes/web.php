@@ -6,6 +6,7 @@ use App\Http\Controllers\BE\JobRecommendataionController;
 use App\Http\Controllers\BE\KuisionerController;
 use App\Http\Controllers\BE\QuestionnaireControllerOpe;
 use App\Http\Controllers\BE\QuestionnaireControllerSiswa;
+use App\Http\Controllers\BE\SettingsController;
 use App\Http\Controllers\BE\SiswaControllerBE;
 use App\Http\Controllers\FE\AuthController;
 use App\Http\Controllers\FE\DashboardControllerFE;
@@ -48,7 +49,6 @@ Route::middleware(['role:siswa,guru,operator', 'check.student.profile'])->group(
         Route::get('/', [DashboardControllerFE::class, 'index'])->name('dashboard');
     });
     Route::group(['prefix' => 'operator'], function () {
-        Route::get('/dashboard', [DashboardControllerFE::class, 'index'])->name('dashboard');
         Route::get('/profile', [OperatorControllerFE::class, 'profile'])->name('operator.profile');
         Route::get('/tracerstudi', [OperatorControllerFE::class, 'tracer'])->name('tracer');
         Route::get('/data/siswa', [OperatorControllerFE::class, 'viewsiswa'])->name('view.siswa');
@@ -63,7 +63,6 @@ Route::middleware(['role:siswa,guru,operator', 'check.student.profile'])->group(
 
     Route::group(['prefix' => 'siswa'], function () {
         Route::get('/profile', [SiswaController::class, 'profile'])->name('siswa.profile');
-        Route::get('/dashboard', [DashboardControllerFE::class, 'index'])->name('dashboard');
         Route::get('/edit', [SiswaControllerBE::class, 'edit'])->name('student.profile.edit');
         // Rekomndasi
         Route::get('/questionnaire', [QuestionnaireControllerSiswa::class, 'showQuestionnaire'])->name('student.kuis');
@@ -74,4 +73,67 @@ Route::middleware(['role:siswa,guru,operator', 'check.student.profile'])->group(
         Route::post('/questionnaire/submit/rekomendasi', [QuestionnaireControllerSiswa::class, 'submitRecommendation'])
             ->name('student.questionnaire.submit.rekomendasi');
     });
+});
+
+// Add these routes to your web.php file
+
+// Stats API routes
+Route::prefix('api')->group(function () {
+    Route::get('/stats/students', [\App\Http\Controllers\Api\StatsController::class, 'getStudentStats'])
+        ->name('api.stats.students');
+    Route::get('/stats/tracer', [\App\Http\Controllers\Api\StatsController::class, 'getTracerStats'])
+        ->name('api.stats.tracer')->middleware('auth');
+});
+
+// Role-specific dashboard routes
+Route::middleware(['auth'])->group(function() {
+    Route::get('/dashboard/operator', [DashboardControllerFE::class, 'operatorDashboard'])->name('operator.dashboard');
+    Route::get('/dashboard/student', [DashboardControllerFE::class, 'studentDashboard'])->name('student.dashboard');
+    Route::get('/dashboard/teacher', [DashboardControllerFE::class, 'teacherDashboard'])->name('teacher.dashboard');
+});
+
+// Operator Settings Routes
+Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->group(function() {
+    // View routes only
+    Route::get('/general', [SettingsController::class, 'general'])->name('operator.settings.general');
+    Route::get('/logo', [SettingsController::class, 'logo'])->name('operator.settings.logo');
+    Route::get('/school', [SettingsController::class, 'school'])->name('operator.settings.school');
+
+    // Backup & Restore - views only
+    Route::get('/backup', [SettingsController::class, 'backup'])->name('operator.settings.backup');
+    Route::get('/backup/download/{filename}', [SettingsController::class, 'downloadBackup'])->name('operator.settings.backup.download');
+});
+
+// Clean up duplicate routes and ensure delete method is properly defined
+Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->name('operator.settings.')->group(function() {
+    // General settings
+    Route::get('/general', [App\Http\Controllers\BE\SettingsController::class, 'general'])->name('general');
+    Route::put('/general', [App\Http\Controllers\BE\SettingsController::class, 'updateGeneral'])->name('general.update');
+    
+    // Logo settings
+    Route::get('/logo', [App\Http\Controllers\BE\SettingsController::class, 'logo'])->name('logo');
+    Route::put('/logo', [App\Http\Controllers\BE\SettingsController::class, 'updateLogo'])->name('logo.update');
+    
+    // School information
+    Route::get('/school', [App\Http\Controllers\BE\SettingsController::class, 'school'])->name('school');
+    Route::put('/school', [App\Http\Controllers\BE\SettingsController::class, 'updateSchool'])->name('school.update');
+    
+    // Appearance settings
+    Route::get('/appearance', [App\Http\Controllers\BE\SettingsController::class, 'appearance'])->name('appearance');
+    Route::put('/appearance', [App\Http\Controllers\BE\SettingsController::class, 'updateAppearance'])->name('appearance.update');
+    
+    // Mail settings
+    Route::get('/mail', [App\Http\Controllers\BE\SettingsController::class, 'mail'])->name('mail');
+    Route::put('/mail', [App\Http\Controllers\BE\SettingsController::class, 'updateMail'])->name('mail.update');
+    
+    // Backup & Restore
+    Route::get('/backup', [App\Http\Controllers\BE\SettingsController::class, 'backup'])->name('backup');
+    Route::post('/backup/generate', [App\Http\Controllers\BE\SettingsController::class, 'generateBackup'])->name('backup.generate');
+    Route::post('/backup/restore', [App\Http\Controllers\BE\SettingsController::class, 'restoreBackup'])->name('backup.restore');
+    Route::get('/backup/download/{filename}', [App\Http\Controllers\BE\SettingsController::class, 'downloadBackup'])->name('backup.download');
+    Route::post('/backup/delete', [App\Http\Controllers\BE\SettingsController::class, 'deleteBackup'])->name('backup.delete'); // Changed from DELETE to POST
+    Route::post('/backup/schedule', [App\Http\Controllers\BE\SettingsController::class, 'updateBackupSchedule'])->name('backup.schedule');
+    
+    // Maintenance mode
+    Route::post('/maintenance/toggle', [App\Http\Controllers\BE\SettingsController::class, 'toggleMaintenance'])->name('maintenance.toggle');
 });
