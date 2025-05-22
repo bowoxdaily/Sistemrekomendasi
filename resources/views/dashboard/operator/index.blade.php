@@ -754,14 +754,6 @@
                 }
             }
             
-
-
-
-
-
-
-
-
             // Load tracer study data                        initRealTimeUpdates();            // Initialize real-time updates                        setInterval(loadWeatherData, 1800000); // 30 minutes            loadWeatherData();            // Load weather data immediately and refresh every 30 minutes            loadTracerData();
             
             // Make sure we load all data properly and in the right order

@@ -14,6 +14,7 @@ use App\Http\Controllers\FE\DashboardControllerFE;
 use App\Http\Controllers\FE\JurusanControllerFE;
 use App\Http\Controllers\FE\OperatorControllerFE;
 use App\Http\Controllers\FE\SiswaController;
+use App\Http\Controllers\FE\SuperadminControllerFE;
 use App\Http\Controllers\KuisionerControllerBE;
 use Illuminate\Support\Facades\Route;
 
@@ -44,11 +45,16 @@ Route::get('reset-password/{token}', [ForgotPasswordController::class, 'showRese
 Route::post('reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
 
 
-Route::middleware(['role:siswa,guru,operator', 'check.student.profile'])->group(function () {
+Route::middleware(['role:siswa,guru,operator,superadmin', 'check.student.profile'])->group(function () {
 
     Route::group(['prefix' => 'dashboard'], function () {
         Route::get('/', [DashboardControllerFE::class, 'index'])->name('dashboard');
     });
+    Route::group(['prefix'=>'superadmin'], function () {
+        Route::get('/operator', [SuperadminControllerFE::class, 'operator'])->name('superadmin.operator');
+        // Route::get('/operator', [DashboardControllerFE::class, 'index'])->name('superadmin.profile');
+    });
+
     Route::group(['prefix' => 'operator'], function () {
         Route::get('/profile', [OperatorControllerFE::class, 'profile'])->name('operator.profile');
         Route::get('/tracerstudi', [OperatorControllerFE::class, 'tracer'])->name('tracer');
@@ -109,17 +115,15 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->group
 Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->name('operator.settings.')->group(function() {
     // General settings
     Route::get('/general', [SettingsController::class, 'general'])->name('general');
-    Route::put('/general', [SettingsController::class, 'updateGeneral'])->name('general.update');
     // Logo settings
     Route::get('/logo', [SettingsController::class, 'logo'])->name('logo');  
     // School information
     Route::get('/school', [SettingsController::class, 'school'])->name('school');
-    Route::put('/school', [SettingsController::class, 'updateSchool'])->name('school.update');
     // Backup & Restore
     Route::get('/backup', [SettingsController::class, 'backup'])->name('backup');
-    Route::post('/backup/generate', [SettingsController::class, 'generateBackup'])->name('backup.generate');
     Route::get('/backup/download/{filename}', [SettingsController::class, 'downloadBackup'])->name('backup.download');
 
     
    
 });
+

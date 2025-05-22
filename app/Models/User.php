@@ -56,6 +56,10 @@ class User extends Authenticatable
     {
         $this->notify(new ResetPasswordNotification($token));
     }
+    public function superAdmin()
+    {
+        return $this->hasOne(SuperAdmin::class);
+    }
     public function student()
     {
         return $this->hasOne(Students::class);

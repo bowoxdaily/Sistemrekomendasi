@@ -6,28 +6,31 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     @php
         // Get settings from the database
         $siteName = App\Models\Setting::get('site_name', 'Sistem Tracer Study');
-        $siteDescription = App\Models\Setting::get('site_description', 'Sistem Pelacakan Alumni dan Rekomendasi Karir untuk SMK');
+        $siteDescription = App\Models\Setting::get(
+            'site_description',
+            'Sistem Pelacakan Alumni dan Rekomendasi Karir untuk SMK',
+        );
         $metaKeywords = App\Models\Setting::get('meta_keywords', 'tracer study, alumni, karir, smk');
         $favicon = App\Models\Setting::get('favicon_path', asset('admin/images/favicon.png'));
-        
+
     @endphp
-    
+
     <title>@yield('title', $siteName)</title>
-    
+
     <!-- Meta tags for SEO -->
     <meta name="description" content="{{ $siteDescription }}">
     <meta name="keywords" content="{{ $metaKeywords }}">
-    
+
     <!-- plugins:css -->
     <link rel="stylesheet" href="{{ asset('admin/vendors/feather/feather.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/vendors/ti-icons/css/themify-icons.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/vendors/css/vendor.bundle.base.css') }}">
     <!-- endinject -->
-    
+
     <!-- Plugin css for this page -->
     <link rel="stylesheet" href="{{ asset('admin/vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/vendors/ti-icons/css/themify-icons.css') }}">
@@ -36,16 +39,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <!-- End plugin css for this page -->
-    
+
     <!-- inject:css -->
     <link rel="stylesheet" href="{{ asset('admin/css/vertical-layout-light/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <!-- endinject -->
-    
+
     <!-- Dynamic favicon -->
     <link rel="shortcut icon" href="{{ $favicon }}" />
-    
+
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
@@ -92,6 +97,8 @@
     <script src="{{ asset('admin/vendors/datatables.net/jquery.dataTables.js') }}"></script>
     <script src="{{ asset('admin/vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script>
     <script src="{{ asset('admin/js/dataTables.select.min.js') }}"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- End plugin js for this page -->
 
     <!-- inject:js -->

@@ -26,6 +26,8 @@ class DashboardControllerFE extends Controller
             return view('dashboard.siswa.dashboard', compact('user'));
         } elseif ($user->role == 'guru') {
             return view('dashboard.guru', compact('user'));
+        } elseif ($user->role == 'superadmin') {
+            return view('dashboard.superadmin.index', compact('user'));
         } elseif ($user->role == 'operator') {
             // Ensure operator gets the correct dashboard
             return view('dashboard.operator.index', compact('user'));

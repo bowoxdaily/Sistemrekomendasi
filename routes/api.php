@@ -8,6 +8,7 @@ use App\Http\Controllers\BE\OperatorControllerBE;
 use App\Http\Controllers\BE\QuestionnaireControllerOpe;
 use App\Http\Controllers\BE\SettingsController;
 use App\Http\Controllers\BE\SiswaControllerBE;
+use App\Http\Controllers\BE\SuperAdminController;
 use App\Models\Jurusan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +46,14 @@ Route::group(['middleware' => ['web', 'auth']], function () {
     Route::post('/student/change-password', [AuthController::class, 'changePassword'])
         ->name('api.student.change-password');
 
+    Route::group(['prefix' => 'superadmin'], function () {
+        Route::get('/operator', [SuperAdminController::class, 'getOperators']);
+        Route::get('/operator/{id}', [SuperAdminController::class, 'getOperator']);
+        Route::post('/operator', [SuperAdminController::class, 'storeOperator']);
+        Route::put('/operator/{id}', [SuperAdminController::class, 'updateOperator']);
+        Route::delete('/operator/{id}', [SuperAdminController::class, 'deleteOperator']);
+    });
+
     Route::group(['prefix' => 'profile-operator'], function () {
         Route::post('/', [OperatorControllerBE::class, 'updateProfile']);
         // Route Siswa
@@ -81,16 +90,7 @@ Route::group(['middleware' => ['web', 'auth']], function () {
             Route::get('/{questionnaire}/questions', [QuestionnaireControllerOpe::class, 'getQuestions']);
         });
     });
-    Route::group(['prefix' => 'siswa'], function () {
-        Route::post('/insert/data/graduation', [DataSiswaController::class, 'insertData']);
-        Route::post('/update/profile', [SiswaControllerBE::class, 'updatesiswaProfile']);
-    });
-    // Statistics Routes
-    Route::get('/stats/students', [SiswaControllerBE::class, 'getCount'])
-        ->name('api.stats.students');
-
-    Route::middleware(['auth:sanctum'])->prefix('settings')->group(function() {
-        // General settings
+    Route::group(['prefix' => 'settings'], function () {
         Route::put('/general', [SettingsController::class, 'updateGeneral']);
         // Logo settings
         Route::post('/logo', [SettingsController::class, 'updateLogo']);
@@ -101,9 +101,13 @@ Route::group(['middleware' => ['web', 'auth']], function () {
         Route::post('/backup/restore', [SettingsController::class, 'restoreBackup']);
         Route::post('/backup/delete', [SettingsController::class, 'deleteBackup']);
         Route::post('/backup/schedule', [SettingsController::class, 'updateBackupSchedule']);
-    
     });
-    // Remove the Student Activity Routes since the feature is no longer used
-    // Route::get('/student/activities', [App\Http\Controllers\BE\StudentActivityController::class, 'getActivities'])
-    //     ->name('api.student.activities');
+
+    Route::group(['prefix' => 'siswa'], function () {
+        Route::post('/insert/data/graduation', [DataSiswaController::class, 'insertData']);
+        Route::post('/update/profile', [SiswaControllerBE::class, 'updatesiswaProfile']);
+    });
+    // Statistics Routes
+    Route::get('/stats/students', [SiswaControllerBE::class, 'getCount'])
+        ->name('api.stats.students');
 });
