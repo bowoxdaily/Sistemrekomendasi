@@ -4,7 +4,9 @@
     
     // Get custom logos with fallbacks to defaults
     $mainLogo = Setting::get('logo_path', asset('admin/images/logo.svg'));
-    $miniLogo = Setting::get('logo_mini_path', asset('admin/images/logo-mini.svg'));
+    
+    // Use the same logo for mini version instead of a separate setting
+    $miniLogo = Setting::get('logo_path', asset('admin/images/logo-mini.svg'));
     $logoAlt = Setting::get('logo_alt_text', 'logo');
 @endphp
 

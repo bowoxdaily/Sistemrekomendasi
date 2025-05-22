@@ -6,6 +6,7 @@ use App\Http\Controllers\BE\JobRecommendataionController;
 use App\Http\Controllers\BE\JurusanController;
 use App\Http\Controllers\BE\OperatorControllerBE;
 use App\Http\Controllers\BE\QuestionnaireControllerOpe;
+use App\Http\Controllers\BE\SettingsController;
 use App\Http\Controllers\BE\SiswaControllerBE;
 use App\Models\Jurusan;
 use Illuminate\Http\Request;
@@ -84,33 +85,25 @@ Route::group(['middleware' => ['web', 'auth']], function () {
         Route::post('/insert/data/graduation', [DataSiswaController::class, 'insertData']);
         Route::post('/update/profile', [SiswaControllerBE::class, 'updatesiswaProfile']);
     });
-
     // Statistics Routes
     Route::get('/stats/students', [SiswaControllerBE::class, 'getCount'])
         ->name('api.stats.students');
 
-    // Add settings CRUD operations
     Route::middleware(['auth:sanctum'])->prefix('settings')->group(function() {
         // General settings
-        Route::put('/general', [App\Http\Controllers\BE\SettingsController::class, 'updateGeneral']);
-        
+        Route::put('/general', [SettingsController::class, 'updateGeneral']);
         // Logo settings
-        Route::post('/logo', [App\Http\Controllers\BE\SettingsController::class, 'updateLogo']);
-        
+        Route::post('/logo', [SettingsController::class, 'updateLogo']);
         // School information
-        Route::put('/school', [App\Http\Controllers\BE\SettingsController::class, 'updateSchool']);
-        
-        // Appearance settings
-        Route::put('/appearance', [App\Http\Controllers\BE\SettingsController::class, 'updateAppearance']);
-        
-        // Mail settings
-        Route::put('/mail', [App\Http\Controllers\BE\SettingsController::class, 'updateMail']);
-        
+        Route::put('/school', [SettingsController::class, 'updateSchool']);
         // Backup & Restore operations
-        Route::post('/backup/generate', [App\Http\Controllers\BE\SettingsController::class, 'generateBackup']);
-        Route::post('/backup/restore', [App\Http\Controllers\BE\SettingsController::class, 'restoreBackup']);
-        Route::delete('/backup/delete', [App\Http\Controllers\BE\SettingsController::class, 'deleteBackup']);
-        Route::post('/backup/schedule', [App\Http\Controllers\BE\SettingsController::class, 'updateBackupSchedule']);
-        Route::post('/maintenance/toggle', [App\Http\Controllers\BE\SettingsController::class, 'toggleMaintenance']);
+        Route::post('/backup/generate', [SettingsController::class, 'generateBackup']);
+        Route::post('/backup/restore', [SettingsController::class, 'restoreBackup']);
+        Route::post('/backup/delete', [SettingsController::class, 'deleteBackup']);
+        Route::post('/backup/schedule', [SettingsController::class, 'updateBackupSchedule']);
+    
     });
+    // Remove the Student Activity Routes since the feature is no longer used
+    // Route::get('/student/activities', [App\Http\Controllers\BE\StudentActivityController::class, 'getActivities'])
+    //     ->name('api.student.activities');
 });

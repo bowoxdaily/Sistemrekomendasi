@@ -354,81 +354,12 @@
         </div>
     </div>
 
-    <!-- Activity Timeline -->
-    <div class="row">
-        <div class="col-lg-12 grid-margin stretch-card">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Aktivitas Terakhir</h4>
-                    <div class="timeline-container">
-                        @if(isset($activities) && count($activities) > 0)
-                            <!-- Render actual activities if available -->
-                            @foreach($activities as $activity)
-                                <div class="timeline-item">
-                                    <div class="timeline-item-marker">
-                                        <div class="timeline-item-marker-indicator bg-primary">
-                                            <i class="fas fa-{{ $activity->icon }} text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div class="timeline-item-content">
-                                        <p class="fw-bold">{{ $activity->title }}</p>
-                                        <p class="text-muted small">{{ $activity->description }}</p>
-                                        <p class="text-xs text-muted">{{ $activity->created_at->diffForHumans() }}</p>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @else
-                            <div class="text-center py-5">
-                                <i class="fas fa-stream fa-3x text-gray-300 mb-3"></i>
-                                <p class="text-muted">Belum ada aktivitas terbaru.</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal untuk belum kerja - Dengan pengecekan has_completed_questionnaire -->
     @if (Auth::check() &&
             Auth::user()->role === 'siswa' &&
             Auth::user()->student->status_setelah_lulus === 'belum_kerja' &&
             !Auth::user()->student->has_completed_questionnaire)
-        <div class="modal fade" id="belumKerjaModal" tabindex="-1" role="dialog" aria-labelledby="belumKerjaModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <form id="belumKerjaForm">
-                    @csrf
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="belumKerjaModalLabel">Lengkapi Data Anda</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span>&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label>Alasan Belum Bekerja</label>
-                                <textarea class="form-control" name="alasan" rows="3" required></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Keterampilan yang Dimiliki (opsional)</label>
-                                <textarea class="form-control" name="keterampilan" rows="2"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Minat Bidang Kerja (opsional)</label>
-                                <textarea class="form-control" name="minat" rows="2"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Simpan</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
+        
 
 
         <!-- Modal Rekomendasi Pekerjaan - Kondisi disederhanakan -->
@@ -643,47 +574,6 @@
 
 @push('styles')
     <style>
-        /* Timeline styling */
-        .timeline-container {
-            position: relative;
-            padding-left: 1rem;
-            border-left: 1px solid #e3e6f0;
-        }
-        
-        .timeline-item {
-            position: relative;
-            padding-bottom: 1.5rem;
-        }
-        
-        .timeline-item:last-child {
-            padding-bottom: 0;
-        }
-        
-        .timeline-item-marker {
-            position: absolute;
-            left: -1.5rem;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .timeline-item-marker-indicator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 24px;
-            height: 24px;
-            border-radius: 100%;
-            font-size: 0.75rem;
-        }
-        
-        .timeline-item-content {
-            margin-left: 0.75rem;
-            padding-left: 0.75rem;
-        }
-
         /* Card styling */
         .card-tale {
             background: linear-gradient(to right, #4747a1, #7978e9);

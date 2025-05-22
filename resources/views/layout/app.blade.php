@@ -6,12 +6,28 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Skydash Admin')</title>
+    
+    @php
+        // Get settings from the database
+        $siteName = App\Models\Setting::get('site_name', 'Sistem Tracer Study');
+        $siteDescription = App\Models\Setting::get('site_description', 'Sistem Pelacakan Alumni dan Rekomendasi Karir untuk SMK');
+        $metaKeywords = App\Models\Setting::get('meta_keywords', 'tracer study, alumni, karir, smk');
+        $favicon = App\Models\Setting::get('favicon_path', asset('admin/images/favicon.png'));
+        
+    @endphp
+    
+    <title>@yield('title', $siteName)</title>
+    
+    <!-- Meta tags for SEO -->
+    <meta name="description" content="{{ $siteDescription }}">
+    <meta name="keywords" content="{{ $metaKeywords }}">
+    
     <!-- plugins:css -->
     <link rel="stylesheet" href="{{ asset('admin/vendors/feather/feather.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/vendors/ti-icons/css/themify-icons.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/vendors/css/vendor.bundle.base.css') }}">
     <!-- endinject -->
+    
     <!-- Plugin css for this page -->
     <link rel="stylesheet" href="{{ asset('admin/vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/vendors/ti-icons/css/themify-icons.css') }}">
@@ -21,11 +37,15 @@
         integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- End plugin css for this page -->
+    
     <!-- inject:css -->
     <link rel="stylesheet" href="{{ asset('admin/css/vertical-layout-light/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <!-- endinject -->
-    <link rel="shortcut icon" href="{{ asset('admin/images/favicon.png') }}" />
+    
+    <!-- Dynamic favicon -->
+    <link rel="shortcut icon" href="{{ $favicon }}" />
+    
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
@@ -33,7 +53,6 @@
     <script>
         var _baseURL = "{{ url('/') }}/";
     </script>
-
 
     @stack('styles')
 </head>
@@ -98,13 +117,6 @@
 
     <!-- End custom js for this page-->
     @stack('scripts')
-
-
-    </div>
-
-
-
-
 </body>
 
 </html>

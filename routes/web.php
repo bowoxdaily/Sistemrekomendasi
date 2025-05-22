@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\BE\AuthController as BEAuthController;
 use App\Http\Controllers\BE\ForgotPasswordController;
 use App\Http\Controllers\BE\JobRecommendataionController;
@@ -79,9 +80,9 @@ Route::middleware(['role:siswa,guru,operator', 'check.student.profile'])->group(
 
 // Stats API routes
 Route::prefix('api')->group(function () {
-    Route::get('/stats/students', [\App\Http\Controllers\Api\StatsController::class, 'getStudentStats'])
+    Route::get('/stats/students', [StatsController::class, 'getStudentStats'])
         ->name('api.stats.students');
-    Route::get('/stats/tracer', [\App\Http\Controllers\Api\StatsController::class, 'getTracerStats'])
+    Route::get('/stats/tracer', [StatsController::class, 'getTracerStats'])
         ->name('api.stats.tracer')->middleware('auth');
 });
 
@@ -107,33 +108,18 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->group
 // Clean up duplicate routes and ensure delete method is properly defined
 Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->name('operator.settings.')->group(function() {
     // General settings
-    Route::get('/general', [App\Http\Controllers\BE\SettingsController::class, 'general'])->name('general');
-    Route::put('/general', [App\Http\Controllers\BE\SettingsController::class, 'updateGeneral'])->name('general.update');
-    
+    Route::get('/general', [SettingsController::class, 'general'])->name('general');
+    Route::put('/general', [SettingsController::class, 'updateGeneral'])->name('general.update');
     // Logo settings
-    Route::get('/logo', [App\Http\Controllers\BE\SettingsController::class, 'logo'])->name('logo');
-    Route::put('/logo', [App\Http\Controllers\BE\SettingsController::class, 'updateLogo'])->name('logo.update');
-    
+    Route::get('/logo', [SettingsController::class, 'logo'])->name('logo');  
     // School information
-    Route::get('/school', [App\Http\Controllers\BE\SettingsController::class, 'school'])->name('school');
-    Route::put('/school', [App\Http\Controllers\BE\SettingsController::class, 'updateSchool'])->name('school.update');
-    
-    // Appearance settings
-    Route::get('/appearance', [App\Http\Controllers\BE\SettingsController::class, 'appearance'])->name('appearance');
-    Route::put('/appearance', [App\Http\Controllers\BE\SettingsController::class, 'updateAppearance'])->name('appearance.update');
-    
-    // Mail settings
-    Route::get('/mail', [App\Http\Controllers\BE\SettingsController::class, 'mail'])->name('mail');
-    Route::put('/mail', [App\Http\Controllers\BE\SettingsController::class, 'updateMail'])->name('mail.update');
-    
+    Route::get('/school', [SettingsController::class, 'school'])->name('school');
+    Route::put('/school', [SettingsController::class, 'updateSchool'])->name('school.update');
     // Backup & Restore
-    Route::get('/backup', [App\Http\Controllers\BE\SettingsController::class, 'backup'])->name('backup');
-    Route::post('/backup/generate', [App\Http\Controllers\BE\SettingsController::class, 'generateBackup'])->name('backup.generate');
-    Route::post('/backup/restore', [App\Http\Controllers\BE\SettingsController::class, 'restoreBackup'])->name('backup.restore');
-    Route::get('/backup/download/{filename}', [App\Http\Controllers\BE\SettingsController::class, 'downloadBackup'])->name('backup.download');
-    Route::post('/backup/delete', [App\Http\Controllers\BE\SettingsController::class, 'deleteBackup'])->name('backup.delete'); // Changed from DELETE to POST
-    Route::post('/backup/schedule', [App\Http\Controllers\BE\SettingsController::class, 'updateBackupSchedule'])->name('backup.schedule');
+    Route::get('/backup', [SettingsController::class, 'backup'])->name('backup');
+    Route::post('/backup/generate', [SettingsController::class, 'generateBackup'])->name('backup.generate');
+    Route::get('/backup/download/{filename}', [SettingsController::class, 'downloadBackup'])->name('backup.download');
+
     
-    // Maintenance mode
-    Route::post('/maintenance/toggle', [App\Http\Controllers\BE\SettingsController::class, 'toggleMaintenance'])->name('maintenance.toggle');
+   
 });

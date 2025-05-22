@@ -16,9 +16,8 @@
                         Ubah logo dan favicon website
                     </p>
 
-                    <form action="{{ route('operator.settings.logo.update') }}" method="POST" enctype="multipart/form-data">
+                    <form id="logo-form" enctype="multipart/form-data">
                         @csrf
-                        @method('PUT')
 
                         <div class="row">
                             <div class="col-md-6">
@@ -28,9 +27,7 @@
                                         <img src="{{ $logo }}" alt="Logo" class="img-thumbnail" style="max-height: 100px;">
                                     </div>
                                     <input type="file" class="form-control-file" id="logo" name="logo">
-                                    @error('logo')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
+                                    <div class="text-danger mt-1 error-message" id="logo_error"></div>
                                     <small class="form-text text-muted">
                                         Format yang didukung: JPG, PNG, GIF. Ukuran maksimal: 2MB.
                                     </small>
@@ -50,9 +47,7 @@
                                         <img src="{{ $favicon }}" alt="Favicon" class="img-thumbnail" style="max-height: 32px;" id="favicon-display">
                                     </div>
                                     <input type="file" class="form-control-file" id="favicon" name="favicon">
-                                    @error('favicon')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
+                                    <div class="text-danger mt-1 error-message" id="favicon_error"></div>
                                     <small class="form-text text-muted">
                                         Format yang didukung: ICO, PNG. Ukuran maksimal: 1MB. Disarankan 16x16 atau 32x32 piksel.
                                     </small>
@@ -71,7 +66,10 @@
                         </div>
                         
                         <div class="mt-3">
-                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                            <button type="submit" class="btn btn-primary" id="save-btn">
+                                <i class="mdi mdi-content-save mr-1" id="save-icon"></i>
+                                <span id="save-text">Simpan Perubahan</span>
+                            </button>
                             <a href="{{ route('dashboard') }}" class="btn btn-light ml-2">Batal</a>
                         </div>
                     </form>
@@ -93,29 +91,113 @@
             toastr.error('{{ session('error') }}', 'Error');
         @endif
         
-        // Update existing logo image with preview
-        $('#logo').change(function() {
-            const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    $('img[alt="Logo"]').attr('src', e.target.result);
+        // AJAX Form Submission
+        $('#logo-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Reset error messages
+            $('.error-message').text('');
+            
+            // Prepare form data
+            const formData = new FormData(this);
+            
+            // Change button state to loading
+            var $btn = $('#save-btn');
+            var $icon = $('#save-icon');
+            var $text = $('#save-text');
+            
+            // Save original state
+            var originalIcon = $icon.attr('class');
+            var originalText = $text.text();
+            
+            // Show loading state
+            $btn.prop('disabled', true);
+            $icon.removeClass().addClass('mdi mdi-loading mdi-spin');
+            $text.text('Menyimpan...');
+            
+            // Send AJAX request - Optimized version
+            $.ajax({
+                url: _baseURL + 'api/settings/logo',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    // Simplified success response - reduce animations
+                    toastr.success(response.message || 'Logo dan favicon berhasil diperbarui', 'Sukses');
+                    
+                    // Show simpler loading state without complex overlay
+                    $btn.prop('disabled', true);
+                    $icon.removeClass().addClass('mdi mdi-check');
+                    $text.text('Menyimpan...');
+                    
+                    // Reload page directly after a short delay
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1000); // Reduced delay to 1 second
+                },
+                
+                error: function(xhr) {
+                    // Restore button state
+                    $btn.prop('disabled', false);
+                    $icon.removeClass().addClass(originalIcon);
+                    $text.text(originalText);
+                    
+                    // Show validation errors or general error message
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        
+                        if (response.errors) {
+                            // Display field-specific errors
+                            $.each(response.errors, function(field, messages) {
+                                $('#' + field + '_error').text(messages[0]);
+                            });
+                        } else {
+                            toastr.error(response.message || 'Gagal memperbarui logo dan favicon', 'Error');
+                        }
+                    } catch (e) {
+                        toastr.error('Gagal memperbarui logo dan favicon. Silakan coba lagi.', 'Error');
+                    }
                 }
-                reader.readAsDataURL(file);
-            }
+            });
         });
         
-        // Update existing favicon image with preview
-        $('#favicon').change(function() {
+        // Optimize image preview by adding size limits
+        $('#logo, #favicon').change(function() {
             const file = this.files[0];
-            if (file) {
+            // Only process files smaller than 2MB to avoid browser slowdown
+            if (file && file.size <= 2 * 1024 * 1024) {
                 const reader = new FileReader();
+                const inputId = $(this).attr('id');
+                
                 reader.onload = function(e) {
-                    $('#favicon-display').attr('src', e.target.result);
+                    if (inputId === 'logo') {
+                        $('img[alt="Logo"]').attr('src', e.target.result);
+                    } else {
+                        $('#favicon-display').attr('src', e.target.result);
+                    }
                 }
                 reader.readAsDataURL(file);
             }
         });
     });
 </script>
+@endpush
+
+@push('styles')
+<style>
+    /* Simplified animations to reduce rendering load */
+    .success-icon {
+        animation: none; /* Removed animation */
+    }
+    
+    /* Remove unused animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
 @endpush

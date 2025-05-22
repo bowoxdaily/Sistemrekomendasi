@@ -2,7 +2,7 @@
     <ul class="nav">
         <li class="nav-item">
             <a class="nav-link" href="{{ route('dashboard') }}">
-                <i class="icon-grid menu-icon"></i>
+                <i class="mdi mdi-view-dashboard menu-icon"></i>
                 <span class="menu-title">Dashboard</span>
             </a>
         </li>
@@ -38,7 +38,7 @@
             <!-- New Settings Menu for Operator -->
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#settings-menu" aria-expanded="false">
-                    <i class="mdi mdi-settings menu-icon"></i>
+                    <i class="mdi mdi-cog menu-icon"></i>
                     <span class="menu-title">Pengaturan Sistem</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -68,7 +68,7 @@
                 <!-- Menu khusus siswa -->
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('siswa.profile') }}">
-                        <i class="icon-user menu-icon"></i>
+                        <i class="mdi mdi-account menu-icon"></i>
                         <span class="menu-title">Profil Saya</span>
                     </a>
                 </li>
@@ -76,7 +76,7 @@
                 @if(Auth::user()->student->status_setelah_lulus === 'belum_kerja')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('student.kuis') }}">
-                            <i class="icon-doc menu-icon"></i>
+                            <i class="mdi mdi-clipboard-text menu-icon"></i>
                             <span class="menu-title">Kuesioner Karir</span>
                             @php
                                 $hasCompleted = Auth::user()->student->has_completed_questionnaire;
@@ -89,7 +89,7 @@
                     
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('student.recommendation.show') }}">
-                            <i class="icon-briefcase menu-icon"></i>
+                            <i class="mdi mdi-briefcase menu-icon"></i>
                             <span class="menu-title">Rekomendasi Pekerjaan</span>
                         </a>
                     </li>
@@ -97,7 +97,7 @@
                 
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="collapse" href="#info-menu" aria-expanded="false">
-                        <i class="icon-info menu-icon"></i>
+                        <i class="mdi mdi-information-outline menu-icon"></i>
                         <span class="menu-title">Informasi</span>
                         <i class="menu-arrow"></i>
                     </a>
@@ -107,7 +107,7 @@
                                 <a class="nav-link" href="#">Lowongan Kerja</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#}">Info Beasiswa</a>
+                                <a class="nav-link" href="#">Info Beasiswa</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="#">Tips Karir</a>
@@ -118,7 +118,7 @@
                 
                 <li class="nav-item">
                     <a class="nav-link" href="#">
-                        <i class="icon-people menu-icon"></i>
+                        <i class="mdi mdi-account-group menu-icon"></i>
                         <span class="menu-title">Data Alumni</span>
                     </a>
                 </li>
@@ -128,7 +128,7 @@
                 <!-- Menu khusus guru -->
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="collapse" href="#kelas-guru" aria-expanded="false">
-                        <i class="icon-book-open menu-icon"></i>
+                        <i class="mdi mdi-book-open-page-variant menu-icon"></i>
                         <span class="menu-title">Manajemen Kelas</span>
                         <i class="menu-arrow"></i>
                     </a>
@@ -144,7 +144,7 @@
             @if (auth()->user()->role === 'operator')
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="collapse" href="#icons" aria-expanded="false" aria-controls="icons">
-                        <i class="icon-contract menu-icon"></i>
+                        <i class="mdi mdi-vector-square menu-icon"></i>
                         <span class="menu-title">Icons</span>
                         <i class="menu-arrow"></i>
                     </a>
@@ -156,14 +156,11 @@
                 </li>
             @endif
 
-
-
-
             <!-- Menu UI Elements hanya untuk guru dan operator -->
             @if (in_array(auth()->user()->role, ['guru', 'operator']))
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false">
-                        <i class="icon-layout menu-icon"></i>
+                        <i class="mdi mdi-palette menu-icon"></i>
                         <span class="menu-title">UI Elements</span>
                         <i class="menu-arrow"></i>
                     </a>
@@ -181,7 +178,7 @@
             <!-- Menu untuk guest (belum login) -->
             <li class="nav-item">
                 <a class="nav-link" href="#">
-                    <i class="icon-login menu-icon"></i>
+                    <i class="mdi mdi-login menu-icon"></i>
                     <span class="menu-title">Login</span>
                 </a>
             </li>

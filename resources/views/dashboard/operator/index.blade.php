@@ -135,43 +135,44 @@
         </div>
     </div>
 
-    <!-- Charts Section - Add proper width constraints -->
+    <!-- Charts Section - Adjusted sizing -->
     <div class="row">
         <div class="col-md-6 grid-margin stretch-card">
             <div class="card">
-                <div class="card-body">
-                    <p class="card-title">Tracer Study: Status Setelah Lulus</p>
-                    <p class="font-weight-500">Distribusi alumni berdasarkan status setelah lulus dalam 3 tahun terakhir.
-                    </p>
-                    <div class="d-flex flex-wrap mb-5">
-                        <div class="mr-5 mt-3">
-                            <p class="text-muted">Total Alumni</p>
+                <div class="card-body py-3">
+                    <p class="card-title mb-2">Tracer Study: Status Setelah Lulus</p>
+                    <p class="font-weight-500 mb-2">Distribusi alumni berdasarkan status setelah lulus dalam 3 tahun terakhir.</p>
+                    <div class="d-flex flex-wrap mb-3">
+                        <div class="mr-5 mt-2">
+                            <p class="text-muted mb-1">Total Alumni</p>
                             <h3 class="text-primary fs-30 font-weight-medium" id="total-alumni-count">0</h3>
                         </div>
-                        <div class="mr-5 mt-3">
-                            <p class="text-muted">Bekerja</p>
+                        <div class="mr-5 mt-2">
+                            <p class="text-muted mb-1">Bekerja</p>
                             <h3 class="text-success fs-30 font-weight-medium" id="working-count">0</h3>
                         </div>
-                        <div class="mr-5 mt-3">
-                            <p class="text-muted">Kuliah</p>
+                        <div class="mr-5 mt-2">
+                            <p class="text-muted mb-1">Kuliah</p>
                             <h3 class="text-info fs-30 font-weight-medium" id="study-count">0</h3>
                         </div>
-                        <div class="mt-3">
-                            <p class="text-muted">Belum Bekerja</p>
+                        <div class="mt-2">
+                            <p class="text-muted mb-1">Belum Bekerja</p>
                             <h3 class="text-warning fs-30 font-weight-medium" id="unemployed-count">0</h3>
                         </div>
                     </div>
-                    <canvas id="tracer-status-chart" height="250"></canvas>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="tracer-status-chart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6 grid-margin stretch-card">
             <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <p class="card-title">Tracer Study: Detail</p>
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="card-title mb-0">Tracer Study: Detail</p>
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="chartFilterDropdown"
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle py-1 px-2" type="button" id="chartFilterDropdown"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 Tipe Data
                             </button>
@@ -183,55 +184,57 @@
                             </div>
                         </div>
                     </div>
-                    <p class="font-weight-500">Visualisasi data detail dari hasil tracer study alumni.</p>
-                    <div id="detail-chart-legend" class="chartjs-legend mt-4 mb-2"></div>
-                    <canvas id="tracer-detail-chart"></canvas>
+                    <p class="font-weight-500 mb-2">Visualisasi data detail dari hasil tracer study alumni.</p>
+                    <div id="detail-chart-legend" class="chartjs-legend mt-2 mb-2"></div>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="tracer-detail-chart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Tracer Study Trends - Fix width constraint -->
+    <!-- Tracer Study Trends - Adjusted sizing -->
     <div class="row">
         <div class="col-md-12 grid-margin stretch-card">
             <div class="card">
-                <div class="card-body">
-                    <p class="card-title">Tren Status Alumni (5 Tahun Terakhir)</p>
-                    <p class="font-weight-500">Perubahan status alumni dari tahun ke tahun.</p>
-                    <div class="chart-container" style="position: relative; width:100%; max-height: 300px;">
-                        <canvas id="tracer-trend-chart" height="150"></canvas>
+                <div class="card-body py-3">
+                    <p class="card-title mb-1">Tren Status Alumni (5 Tahun Terakhir)</p>
+                    <p class="font-weight-500 mb-2">Perubahan status alumni dari tahun ke tahun.</p>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="tracer-trend-chart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Original charts section - Fix width issues -->
+    <!-- Original charts section - Optimized whitespace -->
     <div class="row">
         <div class="col-md-6 grid-margin stretch-card">
             <div class="card">
-                <div class="card-body">
-                    <p class="card-title">Order Details</p>
-                    <p class="font-weight-500">The total number of sessions within the date range.</p>
-                    <div class="d-flex flex-wrap mb-5">
-                        <div class="mr-5 mt-3">
-                            <p class="text-muted">Order value</p>
+                <div class="card-body py-3">
+                    <p class="card-title mb-2">Order Details</p>
+                    <p class="font-weight-500 mb-3">The total number of sessions within the date range.</p>
+                    <div class="d-flex flex-wrap mb-3">
+                        <div class="mr-5 mt-2">
+                            <p class="text-muted mb-1">Order value</p>
                             <h3 class="text-primary fs-30 font-weight-medium">12.3k</h3>
                         </div>
-                        <div class="mr-5 mt-3">
-                            <p class="text-muted">Orders</p>
+                        <div class="mr-5 mt-2">
+                            <p class="text-muted mb-1">Orders</p>
                             <h3 class="text-primary fs-30 font-weight-medium">14k</h3>
                         </div>
-                        <div class="mr-5 mt-3">
-                            <p class="text-muted">Users</p>
+                        <div class="mr-5 mt-2">
+                            <p class="text-muted mb-1">Users</p>
                             <h3 class="text-primary fs-30 font-weight-medium">71.56%</h3>
                         </div>
-                        <div class="mt-3">
-                            <p class="text-muted">Downloads</p>
+                        <div class="mt-2">
+                            <p class="text-muted mb-1">Downloads</p>
                             <h3 class="text-primary fs-30 font-weight-medium">34040</h3>
                         </div>
                     </div>
-                    <div class="chart-container" style="position: relative; width:100%; max-height: 300px;">
+                    <div class="chart-container" style="height: 220px;">
                         <canvas id="order-chart"></canvas>
                     </div>
                 </div>
@@ -239,15 +242,14 @@
         </div>
         <div class="col-md-6 grid-margin stretch-card">
             <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <p class="card-title">Sales Report</p>
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <p class="card-title mb-0">Sales Report</p>
                         <a href="#" class="text-info">View all</a>
                     </div>
-                    <p class="font-weight-500">The total number of sessions within the date range. It is the period time a
-                        user is actively engaged with your website, page or app, etc</p>
-                    <div id="sales-legend" class="chartjs-legend mt-4 mb-2"></div>
-                    <div class="chart-container" style="position: relative; width:100%; max-height: 300px;">
+                    <p class="font-weight-500 mb-2">The total number of sessions within the date range.</p>
+                    <div id="sales-legend" class="chartjs-legend mt-2 mb-2"></div>
+                    <div class="chart-container" style="height: 220px;">
                         <canvas id="sales-chart"></canvas>
                     </div>
                 </div>
@@ -410,9 +412,25 @@
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false, // Changed to false to fill container
+                            layout: {
+                                padding: {
+                                    top: 10,
+                                    right: 30,
+                                    bottom: 10, 
+                                    left: 10
+                                }
+                            },
                             plugins: {
                                 legend: {
                                     position: 'right',
+                                    labels: {
+                                        boxWidth: 15,
+                                        padding: 10,
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
                                 },
                                 tooltip: {
                                     callbacks: {
@@ -468,15 +486,30 @@
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false, // Changed to false to fill container
+                            layout: {
+                                padding: {
+                                    top: 10,
+                                    right: 20,
+                                    bottom: 10,
+                                    left: 10
+                                }
+                            },
                             scales: {
                                 y: {
                                     beginAtZero: true,
+                                    ticks: {
+                                        padding: 5
+                                    },
                                     title: {
                                         display: true,
                                         text: 'Jumlah Alumni'
                                     }
                                 },
                                 x: {
+                                    ticks: {
+                                        padding: 5
+                                    },
                                     title: {
                                         display: true,
                                         text: 'Tahun'
@@ -555,6 +588,15 @@
                     data: chartData,
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false, // Changed to false to fill container
+                        layout: {
+                            padding: {
+                                top: 10,
+                                right: chartType === 'jobMatch' ? 30 : 10,
+                                bottom: 10,
+                                left: 10
+                            }
+                        },
                         plugins: {
                             legend: {
                                 display: chartType === 'jobMatch',
@@ -813,11 +855,16 @@
         /* Fix dashboard width and overflow issues */
         .chart-container {
             width: 100%;
-            overflow: hidden;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            min-height: 300px; /* Set minimum height */
         }
         
+        /* Ensure canvas fills container */
         canvas {
             max-width: 100%;
+            height: 100% !important; /* Important to ensure full height */
         }
         
         /* Fix card overflow issues */
@@ -825,14 +872,38 @@
             overflow: hidden;
         }
         
-        /* Add responsive adjustments */
+        .card-body {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        
+        /* Reduce margin between cards */
+        .grid-margin {
+            margin-bottom: 1rem;
+        }
+        
+        /* Reduce text margins */
+        .card-title {
+            margin-bottom: 0.5rem;
+        }
+        
+        p.font-weight-500 {
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Make metrics more compact */
+        .d-flex.flex-wrap {
+            margin-bottom: 0.5rem;
+        }
+        
+        .d-flex.flex-wrap .mr-5 {
+            margin-right: 1rem !important;
+        }
+        
+        /* Adjust responsive styling */
         @media (max-width: 768px) {
-            .d-flex.flex-wrap {
-                justify-content: center;
-            }
-            
-            .card-title {
-                font-size: 1rem;
+            .chart-container {
+                height: 350px !important; /* Taller on mobile */
             }
         }
     </style>

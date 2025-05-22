@@ -241,7 +241,7 @@
             
             // Send AJAX request
             $.ajax({
-                url: '{{ route('operator.settings.backup.generate') }}',
+                url: _baseURL + 'api/settings/backup/generate',
                 type: 'POST',
                 data: $(this).serialize(),
                 headers: {
@@ -324,7 +324,7 @@
                     
                     // Send AJAX request
                     $.ajax({
-                        url: '{{ route('operator.settings.backup.restore') }}',
+                        url: _baseURL + 'api/settings/backup/restore',
                         type: 'POST',
                         data: formData,
                         processData: false,
@@ -412,7 +412,7 @@
             
             // Send AJAX request
             $.ajax({
-                url: '{{ route('operator.settings.backup.schedule') }}',
+                url: _baseURL + 'api/settings/backup/schedule',
                 type: 'POST',
                 data: $(this).serialize(),
                 headers: {
@@ -469,7 +469,7 @@
                 if (result.isConfirmed) {
                     // Send AJAX request - Changed from DELETE to POST
                     $.ajax({
-                        url: '{{ route('operator.settings.backup.delete') }}',
+                        url: _baseURL + 'api/settings/backup/delete',
                         type: 'POST', // Changed from DELETE to POST
                         data: { 
                             filename: filename,
