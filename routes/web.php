@@ -50,7 +50,7 @@ Route::middleware(['role:siswa,guru,operator,superadmin', 'check.student.profile
     Route::group(['prefix' => 'dashboard'], function () {
         Route::get('/', [DashboardControllerFE::class, 'index'])->name('dashboard');
     });
-    Route::group(['prefix'=>'superadmin'], function () {
+    Route::group(['prefix' => 'superadmin'], function () {
         Route::get('/operator', [SuperadminControllerFE::class, 'operator'])->name('superadmin.operator');
         // Route::get('/operator', [DashboardControllerFE::class, 'index'])->name('superadmin.profile');
     });
@@ -93,14 +93,14 @@ Route::prefix('api')->group(function () {
 });
 
 // Role-specific dashboard routes
-Route::middleware(['auth'])->group(function() {
+Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/operator', [DashboardControllerFE::class, 'operatorDashboard'])->name('operator.dashboard');
     Route::get('/dashboard/student', [DashboardControllerFE::class, 'studentDashboard'])->name('student.dashboard');
     Route::get('/dashboard/teacher', [DashboardControllerFE::class, 'teacherDashboard'])->name('teacher.dashboard');
 });
 
 // Operator Settings Routes
-Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->group(function() {
+Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->group(function () {
     // View routes only
     Route::get('/general', [SettingsController::class, 'general'])->name('operator.settings.general');
     Route::get('/logo', [SettingsController::class, 'logo'])->name('operator.settings.logo');
@@ -112,18 +112,14 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->group
 });
 
 // Clean up duplicate routes and ensure delete method is properly defined
-Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->name('operator.settings.')->group(function() {
+Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->name('operator.settings.')->group(function () {
     // General settings
     Route::get('/general', [SettingsController::class, 'general'])->name('general');
     // Logo settings
-    Route::get('/logo', [SettingsController::class, 'logo'])->name('logo');  
+    Route::get('/logo', [SettingsController::class, 'logo'])->name('logo');
     // School information
     Route::get('/school', [SettingsController::class, 'school'])->name('school');
     // Backup & Restore
     Route::get('/backup', [SettingsController::class, 'backup'])->name('backup');
     Route::get('/backup/download/{filename}', [SettingsController::class, 'downloadBackup'])->name('backup.download');
-
-    
-   
 });
-

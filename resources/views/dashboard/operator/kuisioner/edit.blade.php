@@ -371,14 +371,15 @@
                         showAlert('danger', 'Semua nilai pilihan harus antara 1-5');
                         return false;
                     }
-                    
+
                     // Log for debugging
-                    console.log('Options to be submitted:', Array.from($('#optionsList .input-group')).map(group => {
-                        return {
-                            text: $(group).find('.option-input').val(),
-                            value: $(group).find('.option-value').val()
-                        };
-                    }));
+                    console.log('Options to be submitted:', Array.from($('#optionsList .input-group')).map(
+                        group => {
+                            return {
+                                text: $(group).find('.option-input').val(),
+                                value: $(group).find('.option-value').val()
+                            };
+                        }));
                 }
 
                 // Validate weight

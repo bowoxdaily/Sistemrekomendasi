@@ -1,0 +1,512 @@
+/* Container adjustments for better positioning */
+.container {
+    padding-top: 1rem !important;
+    padding-bottom: 2rem !important;
+}
+
+/* Progress bar card positioning */
+.card.mb-4 {
+    margin-bottom: 1.5rem !important;
+}
+
+/* Question Container */
+.question-slide {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.question-card {
+    padding: 1.5rem;
+    border-radius: 10px;
+    background: #ffffff;
+    min-height: 350px;
+}
+
+.question-header {
+    border-bottom: 2px solid #f8f9fa;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.question-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    line-height: 1.4;
+    margin-bottom: 0;
+}
+
+.question-number {
+    background: #007bff;
+    color: white;
+    padding: 0.2rem 0.45rem;
+    border-radius: 50%;
+    font-size: 0.85rem;
+    margin-right: 0.75rem;
+    display: inline-block;
+    min-width: 1.8rem;
+    text-align: center;
+}
+
+.question-content {
+    margin-top: 1rem;
+}
+
+/* Card header adjustments */
+.card-header {
+    padding: 0.75rem 1rem;
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+/* Alert adjustments */
+.alert {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+}
+
+/* Multiple Choice Options */
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.option-item {
+    position: relative;
+}
+
+.option-input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.option-label {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+
+.option-label:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 123, 255, 0.15);
+}
+
+.option-input:checked + .option-label {
+    border-color: #007bff;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+}
+
+.option-icon {
+    background: #6c757d;
+    color: white;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 0.875rem;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.option-input:checked + .option-label .option-icon {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.option-text {
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+.option-check {
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s ease;
+    color: #28a745;
+    font-size: 1.1rem;
+}
+
+.option-input:checked + .option-label .option-check {
+    opacity: 1;
+    transform: scale(1);
+    color: white;
+}
+
+/* Scale Options */
+.scale-container {
+    text-align: center;
+    padding: 1.5rem 0.5rem;
+}
+
+.scale-values {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    gap: 0.75rem;
+}
+
+.scale-option {
+    flex: 1;
+}
+
+.scale-input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.scale-label {
+    display: block;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.scale-number {
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 2px solid #dee2e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    margin: 0 auto 0.4rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.scale-icon {
+    font-size: 1.3rem;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.scale-input:checked + .scale-label .scale-number {
+    border-color: #007bff;
+    background: #007bff;
+    color: white;
+    transform: scale(1.05);
+}
+
+.scale-input:checked + .scale-label .scale-icon {
+    color: #007bff;
+    transform: scale(1.1);
+}
+
+.scale-endpoints {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    padding: 0 0.75rem;
+    font-weight: 500;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Text Area */
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.875rem;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Navigation Controls */
+.navigation-controls {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+}
+
+/* Progress bar in navigation area */
+.navigation-controls .card {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    box-shadow: none;
+}
+
+.navigation-controls .card-body {
+    padding: 0.75rem 1rem;
+}
+
+.navigation-info {
+    display: flex;
+    align-items: center;
+}
+
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.625rem 1.25rem;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+.btn:disabled {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Validation shake animation */
+@keyframes shake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-5px);
+    }
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(5px);
+    }
+}
+
+/* Submit button pulse animation */
+.btn-pulse {
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 15px rgba(40, 167, 69, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+/* Progress Bar */
+.progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+
+/* Completion Modal */
+.completion-icon {
+    animation: bounce 1s ease-in-out;
+}
+
+@keyframes bounce {
+    0%,
+    20%,
+    60%,
+    100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    80% {
+        transform: translateY(-5px);
+    }
+}
+
+.summary-item {
+    padding: 0.875rem;
+    border-radius: 8px;
+    background: #f8f9fa;
+    margin-bottom: 0.75rem;
+}
+
+.summary-item h5 {
+    margin-bottom: 0.2rem;
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+/* Custom SweetAlert styles for completion notification */
+.completion-notification-popup {
+    border-radius: 15px !important;
+    padding: 1rem !important;
+}
+
+.completion-notification-popup .swal2-html-container {
+    padding: 1rem 0 !important;
+}
+
+.completion-notification-popup .swal2-title {
+    font-size: 2rem !important;
+    color: #28a745 !important;
+    margin-bottom: 1rem !important;
+}
+
+.completion-notification-popup .swal2-confirm {
+    padding: 0.75rem 2rem !important;
+    font-size: 1.1rem !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+.completion-notification-popup .swal2-confirm:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding-top: 0.5rem !important;
+    }
+
+    .question-card {
+        padding: 1rem;
+        min-height: 300px;
+    }
+
+    .options-grid {
+        gap: 0.5rem;
+    }
+
+    .option-label {
+        padding: 0.75rem;
+    }
+
+    .scale-values {
+        gap: 0.4rem;
+    }
+
+    .scale-number {
+        width: 2.4rem;
+        height: 2.4rem;
+        font-size: 0.9rem;
+    }
+
+    .navigation-controls {
+        padding: 0.75rem;
+    }
+
+    .navigation-controls .d-flex {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .navigation-info {
+        order: -1;
+        justify-content: center;
+    }
+
+    /* Progress bar mobile adjustments */
+    .navigation-controls .card-body {
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* Animation for question transitions */
+.question-slide.slide-out {
+    animation: slideOut 0.3s ease-in-out forwards;
+}
+
+.question-slide.slide-in {
+    animation: slideIn 0.3s ease-in-out forwards;
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Validation styles */
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+    display: block !important;
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+}
+
+/* Compact spacing for better vertical positioning */
+.card.shadow-sm {
+    margin-bottom: 1rem;
+}
+
+.form-text {
+    margin-top: 0.3rem;
+}
+
+.badge {
+    font-size: 0.8rem;
+}
