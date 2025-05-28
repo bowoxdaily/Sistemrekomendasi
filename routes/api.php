@@ -63,6 +63,7 @@ Route::group(['middleware' => ['web', 'auth']], function () {
         Route::get('/download-template/siswa', [OperatorControllerBE::class, 'downloadTemplateAkunSiswa']);
         Route::post('/import/siswa', [OperatorControllerBE::class, 'importAkunSiswa']);
         Route::delete('/delete/siswa/{id}', [OperatorControllerBE::class, 'destroy']);
+        Route::post('/update/siswa/{id}', [OperatorControllerBE::class, 'updateSiswa']);
         // RouteJurusan 
         Route::get('/get/jurusan', [JurusanController::class, 'index']);
         Route::post('/create/jurusan', [JurusanController::class, 'store']);

@@ -24,29 +24,74 @@
                 <div class="col-12 col-xl-8 mb-4 mb-xl-0">
                     <h3 class="font-weight-bold">Selamat Datang, {{ Auth::user()->student->nama_lengkap }}</h3>
                     <h6 class="font-weight-normal mb-0">
-                        Status: 
                         @php
                             $status = Auth::user()->student->status_setelah_lulus;
                             $badgeClass = 'primary';
                             $iconClass = 'user-graduate';
-                            
-                            if($status === 'belum_kerja') {
+
+                            if ($status === 'belum_kerja') {
                                 $badgeClass = 'warning';
                                 $iconClass = 'search';
-                            } elseif($status === 'kerja') {
+                            } elseif ($status === 'kerja') {
                                 $badgeClass = 'success';
                                 $iconClass = 'briefcase';
-                            } elseif($status === 'kuliah') {
+                            } elseif ($status === 'kuliah') {
                                 $badgeClass = 'info';
                                 $iconClass = 'university';
                             }
+
+                            // Get the second badge info based on status
+                            $secondBadgeClass = '';
+                            $secondBadgeText = '';
+                            $secondBadgeIcon = '';
+
+                            if ($status === 'belum_kerja') {
+                                if (Auth::user()->student->has_completed_questionnaire) {
+                                    $secondBadgeClass = 'success';
+                                    $secondBadgeText = 'Kuesioner Selesai';
+                                    $secondBadgeIcon = 'check-circle';
+                                } else {
+                                    $secondBadgeClass = 'secondary';
+                                    $secondBadgeText = 'Kuesioner Belum Selesai';
+                                    $secondBadgeIcon = 'clipboard-list';
+                                }
+                            } elseif ($status === 'kerja') {
+                                if (Auth::user()->student->sesuai_jurusan === 'ya') {
+                                    $secondBadgeClass = 'success';
+                                    $secondBadgeText = 'Sesuai Jurusan';
+                                    $secondBadgeIcon = 'check-double';
+                                } else {
+                                    $secondBadgeClass = 'info';
+                                    $secondBadgeText = 'Beda Jurusan';
+                                    $secondBadgeIcon = 'random';
+                                }
+                            } elseif ($status === 'kuliah') {
+                                $dataKuliah = \App\Models\DataKuliah::where(
+                                    'student_id',
+                                    Auth::user()->student->id,
+                                )->first();
+                                if ($dataKuliah && $dataKuliah->status_beasiswa === 'ya') {
+                                    $secondBadgeClass = 'success';
+                                    $secondBadgeText = 'Penerima Beasiswa';
+                                    $secondBadgeIcon = 'award';
+                                } else {
+                                    $secondBadgeClass = 'secondary';
+                                    $secondBadgeText = 'Non-Beasiswa';
+                                    $secondBadgeIcon = 'user-graduate';
+                                }
+                            }
                         @endphp
-                        <span class="text-{{ $badgeClass }} font-weight-bold">
+
+                        <!-- First Badge: Status Setelah Lulus -->
+                        <span class="badge badge-{{ $badgeClass }} font-weight-bold mr-2">
                             <i class="fas fa-{{ $iconClass }} mr-1"></i>
                             {{ ucfirst(str_replace('_', ' ', $status)) }}
                         </span>
-                        <span class="ml-3 badge badge-{{ Auth::user()->student->is_profile_complete ? 'success' : 'warning' }}">
-                            {{ Auth::user()->student->is_profile_complete ? 'Profil Lengkap' : 'Profil Belum Lengkap' }}
+
+                        <!-- Second Badge: Status Specific Context -->
+                        <span class="badge badge-{{ $secondBadgeClass }} font-weight-bold">
+                            <i class="fas fa-{{ $secondBadgeIcon }} mr-1"></i>
+                            {{ $secondBadgeText }}
                         </span>
                     </h6>
                 </div>
@@ -78,7 +123,10 @@
                         <div class="d-flex">
                             <div class="ml-2">
                                 <h4 class="location font-weight-normal">Alumni SMKN 1 Terisi</h4>
-                                <h6 class="font-weight-normal">Tahun Lulus: {{ Auth::user()->student->tanggal_lulus ? date('Y', strtotime(Auth::user()->student->tanggal_lulus)) : 'Belum diatur' }}</h6>
+                                <h6 class="font-weight-normal mb-0">
+                                    Tahun Lulus:
+                                    {{ Auth::user()->student->tanggal_lulus ? date('Y', strtotime(Auth::user()->student->tanggal_lulus)) : 'Belum diatur' }}
+                                </h6>
                             </div>
                         </div>
                     </div>
@@ -87,86 +135,136 @@
         </div>
         <div class="col-md-7 grid-margin transparent">
             <div class="row">
+                <!-- Card 1: Status Profil -->
                 <div class="col-md-6 mb-4 stretch-card transparent">
                     <div class="card card-tale">
                         <div class="card-body">
                             <p class="mb-4">Status Profil</p>
-                            <p class="fs-30 mb-2">{{ Auth::user()->student->is_profile_complete ? 'Lengkap' : 'Belum Lengkap' }}</p>
-                            <p>{{ Auth::user()->student->is_profile_complete ? 'Profil Anda sudah diisi dengan lengkap' : 'Silahkan lengkapi profil Anda' }}</p>
+                            <p class="fs-30 mb-2">
+                                {{ Auth::user()->student->is_profile_complete ? 'Lengkap' : 'Belum Lengkap' }}</p>
+                            <p>{{ Auth::user()->student->is_profile_complete ? 'Profil Anda sudah diisi dengan lengkap' : 'Silahkan lengkapi profil Anda' }}
+                            </p>
                         </div>
                     </div>
                 </div>
+
+                <!-- Card 2: Dynamic based on status -->
                 <div class="col-md-6 mb-4 stretch-card transparent">
-                    <div class="card card-dark-blue">
-                        <div class="card-body">
-                            @if(Auth::user()->student->status_setelah_lulus === 'belum_kerja')
+                    @if (Auth::user()->student->status_setelah_lulus === 'belum_kerja')
+                        <div class="card card-dark-blue">
+                            <div class="card-body">
                                 <p class="mb-4">Status Kuesioner</p>
-                                <p class="fs-30 mb-2">{{ Auth::user()->student->has_completed_questionnaire ? 'Selesai' : 'Belum Diisi' }}</p>
-                                <p>{{ Auth::user()->student->has_completed_questionnaire ? 'Anda sudah mengisi kuesioner' : 'Isi kuesioner untuk mendapat rekomendasi' }}</p>
-                            @elseif(Auth::user()->student->status_setelah_lulus === 'kerja')
-                                <p class="mb-4">Status Pekerjaan</p>
-                                <p class="fs-30 mb-2">{{ ucfirst(Auth::user()->student->jenis_pekerjaan ?? 'Aktif') }}</p>
-                                <p>Anda sedang bekerja di {{ Auth::user()->student->nama_perusahaan ?? 'perusahaan' }}</p>
-                            @else
-                                <p class="mb-4">Status Pendidikan</p>
-                                @php
-                                    $dataKuliah = \App\Models\DataKuliah::where('student_id', Auth::user()->student->id)->first();
-                                @endphp
-                                <p class="fs-30 mb-2">{{ $dataKuliah->jenjang ?? 'Kuliah' }}</p>
-                                <p>{{ $dataKuliah ? 'Jurusan ' . $dataKuliah->jurusan : 'Melanjutkan pendidikan tinggi' }}</p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-4 mb-lg-0 stretch-card transparent">
-                    <div class="card card-light-blue">
-                        <div class="card-body">
-                            <p class="mb-4">Status Setelah Lulus</p>
-                            <p class="fs-30 mb-2">{{ ucfirst(str_replace('_', ' ', Auth::user()->student->status_setelah_lulus)) }}</p>
-                            <p>{{ Auth::user()->student->status_setelah_lulus === 'belum_kerja' ? 'Lihat rekomendasi pekerjaan' : 'Terima kasih atas informasinya' }}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 stretch-card transparent">
-                    <div class="card card-light-danger">
-                        <div class="card-body">
-                            @if(Auth::user()->student->status_setelah_lulus === 'belum_kerja')
-                                <p class="mb-4">Rekomendasi</p>
-                                @php
-                                    $latestResponse = \App\Models\QuestionnaireResponse::where('student_id', Auth::user()->student->id)
-                                        ->orderBy('created_at', 'desc')
-                                        ->first();
-                                @endphp
-                                
-                                @if($latestResponse)
-                                    <div class="fs-30 mb-2">{!! $latestResponse->getRecommendationBadge() !!}</div>
-                                    <p>
-                                        @if($latestResponse->hasRecommendations())
-                                            Tersedia {{ count($latestResponse->getFormattedRecommendations()) }} rekomendasi pekerjaan
-                                        @else
-                                            Silahkan isi kuesioner untuk mendapatkan rekomendasi
-                                        @endif
-                                    </p>
+                                <p class="fs-30 mb-2">
+                                    {{ Auth::user()->student->has_completed_questionnaire ? 'Selesai' : 'Belum Diisi' }}
+                                </p>
+                                <p>{{ Auth::user()->student->has_completed_questionnaire ? 'Anda sudah mengisi kuesioner' : 'Isi kuesioner untuk mendapat rekomendasi' }}
+                                </p>
+                                @if (Auth::user()->student->has_completed_questionnaire)
+                                    @php
+                                        $latestResponse = \App\Models\QuestionnaireResponse::where(
+                                            'student_id',
+                                            Auth::user()->student->id,
+                                        )
+                                            ->orderBy('created_at', 'desc')
+                                            ->first();
+                                    @endphp
+                                    @if ($latestResponse && $latestResponse->hasRecommendations())
+                                        <div class="mt-2">
+                                            <a href="{{ route('student.recommendation.show') }}"
+                                                class="btn btn-sm btn-outline-light">
+                                                <i class="fas fa-briefcase mr-1"></i> Lihat Rekomendasi
+                                            </a>
+                                        </div>
+                                    @endif
                                 @else
-                                    <p class="fs-30 mb-2">Belum Ada</p>
-                                    <p>Isi kuesioner untuk melihat rekomendasi</p>
+                                    <div class="mt-2">
+                                        <a href="{{ url('siswa/questionnaire') }}" class="btn btn-sm btn-outline-light">
+                                            <i class="fas fa-clipboard-list mr-1"></i> Isi Kuesioner
+                                        </a>
+                                    </div>
                                 @endif
-                            @elseif(Auth::user()->student->status_setelah_lulus === 'kerja')
-                                <p class="mb-4">Informasi Gaji</p>
-                                <p class="fs-30 mb-2">{{ Auth::user()->student->gaji ? 'Rp ' . number_format(Auth::user()->student->gaji, 0, ',', '.') : 'Tidak Ditampilkan' }}</p>
-                                <p>{{ Auth::user()->student->gaji ? 'Gaji saat ini' : 'Data gaji tidak tersedia' }}</p>
-                            @else
-                                <p class="mb-4">Status Beasiswa</p>
-                                @php
-                                    $dataKuliah = \App\Models\DataKuliah::where('student_id', Auth::user()->student->id)->first();
-                                @endphp
-                                <p class="fs-30 mb-2">{{ $dataKuliah && $dataKuliah->status_beasiswa === 'ya' ? 'Aktif' : 'Tidak Ada' }}</p>
-                                <p>{{ $dataKuliah && $dataKuliah->status_beasiswa === 'ya' ? ($dataKuliah->nama_beasiswa ?? 'Menerima beasiswa') : 'Tidak menerima beasiswa' }}</p>
-                            @endif
+                            </div>
                         </div>
-                    </div>
+                    @elseif(Auth::user()->student->status_setelah_lulus === 'kerja')
+                        <div class="card card-light-blue">
+                            <div class="card-body">
+                                <p class="mb-4">Informasi Pekerjaan</p>
+                                <p class="fs-30 mb-2">{{ ucfirst(Auth::user()->student->jenis_pekerjaan ?? 'Aktif') }}</p>
+                                <p>
+                                    @if (Auth::user()->student->nama_perusahaan)
+                                        Anda bekerja di {{ Auth::user()->student->nama_perusahaan }}
+                                        @if (Auth::user()->student->posisi)
+                                            sebagai {{ Auth::user()->student->posisi }}
+                                        @endif
+                                    @else
+                                        Posisi: {{ Auth::user()->student->posisi ?? 'Belum diisi' }}
+                                    @endif
+                                </p>
+                                @if (Auth::user()->student->sesuai_jurusan)
+                                    <div
+                                        class="badge badge-{{ Auth::user()->student->sesuai_jurusan === 'ya' ? 'success' : 'info' }} mt-2">
+                                        {{ Auth::user()->student->sesuai_jurusan === 'ya' ? 'Sesuai Jurusan' : 'Beda Jurusan' }}
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @else
+                        <div class="card card-light-danger">
+                            <div class="card-body">
+                                <p class="mb-4">Informasi Pendidikan</p>
+                                @php
+                                    $dataKuliah = \App\Models\DataKuliah::where(
+                                        'student_id',
+                                        Auth::user()->student->id,
+                                    )->first();
+                                @endphp
+
+                                @if ($dataKuliah)
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="education-icon mr-3">
+                                            <i class="fas fa-graduation-cap fa-2x text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <p class="fs-30 mb-0 font-weight-medium">{{ $dataKuliah->jenjang }}
+                                                {{ $dataKuliah->jurusan }}</p>
+                                            <p class="text-muted mb-0">
+                                                <i class="fas fa-university mr-1"></i> {{ $dataKuliah->nama_pt }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex align-items-center mt-3">
+                                        <div class="mr-4">
+                                            <small class="text-muted d-block">Tahun Masuk</small>
+                                            <span class="font-weight-medium">{{ $dataKuliah->tahun_masuk }}</span>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">Status Beasiswa</small>
+                                            @if ($dataKuliah->status_beasiswa === 'ya')
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-award mr-1"></i>
+                                                    {{ $dataKuliah->nama_beasiswa ?: 'Penerima Beasiswa' }}
+                                                </span>
+                                            @else
+                                                <span class="badge badge-light">Tidak Menerima</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="text-center py-3">
+                                        <i class="fas fa-exclamation-circle fa-3x text-muted mb-2"></i>
+                                        <p class="fs-30 mb-1">Belum Lengkap</p>
+                                        <p>Data pendidikan belum tersedia</p>
+
+                                        <button class="btn btn-outline-light btn-sm mt-2" data-toggle="modal"
+                                            data-target="#kuliahModal">
+                                            <i class="fas fa-plus-circle mr-1"></i> Lengkapi Data
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -187,33 +285,42 @@
                             Informasi Pendidikan Anda
                         @endif
                     </h4>
-                    
+
                     @if (Auth::user()->student->status_setelah_lulus === 'belum_kerja')
                         @if (Auth::user()->student->has_completed_questionnaire)
                             <div class="text-center">
                                 <h5>Rekomendasi Pekerjaan untuk Anda:</h5>
                                 <div class="list-group">
                                     @php
-                                        $latestResponse = \App\Models\QuestionnaireResponse::where('student_id', Auth::user()->student->id)
+                                        $latestResponse = \App\Models\QuestionnaireResponse::where(
+                                            'student_id',
+                                            Auth::user()->student->id,
+                                        )
                                             ->orderBy('created_at', 'desc')
                                             ->first();
-                                        
-                                        $topRecommendations = $latestResponse ? $latestResponse->getTopRecommendations(5) : [];
+
+                                        $topRecommendations = $latestResponse
+                                            ? $latestResponse->getTopRecommendations(5)
+                                            : [];
                                     @endphp
-                                    
+
                                     @if (!empty($topRecommendations))
                                         @foreach ($topRecommendations as $recommendation)
                                             <a href="#" class="list-group-item list-group-item-action">
                                                 {{ $recommendation['job']->job_title ?? $recommendation['job']->name }}
-                                                <span class="badge badge-{{ 
-                                                    $recommendation['match_percentage'] >= 80 ? 'success' : 
-                                                    ($recommendation['match_percentage'] >= 60 ? 'info' : 'primary') 
-                                                }} float-right">{{ number_format($recommendation['match_percentage'], 1) }}% Match</span>
+                                                <span
+                                                    class="badge badge-{{ $recommendation['match_percentage'] >= 80
+                                                        ? 'success'
+                                                        : ($recommendation['match_percentage'] >= 60
+                                                            ? 'info'
+                                                            : 'primary') }} float-right">{{ number_format($recommendation['match_percentage'], 1) }}%
+                                                    Match</span>
                                             </a>
                                         @endforeach
                                     @else
                                         <div class="alert alert-info">
-                                            <i class="fas fa-info-circle mr-1"></i> Rekomendasi Anda sedang diproses atau belum tersedia.
+                                            <i class="fas fa-info-circle mr-1"></i> Rekomendasi Anda sedang diproses atau
+                                            belum tersedia.
                                         </div>
                                     @endif
                                 </div>
@@ -223,9 +330,12 @@
                             </div>
                         @else
                             <div class="text-center py-3">
-                                <img src="{{ asset('admin/images/undraw_career_progress.svg') }}" style="max-height: 150px;" class="img-fluid mb-3">
+                                <img src="{{ asset('admin/images/undraw_career_progress.svg') }}"
+                                    style="max-height: 150px;" class="img-fluid mb-3">
                                 <h5>Dapatkan Rekomendasi Pekerjaan</h5>
-                                <p class="text-muted">Lengkapi kuesioner untuk mendapatkan rekomendasi pekerjaan yang sesuai dengan keterampilan dan minat Anda.</p>
+                                <p class="text-muted">Lengkapi kuesioner untuk mendapatkan rekomendasi pekerjaan yang
+                                    sesuai
+                                    dengan keterampilan dan minat Anda.</p>
                                 <a href="{{ url('siswa/questionnaire') }}" class="btn btn-primary">
                                     <i class="fas fa-clipboard-list mr-1"></i> Isi Kuesioner Sekarang
                                 </a>
@@ -233,13 +343,15 @@
                         @endif
                     @elseif (Auth::user()->student->status_setelah_lulus === 'kerja')
                         <div class="text-center py-3">
-                            <img src="{{ asset('admin/images/undraw_work.svg') }}" style="max-height: 150px;" class="img-fluid mb-3">
+                            <img src="{{ asset('admin/images/undraw_work.svg') }}" style="max-height: 150px;"
+                                class="img-fluid mb-3">
                             <h5><i class="fas fa-briefcase mr-2"></i>Status: Sudah Bekerja</h5>
                             <div class="card bg-light p-3 mt-3">
                                 <div class="row">
                                     <div class="col-md-6 text-left border-right">
                                         <p class="mb-1"><strong>Perusahaan:</strong></p>
-                                        <p class="text-muted">{{ Auth::user()->student->nama_perusahaan ?? 'Belum diisi' }}</p>
+                                        <p class="text-muted">
+                                            {{ Auth::user()->student->nama_perusahaan ?? 'Belum diisi' }}</p>
                                     </div>
                                     <div class="col-md-6 text-left">
                                         <p class="mb-1"><strong>Posisi:</strong></p>
@@ -249,24 +361,31 @@
                                 <div class="row mt-2">
                                     <div class="col-md-6 text-left border-right">
                                         <p class="mb-1"><strong>Jenis Pekerjaan:</strong></p>
-                                        <p class="text-muted">{{ Auth::user()->student->jenis_pekerjaan ?? 'Belum diisi' }}</p>
+                                        <p class="text-muted">
+                                            {{ Auth::user()->student->jenis_pekerjaan ?? 'Belum diisi' }}</p>
                                     </div>
                                     <div class="col-md-6 text-left">
                                         <p class="mb-1"><strong>Mulai Bekerja:</strong></p>
-                                        <p class="text-muted">{{ Auth::user()->student->tanggal_mulai ? date('d-m-Y', strtotime(Auth::user()->student->tanggal_mulai)) : 'Belum diisi' }}</p>
+                                        <p class="text-muted">
+                                            {{ Auth::user()->student->tanggal_mulai ? date('d-m-Y', strtotime(Auth::user()->student->tanggal_mulai)) : 'Belum diisi' }}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     @elseif (Auth::user()->student->status_setelah_lulus === 'kuliah')
                         <div class="text-center py-3">
-                            <img src="{{ asset('admin/images/undraw_education.svg') }}" style="max-height: 150px;" class="img-fluid mb-3">
+                            <img src="{{ asset('admin/images/undraw_education.svg') }}" style="max-height: 150px;"
+                                class="img-fluid mb-3">
                             <h5><i class="fas fa-university mr-2"></i>Status: Kuliah</h5>
                             @php
-                                $dataKuliah = \App\Models\DataKuliah::where('student_id', Auth::user()->student->id)->first();
+                                $dataKuliah = \App\Models\DataKuliah::where(
+                                    'student_id',
+                                    Auth::user()->student->id,
+                                )->first();
                             @endphp
-                            
-                            @if($dataKuliah)
+
+                            @if ($dataKuliah)
                                 <div class="card bg-light p-3 mt-3">
                                     <div class="row">
                                         <div class="col-md-6 text-left border-right">
@@ -275,7 +394,8 @@
                                         </div>
                                         <div class="col-md-6 text-left">
                                             <p class="mb-1"><strong>Program Studi:</strong></p>
-                                            <p class="text-muted">{{ $dataKuliah->jurusan }} ({{ $dataKuliah->jenjang }})</p>
+                                            <p class="text-muted">{{ $dataKuliah->jurusan }} ({{ $dataKuliah->jenjang }})
+                                            </p>
                                         </div>
                                     </div>
                                     <div class="row mt-2">
@@ -286,10 +406,11 @@
                                         <div class="col-md-6 text-left">
                                             <p class="mb-1"><strong>Status Beasiswa:</strong></p>
                                             <p class="text-muted">
-                                                @if($dataKuliah->status_beasiswa === 'ya')
+                                                @if ($dataKuliah->status_beasiswa === 'ya')
                                                     <span class="badge badge-success">Menerima Beasiswa</span>
-                                                    @if($dataKuliah->nama_beasiswa)
-                                                        <small class="d-block mt-1">{{ $dataKuliah->nama_beasiswa }}</small>
+                                                    @if ($dataKuliah->nama_beasiswa)
+                                                        <small
+                                                            class="d-block mt-1">{{ $dataKuliah->nama_beasiswa }}</small>
                                                     @endif
                                                 @else
                                                     <span class="badge badge-secondary">Tidak Menerima Beasiswa</span>
@@ -297,7 +418,7 @@
                                             </p>
                                         </div>
                                     </div>
-                                    @if($dataKuliah->prestasi_akademik)
+                                    @if ($dataKuliah->prestasi_akademik)
                                         <div class="row mt-2">
                                             <div class="col-12 text-left">
                                                 <p class="mb-1"><strong>Prestasi Akademik:</strong></p>
@@ -317,7 +438,7 @@
                 </div>
             </div>
         </div>
-    
+
         <!-- Info and Resources Section -->
         <div class="col-md-6 grid-margin stretch-card">
             <div class="card">
@@ -332,14 +453,16 @@
                                 <h6 class="mb-1">Tips Mencari Kerja</h6>
                                 <small class="text-muted">3 hari yang lalu</small>
                             </div>
-                            <p class="mb-1 text-muted small">Panduan lengkap untuk lulusan baru dalam mencari pekerjaan pertama.</p>
+                            <p class="mb-1 text-muted small">Panduan lengkap untuk lulusan baru dalam mencari pekerjaan
+                                pertama.</p>
                         </a>
                         <a href="#" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">Info Beasiswa Perguruan Tinggi</h6>
                                 <small class="text-muted">1 minggu yang lalu</small>
                             </div>
-                            <p class="mb-1 text-muted small">Informasi tentang berbagai program beasiswa untuk melanjutkan pendidikan.</p>
+                            <p class="mb-1 text-muted small">Informasi tentang berbagai program beasiswa untuk melanjutkan
+                                pendidikan.</p>
                         </a>
                         <a href="#" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
@@ -359,9 +482,6 @@
             Auth::user()->role === 'siswa' &&
             Auth::user()->student->status_setelah_lulus === 'belum_kerja' &&
             !Auth::user()->student->has_completed_questionnaire)
-        
-
-
         <!-- Modal Rekomendasi Pekerjaan - Kondisi disederhanakan -->
         <div class="modal fade" id="rekomendasiModal" data-backdrop="static" data-keyboard="false" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
@@ -574,25 +694,148 @@
 
 @push('styles')
     <style>
-        /* Card styling */
-        .card-tale {
-            background: linear-gradient(to right, #4747a1, #7978e9);
-            color: #ffffff;
-        }
-        
-        .card-dark-blue {
-            background: linear-gradient(to right, #376bff, #4ca2ff);
-            color: #ffffff;
-        }
-        
-        .card-light-blue {
-            background: linear-gradient(to right, #13b5ea, #0dc8f2);
-            color: #ffffff;
-        }
-        
+        /* Enhanced Card Styling with Modern Effects */
+        .card-tale,
+        .card-dark-blue,
+        .card-light-blue,
         .card-light-danger {
-            background: linear-gradient(to right, #f48a63, #ff9f87);
+            background: linear-gradient(135deg, #6254e7, #9289f1);
             color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(98, 84, 231, 0.2);
+            transition: all 0.3s ease;
+            height: 100%;
+            /* Make all cards same height */
+            margin-bottom: 0;
+            /* Remove bottom margin */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-dark-blue {
+            background: linear-gradient(135deg, #0062ff, #6cb3ff);
+            box-shadow: 0 6px 18px rgba(0, 98, 255, 0.2);
+        }
+
+        .card-light-blue {
+            background: linear-gradient(135deg, #0998d3, #5be6ff);
+            box-shadow: 0 6px 18px rgba(9, 152, 211, 0.2);
+        }
+
+        .card-light-danger {
+            background: linear-gradient(135deg, #ff7e54, #ffaa8a);
+            box-shadow: 0 6px 18px rgba(255, 126, 84, 0.2);
+        }
+
+        /* Card body to fill available space */
+        .card-body {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 1.25rem;
+            /* Consistent padding */
+        }
+
+        /* Remove extra spacing from the row and stretch-card */
+        .grid-margin.transparent {
+            margin-bottom: 0;
+        }
+
+        .stretch-card {
+            margin-bottom: 1.5rem;
+            /* Consistent spacing between cards */
+            display: flex;
+        }
+
+        .stretch-card>.card {
+            width: 100%;
+        }
+
+        /* Hover effects for cards */
+        .card-tale:hover,
+        .card-dark-blue:hover,
+        .card-light-blue:hover,
+        .card-light-danger:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Attention card styling - for important information */
+        .card-attention {
+            background: linear-gradient(135deg, #ffad00, #ff7e00);
+            color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(255, 173, 0, 0.2);
+            border-left: 5px solid #ff5500;
+            transition: all 0.3s ease;
+        }
+
+        /* Enhanced badge styling */
+        .badge {
+            padding: 6px 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            border-radius: 30px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge-success {
+            background: linear-gradient(to right, #28a745, #4fd375) !important;
+            border: none;
+        }
+
+        .badge-info {
+            background: linear-gradient(to right, #17a2b8, #4cd3e9) !important;
+            border: none;
+        }
+
+        .badge-warning {
+            background: linear-gradient(to right, #ffc107, #ffdb6b) !important;
+            border: none;
+            color: #212529 !important;
+        }
+
+        .badge-light {
+            background: linear-gradient(to right, #f8f9fa, #ffffff) !important;
+            border: 1px solid #e9ecef;
+            color: #333 !important;
+        }
+
+        /* Education section styling */
+        .education-icon {
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Typography improvements */
+        .card-body p.fs-30 {
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-body .text-muted {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Button enhancements */
+        .btn-outline-light {
+            border-width: 2px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-light:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
     </style>
 @endpush

@@ -1,0 +1,64 @@
+/* Custom Sidebar Styling */
+.sidebar {
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Remove blue outline and color on click/focus */
+.sidebar .nav .nav-item .nav-link:focus,
+.sidebar .nav .nav-item .nav-link:active {
+    color: inherit;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+/* Active state styling for menu items */
+.sidebar .nav .nav-item.active {
+    background: #4b49ac;
+}
+
+.sidebar .nav .nav-item.active > .nav-link {
+    background: #4b49ac;
+}
+
+.sidebar .nav .nav-item.active > .nav-link i,
+.sidebar .nav .nav-item.active > .nav-link .menu-title,
+.sidebar .nav .nav-item.active > .nav-link .menu-arrow {
+    color: #ffffff;
+}
+
+/* Hover effects */
+.sidebar .nav .nav-item:hover > .nav-link {
+    background: #4b49ac;
+    color: #ffffff;
+}
+
+.sidebar .nav .nav-item:hover > .nav-link i,
+.sidebar .nav .nav-item:hover > .nav-link .menu-title,
+.sidebar .nav .nav-item:hover > .nav-link .menu-arrow {
+    color: #ffffff;
+}
+
+/* Submenu styles */
+.sidebar .nav.sub-menu {
+    background: #4b49ac;
+    padding-bottom: 12px;
+}
+
+.sidebar .nav.sub-menu .nav-item .nav-link {
+    color: #ffffff;
+    padding: 0.7rem 1rem;
+    position: relative;
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
+.sidebar .nav.sub-menu .nav-item .nav-link.active {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .nav.sub-menu .nav-item .nav-link:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}

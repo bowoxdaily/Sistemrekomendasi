@@ -233,6 +233,67 @@ class OperatorControllerBE extends Controller
         }
     }
 
+    // Add this new method to handle student updates
+    public function updateSiswa(Request $request, $id)
+    {
+        try {
+            // Find the student
+            $siswa = Students::findOrFail($id);
+
+            // Validate input
+            $validator = Validator::make($request->all(), [
+                'nama_lengkap' => 'required|string|max:255',
+                'nisn' => 'required|string',
+                'jurusan_id' => 'required|exists:jurusans,id',
+                'status_lulus' => 'required|in:belum,lulus',
+                'tempat_lahir' => 'required|string|max:255',
+                'tanggal_lahir' => 'required|date',
+                'alamat' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Update the student
+            $siswa->nama_lengkap = $request->nama_lengkap;
+            $siswa->nisn = $request->nisn;
+            $siswa->jurusan_id = $request->jurusan_id;
+            $siswa->status_lulus = $request->status_lulus;
+            $siswa->tempat_lahir = $request->tempat_lahir;
+            $siswa->tanggal_lahir = $request->tanggal_lahir;
+            $siswa->alamat = $request->alamat;
+
+            // Handle graduation date
+            if ($request->status_lulus === 'lulus') {
+                if ($request->has('tanggal_lulus')) {
+                    $siswa->tanggal_lulus = $request->tanggal_lulus;
+                } elseif ($request->has('tahun_lulus')) {
+                    // Convert year to date format
+                    $siswa->tanggal_lulus = $request->tahun_lulus . '-01-01';
+                }
+            } else {
+                $siswa->tanggal_lulus = null;
+            }
+
+            $siswa->save();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data siswa berhasil diperbarui',
+                'data' => $siswa
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal memperbarui data siswa: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 
 
 

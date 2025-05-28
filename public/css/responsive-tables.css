@@ -1,0 +1,83 @@
+/* Responsive Tables Styling */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure table takes full width but allows horizontal scrolling */
+.table-responsive .table {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* Mobile card styling */
+.card[data-id] {
+    border-left: 4px solid #4b49ac;
+}
+
+.card[data-id] strong.text-muted {
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+}
+
+/* Style for mobile view */
+@media (max-width: 767.98px) {
+    .table-responsive .table {
+        border-collapse: collapse;
+    }
+
+    .table-responsive .table th,
+    .table-responsive .table td {
+        padding: 0.5rem;
+    }
+
+    /* Ensure dropdown menu is fully visible on mobile */
+    .dropdown-menu {
+        position: fixed;
+        top: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 300px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    /* Improve dropdown items visibility */
+    .dropdown-item {
+        padding: 0.75rem 1.5rem;
+    }
+
+    /* Always show NISN and Tahun Lulus columns */
+    #siswa-table th:nth-child(3),
+    #siswa-table td:nth-child(3),
+    #siswa-table th:nth-child(8),
+    #siswa-table td:nth-child(8) {
+        display: table-cell !important;
+    }
+
+    /* Make text in these columns more visible */
+    #siswa-table td:nth-child(3),
+    #siswa-table td:nth-child(8) {
+        font-weight: bold;
+    }
+}
+
+/* Handle truncated text better */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Add a subtle hover effect for better UX */
+#siswa-table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+}
+
+/* Make sure NISN column width is consistent */
+#siswa-table th:nth-child(3),
+#siswa-table td:nth-child(3) {
+    min-width: 120px;
+}
