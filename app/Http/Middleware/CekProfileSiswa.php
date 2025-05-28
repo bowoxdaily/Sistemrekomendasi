@@ -69,19 +69,27 @@ class CekProfileSiswa
      */
     private function isProfileComplete(Students $student): bool
     {
+        // Basic required fields for all students
         $requiredFields = [
             'nama_lengkap',
             'tempat_lahir',
             'tanggal_lahir',
             'alamat',
             'jenis_kelamin',
-            'status_setelah_lulus' // Pastikan status setelah lulus diisi
         ];
 
+        // Check basic fields
         foreach ($requiredFields as $field) {
             if (empty($student->$field)) {
+                Log::info("Field '$field' is empty, profile considered incomplete");
                 return false;
             }
+        }
+
+        // Only check status_setelah_lulus if the student has graduated
+        if ($student->status_lulus === 'lulus' && empty($student->status_setelah_lulus)) {
+            Log::info("Student is graduated but status_setelah_lulus is empty, profile considered incomplete");
+            return false;
         }
 
         return true;

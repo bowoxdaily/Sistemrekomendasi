@@ -77,7 +77,7 @@
                                                             @endphp
 
                                                             @if ($hasOptions)
-                                                                <div class="row g-3">
+                                                                <div class="options-horizontal-grid">
                                                                     @foreach ($question->options as $optionIndex => $option)
                                                                         @php
                                                                             // Determine option text and value correctly
@@ -98,7 +98,7 @@
                                                                         @endphp
 
                                                                         @if (!empty($optionText))
-                                                                            <div class="col-md-6 mb-3">
+                                                                            <div class="option-item-horizontal">
                                                                                 <div class="option-card">
                                                                                     <input class="option-input question-input"
                                                                                         type="radio"
@@ -140,7 +140,8 @@
                                                                         <input type="radio" class="scale-input question-input"
                                                                             name="answers[{{ $question->id }}]"
                                                                             id="question_{{ $question->id }}_scale_{{ $i }}"
-                                                                            value="{{ $i }}" required>
+                                                                            value="{{ $i }}" required
+                                                                            data-question-id="{{ $question->id }}">
                                                                         <label class="scale-label"
                                                                             for="question_{{ $question->id }}_scale_{{ $i }}">
                                                                             <div class="scale-number">{{ $i }}</div>
@@ -230,10 +231,10 @@
                                     </div>
                                 </div>
 
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex justify-content-between align-items-center navigation-buttons">
                                     <button type="button" class="btn btn-outline-secondary btn-nav" id="prevBtn"
                                         disabled>
-                                        <i class="mdi mdi-chevron-left me-2"></i>Sebelumnya
+                                        <i class="mdi mdi-chevron-left"></i><span>Sebelumnya</span>
                                     </button>
 
                                     <div class="navigation-info">
@@ -244,12 +245,12 @@
                                     </div>
 
                                     <button type="button" class="btn btn-primary btn-nav" id="nextBtn">
-                                        Selanjutnya<i class="mdi mdi-chevron-right ms-2"></i>
+                                        <span>Selanjutnya</span><i class="mdi mdi-chevron-right ms-2"></i>
                                     </button>
 
                                     <button type="submit" class="btn btn-success btn-nav" id="submitBtn"
                                         style="display: none;">
-                                        <i class="mdi mdi-send me-2"></i>Kirim Jawaban
+                                        <i class="mdi mdi-send me-2"></i><span>Kirim Jawaban</span>
                                     </button>
                                 </div>
                             </div>
@@ -277,8 +278,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                     <button type="button" class="btn btn-primary" id="submitFromReview">
-                        <i class="fas fa-paper-plane me-2"></i>
-                        Kirim Jawaban
+                        <i class="mdi mdi-send me-2"></i>Kirim Jawaban
                     </button>
                 </div>
             </div>

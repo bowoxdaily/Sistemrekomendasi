@@ -12,6 +12,24 @@ $(document).ready(function () {
     updateProgress();
     initializeFirstQuestion();
     handleResponsiveFeatures();
+    setupEventHandlers();
+
+    // Set up event handlers separately to ensure they're properly bound
+    function setupEventHandlers() {
+        // Fix for review modal submit button
+        $("#submitFromReview").on("click", function () {
+            $("#reviewModal").modal("hide");
+
+            // Show confirmation dialog
+            showSubmissionConfirmation();
+        });
+
+        // Direct form submission
+        $("#submitBtn").on("click", function (e) {
+            e.preventDefault();
+            showSubmissionConfirmation();
+        });
+    }
 
     function handleResponsiveFeatures() {
         // Adjust auto-advance timing for mobile
@@ -291,47 +309,146 @@ $(document).ready(function () {
                 <div class="text-center">
                     <i class="mdi mdi-trophy text-warning mb-3" style="font-size: ${iconSize}; animation: bounce 1s ease-in-out infinite;"></i>
                     <p class="lead mb-2" style="font-size: ${fontSize};">Anda telah menyelesaikan semua pertanyaan!</p>
-                    <p class="text-muted">Klik tombol "Kirim Jawaban" untuk menyelesaikan kuesioner ini.</p>
+                    <p class="text-muted mb-3">Silahkan pilih opsi di bawah ini:</p>
                 </div>
             `,
-            confirmButtonText:
-                '<i class="mdi mdi-check me-2"></i>Baik, Mengerti!',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: '<i class="mdi mdi-send me-2"></i>Kirim Jawaban',
+            denyButtonText: '<i class="mdi mdi-eye me-2"></i>Tinjau Jawaban',
+            cancelButtonText: "Kembali",
             confirmButtonColor: "#28a745",
+            denyButtonColor: "#007bff",
+            cancelButtonColor: "#6c757d",
             allowOutsideClick: false,
-            allowEscapeKey: false,
+            reverseButtons: true,
             customClass: {
                 popup: "completion-notification-popup",
-                confirmButton: isMobile ? "btn" : "btn-lg",
+                confirmButton: "btn-choice",
+                denyButton: "btn-choice",
+                cancelButton: "btn-choice",
             },
-            // Responsive modal sizing
-            width: isMobile ? "90%" : undefined,
-            showClass: {
-                popup: "animate__animated animate__bounceIn animate__faster",
-            },
-            hideClass: {
-                popup: "animate__animated animate__fadeOut animate__faster",
-            },
+            width: isMobile ? "90%" : "500px",
         }).then((result) => {
             if (result.isConfirmed) {
-                updateSubmitButton();
+                // User chose to submit answers
+                showSubmissionConfirmation();
+            } else if (result.isDenied) {
+                // User chose to review answers
+                showReviewModal();
             }
         });
     }
 
-    function updateSubmitButton() {
-        const $submitBtn = $("#submitBtn");
-        $submitBtn
-            .html(
-                '<i class="mdi mdi-check-circle me-2"></i>Kirim Jawaban - Semua Selesai!'
-            )
-            .addClass("btn-pulse");
-
-        setTimeout(() => {
-            $submitBtn.removeClass("btn-pulse");
-        }, 4000);
+    // Updated submission confirmation with clear action
+    function showSubmissionConfirmation() {
+        Swal.fire({
+            title: "Konfirmasi Pengiriman",
+            html: `
+                <div class="text-center">
+                    <i class="mdi mdi-help-circle-outline text-warning mb-3" style="font-size: 3rem;"></i>
+                    <p>Apakah Anda yakin ingin mengirim jawaban?</p>
+                    <p class="text-muted">Jawaban tidak dapat diubah setelah dikirim.</p>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText:
+                '<i class="mdi mdi-send me-2"></i>Ya, Kirim Sekarang',
+            cancelButtonText: "Batal",
+            confirmButtonColor: "#28a745",
+            cancelButtonColor: "#6c757d",
+            reverseButtons: true,
+            customClass: {
+                confirmButton: "btn-lg",
+            },
+        }).then((result) => {
+            if (result.isConfirmed) {
+                actuallySubmitForm();
+            }
+        });
     }
 
-    // Rest of the existing functions...
+    // This function actually submits the form
+    function actuallySubmitForm() {
+        const $submitBtn = $("#submitBtn");
+
+        // Show loading state
+        $submitBtn
+            .prop("disabled", true)
+            .html(
+                '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim jawaban...'
+            );
+
+        Swal.fire({
+            title: "Mengirim jawaban...",
+            text: "Mohon tunggu sebentar",
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+        });
+
+        // Submit the form after a short delay to ensure the loading state is visible
+        setTimeout(() => {
+            document.getElementById("questionnaireForm").submit();
+        }, 500);
+    }
+
+    function showReviewModal() {
+        let reviewContent = "";
+        let totalAnswered = 0;
+
+        $(".question-slide").each(function (index) {
+            const $slide = $(this);
+            const $input = $slide.find(".question-input").first();
+            const questionId = $input.data("question-id");
+            const isAnswered = answers.hasOwnProperty(questionId);
+
+            if (isAnswered) {
+                totalAnswered++;
+            }
+
+            // Build review content for each question
+            reviewContent += `
+                <div class="mb-3 p-3 border rounded">
+                    <h6>Pertanyaan ${index + 1}</h6>
+                    <div class="fw-bold mb-2">${
+                        $slide.find(".question-text").html() ||
+                        "Tidak ada pertanyaan"
+                    }</div>
+                    <div class="mb-2">Jawaban Anda: <span class="text-success">${
+                        isAnswered ? answers[questionId] : "Belum dijawab"
+                    }</span></div>
+                    <div class="mb-2">Status: ${
+                        isAnswered
+                            ? '<span class="badge bg-success">Dijawab</span>'
+                            : '<span class="badge bg-danger">Belum dijawab</span>'
+                    }</div>
+                </div>
+            `;
+        });
+
+        const summaryContent = `
+            <div class="alert alert-info mb-4">
+                <h6><i class="mdi mdi-information me-2"></i>Ringkasan Jawaban</h6>
+                <p class="mb-0">Total dijawab: <strong>${totalAnswered}</strong> dari <strong>${totalQuestions}</strong> pertanyaan</p>
+            </div>
+        `;
+
+        // Clear any previous content and show new content
+        $("#reviewContent").html(summaryContent + reviewContent);
+        $("#reviewModal").modal("show");
+    }
+
+    // Override the questionnaireForm submit event to use our confirmation flow
+    $("#questionnaireForm").on("submit", function (e) {
+        e.preventDefault();
+        if (validateAllQuestions()) {
+            showSubmissionConfirmation();
+        }
+    });
+
     function validateCurrentQuestion() {
         const $currentSlide = $(".question-slide").eq(currentQuestion);
         const $input = $currentSlide.find(".question-input").first();
