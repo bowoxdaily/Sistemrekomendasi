@@ -117,18 +117,14 @@
     <div class="row">
         <div class="col-md-5 grid-margin stretch-card">
             <div class="card tale-bg">
-                <div class="card-people mt-auto">
+                <div class="card-people">
                     <img src="{{ asset('admin/images/dashboard/people.svg') }}" alt="people">
-                    <div class="weather-info">
-                        <div class="d-flex">
-                            <div class="ml-2">
-                                <h4 class="location font-weight-normal">Alumni SMKN 1 Terisi</h4>
-                                <h6 class="font-weight-normal mb-0">
-                                    Tahun Lulus:
-                                    {{ Auth::user()->student->tanggal_lulus ? date('Y', strtotime(Auth::user()->student->tanggal_lulus)) : 'Belum diatur' }}
-                                </h6>
-                            </div>
-                        </div>
+                    <div class="alumni-info">
+                        <h4 class="location font-weight-normal">Alumni SMKN 1 Terisi</h4>
+                        <h6 class="font-weight-normal mb-0">
+                            Tahun Lulus:
+                            {{ Auth::user()->student->tanggal_lulus ? date('Y', strtotime(Auth::user()->student->tanggal_lulus)) : 'Belum diatur' }}
+                        </h6>
                     </div>
                 </div>
             </div>
@@ -189,22 +185,39 @@
                         <div class="card card-light-blue">
                             <div class="card-body">
                                 <p class="mb-4">Informasi Pekerjaan</p>
-                                <p class="fs-30 mb-2">{{ ucfirst(Auth::user()->student->jenis_pekerjaan ?? 'Aktif') }}</p>
-                                <p>
-                                    @if (Auth::user()->student->nama_perusahaan)
-                                        Anda bekerja di {{ Auth::user()->student->nama_perusahaan }}
-                                        @if (Auth::user()->student->posisi)
-                                            sebagai {{ Auth::user()->student->posisi }}
+                                @php
+                                    $dataKerja = \App\Models\DataKerja::where(
+                                        'student_id',
+                                        Auth::user()->student->id,
+                                    )->first();
+                                @endphp
+
+                                @if ($dataKerja)
+                                    <p class="fs-30 mb-2">{{ ucfirst($dataKerja->jenis_pekerjaan ?? 'Aktif') }}</p>
+                                    <p>
+                                        @if ($dataKerja->nama_perusahaan)
+                                            Anda bekerja di {{ $dataKerja->nama_perusahaan }}
+                                            @if ($dataKerja->posisi)
+                                                sebagai {{ $dataKerja->posisi }}
+                                            @endif
+                                        @else
+                                            Posisi: {{ $dataKerja->posisi ?? 'Belum diisi' }}
                                         @endif
-                                    @else
-                                        Posisi: {{ Auth::user()->student->posisi ?? 'Belum diisi' }}
+                                    </p>
+                                    @if ($dataKerja->sesuai_jurusan)
+                                        <div
+                                            class="badge badge-{{ $dataKerja->sesuai_jurusan === 'ya' ? 'success' : 'info' }} mt-2">
+                                            {{ $dataKerja->sesuai_jurusan === 'ya' ? 'Sesuai Jurusan' : 'Beda Jurusan' }}
+                                        </div>
                                     @endif
-                                </p>
-                                @if (Auth::user()->student->sesuai_jurusan)
-                                    <div
-                                        class="badge badge-{{ Auth::user()->student->sesuai_jurusan === 'ya' ? 'success' : 'info' }} mt-2">
-                                        {{ Auth::user()->student->sesuai_jurusan === 'ya' ? 'Sesuai Jurusan' : 'Beda Jurusan' }}
-                                    </div>
+                                @else
+                                    <p class="fs-30 mb-2">Belum Lengkap</p>
+                                    <p>Data pekerjaan belum tersedia</p>
+
+                                    <button class="btn btn-outline-light btn-sm mt-2" data-toggle="modal"
+                                        data-target="#kerjaModal">
+                                        <i class="fas fa-plus-circle mr-1"></i> Lengkapi Data
+                                    </button>
                                 @endif
                             </div>
                         </div>
@@ -346,32 +359,79 @@
                             <img src="{{ asset('admin/images/undraw_work.svg') }}" style="max-height: 150px;"
                                 class="img-fluid mb-3">
                             <h5><i class="fas fa-briefcase mr-2"></i>Status: Sudah Bekerja</h5>
-                            <div class="card bg-light p-3 mt-3">
-                                <div class="row">
-                                    <div class="col-md-6 text-left border-right">
-                                        <p class="mb-1"><strong>Perusahaan:</strong></p>
-                                        <p class="text-muted">
-                                            {{ Auth::user()->student->nama_perusahaan ?? 'Belum diisi' }}</p>
+
+                            @php
+                                $dataKerja = \App\Models\DataKerja::where(
+                                    'student_id',
+                                    Auth::user()->student->id,
+                                )->first();
+                            @endphp
+
+                            @if ($dataKerja)
+                                <div class="card bg-light p-3 mt-3">
+                                    <div class="row">
+                                        <div class="col-md-6 text-left border-right">
+                                            <p class="mb-1"><strong>Perusahaan:</strong></p>
+                                            <p class="text-muted">{{ $dataKerja->nama_perusahaan ?? 'Belum diisi' }}</p>
+                                        </div>
+                                        <div class="col-md-6 text-left">
+                                            <p class="mb-1"><strong>Posisi:</strong></p>
+                                            <p class="text-muted">{{ $dataKerja->posisi ?? 'Belum diisi' }}</p>
+                                        </div>
                                     </div>
-                                    <div class="col-md-6 text-left">
-                                        <p class="mb-1"><strong>Posisi:</strong></p>
-                                        <p class="text-muted">{{ Auth::user()->student->posisi ?? 'Belum diisi' }}</p>
+                                    <div class="row mt-2">
+                                        <div class="col-md-6 text-left border-right">
+                                            <p class="mb-1"><strong>Jenis Pekerjaan:</strong></p>
+                                            <p class="text-muted">{{ $dataKerja->jenis_pekerjaan ?? 'Belum diisi' }}</p>
+                                        </div>
+                                        <div class="col-md-6 text-left">
+                                            <p class="mb-1"><strong>Mulai Bekerja:</strong></p>
+                                            <p class="text-muted">
+                                                {{ $dataKerja->tanggal_mulai ? date('d-m-Y', strtotime($dataKerja->tanggal_mulai)) : 'Belum diisi' }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    @if ($dataKerja->gaji)
+                                        <div class="row mt-2">
+                                            <div class="col-md-6 text-left border-right">
+                                                <p class="mb-1"><strong>Gaji:</strong></p>
+                                                <p class="text-muted">Rp
+                                                    {{ number_format($dataKerja->gaji, 0, ',', '.') }}</p>
+                                            </div>
+                                            <div class="col-md-6 text-left">
+                                                <p class="mb-1"><strong>Kesesuaian:</strong></p>
+                                                <p class="text-muted">
+                                                    <span
+                                                        class="badge badge-{{ $dataKerja->sesuai_jurusan === 'ya' ? 'success' : 'info' }}">
+                                                        {{ $dataKerja->sesuai_jurusan === 'ya' ? 'Sesuai Jurusan' : 'Beda Jurusan' }}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    @if ($dataKerja->kompetensi_dibutuhkan)
+                                        <div class="row mt-2">
+                                            <div class="col-12 text-left">
+                                                <p class="mb-1"><strong>Kompetensi yang Dibutuhkan:</strong></p>
+                                                <p class="text-muted">{{ $dataKerja->kompetensi_dibutuhkan }}</p>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="alert alert-info mt-3">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    Data pekerjaan belum lengkap. Silahkan lengkapi data Anda.
+                                    <div class="mt-3">
+                                        <button class="btn btn-primary btn-sm" data-toggle="modal"
+                                            data-target="#kerjaModal">
+                                            <i class="fas fa-plus-circle mr-1"></i> Lengkapi Data
+                                        </button>
                                     </div>
                                 </div>
-                                <div class="row mt-2">
-                                    <div class="col-md-6 text-left border-right">
-                                        <p class="mb-1"><strong>Jenis Pekerjaan:</strong></p>
-                                        <p class="text-muted">
-                                            {{ Auth::user()->student->jenis_pekerjaan ?? 'Belum diisi' }}</p>
-                                    </div>
-                                    <div class="col-md-6 text-left">
-                                        <p class="mb-1"><strong>Mulai Bekerja:</strong></p>
-                                        <p class="text-muted">
-                                            {{ Auth::user()->student->tanggal_mulai ? date('d-m-Y', strtotime(Auth::user()->student->tanggal_mulai)) : 'Belum diisi' }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                            @endif
                         </div>
                     @elseif (Auth::user()->student->status_setelah_lulus === 'kuliah')
                         <div class="text-center py-3">

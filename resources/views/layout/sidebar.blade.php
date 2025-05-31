@@ -113,6 +113,15 @@
                     </ul>
                 </div>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="{{ route('operator.blog.index') }}"
+                    aria-expanded="false" aria-controls="icons">
+                    <i class="mdi mdi-post-outline menu-icon"></i>
+                    <span class="menu-title">Informasi</span>
+
+                </a>
+
+            </li>
 
             @php
                 $isSettingsActive = request()->routeIs('operator.settings.*');
@@ -224,19 +233,6 @@
             @endif
 
             @if (auth()->user()->role === 'operator')
-                <li class="nav-item">
-                    <a class="nav-link" data-toggle="collapse" href="#icons" aria-expanded="false"
-                        aria-controls="icons">
-                        <i class="mdi mdi-vector-square menu-icon"></i>
-                        <span class="menu-title">Icons</span>
-                        <i class="menu-arrow"></i>
-                    </a>
-                    <div class="collapse" id="icons">
-                        <ul class="nav flex-column sub-menu">
-                            <li class="nav-item"> <a class="nav-link" href="pages/icons/mdi.html">Mdi icons</a></li>
-                        </ul>
-                    </div>
-                </li>
             @endif
 
             <!-- Menu UI Elements hanya untuk guru dan operator -->

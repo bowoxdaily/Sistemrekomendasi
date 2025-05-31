@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\BE;
 
 use App\Http\Controllers\Controller;
@@ -25,24 +26,111 @@ class DataSiswaController extends Controller
                 ], 404);
             }
 
-            // Based on status_setelah_lulus, validate and store data
-            switch ($student->status_setelah_lulus) {
-                case 'kuliah':
-                    return $this->storeKuliahData($request, $student);
+            // Determine what type of data we're inserting based on input
+            if ($request->has('nama_pt') && $request->has('jurusan')) {
+                // Validate kuliah data
+                $validator = Validator::make($request->all(), [
+                    'nama_pt'           => 'required|string|max:255',
+                    'jurusan'           => 'required|string|max:255',
+                    'jenjang'           => 'required|string|in:D3,D4,S1,S2,S3',
+                    'tahun_masuk'       => 'required|integer|min:1900|max:2099',
+                    'status_beasiswa'   => 'required|string|in:ya,tidak',
+                    'nama_beasiswa'     => 'nullable|string|max:255|required_if:status_beasiswa,ya',
+                ]);
 
-                case 'kerja':
-                    return $this->storeKerjaData($request, $student);
-
-                case 'belum_kerja':
-                    return $this->storeBelumKerjaData($request, $student);
-
-                default:
+                if ($validator->fails()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Status setelah lulus tidak valid.',
-                    ], 400);
-            }
+                        'message' => 'Validasi gagal',
+                        'errors'  => $validator->errors(),
+                    ], 422);
+                }
 
+                // Check if data already exists
+                $existingData = DataKuliah::where('student_id', $student->id)->first();
+
+                if ($existingData) {
+                    // Update existing data
+                    $existingData->update($request->all());
+                    $data = $existingData;
+                } else {
+                    // Create new data
+                    $data = DataKuliah::create([
+                        'student_id' => $student->id,
+                        'nama_pt'           => $request->nama_pt,
+                        'jurusan'           => $request->jurusan,
+                        'jenjang'           => $request->jenjang,
+                        'tahun_masuk'       => $request->tahun_masuk,
+                        'status_beasiswa'   => $request->status_beasiswa,
+                        'nama_beasiswa'     => $request->nama_beasiswa,
+                        'prestasi_akademik' => $request->prestasi_akademik,
+                    ]);
+                }
+
+                // Update student profile completion status
+                $student->is_profile_complete = true;
+                $student->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data kuliah berhasil disimpan',
+                    'data'    => $data,
+                ]);
+            } elseif ($request->has('nama_perusahaan') && $request->has('posisi')) {
+                // Validate kerja data
+                $validator = Validator::make($request->all(), [
+                    'nama_perusahaan'       => 'required|string|max:255',
+                    'posisi'                => 'required|string|max:255',
+                    'jenis_pekerjaan'       => 'required|string|max:255',
+                    'tanggal_mulai'         => 'required|date',
+                    'gaji'                  => 'nullable|numeric',
+                    'sesuai_jurusan'        => 'required|string|in:ya,tidak',
+                ]);
+
+                if ($validator->fails()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validasi gagal',
+                        'errors'  => $validator->errors(),
+                    ], 422);
+                }
+
+                // Check if data already exists
+                $existingData = DataKerja::where('student_id', $student->id)->first();
+
+                if ($existingData) {
+                    // Update existing data
+                    $existingData->update($request->all());
+                    $data = $existingData;
+                } else {
+                    // Create new data
+                    $data = DataKerja::create([
+                        'student_id' => $student->id,
+                        'nama_perusahaan'       => $request->nama_perusahaan,
+                        'posisi'                => $request->posisi,
+                        'jenis_pekerjaan'       => $request->jenis_pekerjaan,
+                        'tanggal_mulai'         => $request->tanggal_mulai,
+                        'gaji'                  => $request->gaji,
+                        'sesuai_jurusan'        => $request->sesuai_jurusan,
+                        'kompetensi_dibutuhkan' => $request->kompetensi_dibutuhkan,
+                    ]);
+                }
+
+                // Update student profile completion status
+                $student->is_profile_complete = true;
+                $student->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data pekerjaan berhasil disimpan',
+                    'data'    => $data,
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tipe data tidak valid',
+                ], 400);
+            }
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
