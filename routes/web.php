@@ -84,6 +84,8 @@ Route::middleware(['role:siswa,guru,operator,superadmin', 'check.student.profile
 
     Route::group(['prefix' => 'blog'], function () {
         Route::get('/', [BlogsControllerFE::class, 'index'])->name('operator.blog.index');
+        Route::get('/create', [BlogsControllerFE::class, 'create'])->name('operator.blog.create');
+        Route::get('/edit/{id}', [BlogsControllerFE::class, 'edit'])->name('operator.blog.edit');
     });
 });
 
@@ -128,3 +130,14 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator/settings')->name(
     Route::get('/backup', [SettingsController::class, 'backup'])->name('backup');
     Route::get('/backup/download/{filename}', [SettingsController::class, 'downloadBackup'])->name('backup.download');
 });
+
+// Add or update the blog routes
+Route::prefix('operator/blog')->middleware(['auth', 'role:operator'])->group(function () {
+    Route::get('/', 'App\Http\Controllers\BlogController@index')->name('operator.blog.index');
+    Route::get('/create', 'App\Http\Controllers\BlogController@create')->name('operator.blog.create');
+    Route::get('/edit/{id}', 'App\Http\Controllers\BlogController@edit')->name('operator.blog.edit');
+});
+
+// Public blog routes (accessible to all users)
+Route::get('/blog', 'App\Http\Controllers\BlogController@list')->name('blog.index');
+Route::get('/blog/{slug}', 'App\Http\Controllers\BlogController@show')->name('blog.show');

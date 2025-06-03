@@ -1,17 +1,18 @@
 <?php
 
-use App\Http\Controllers\BE\AuthController;
-use App\Http\Controllers\BE\DataSiswaController;
-use App\Http\Controllers\BE\JobRecommendataionController;
-use App\Http\Controllers\BE\JurusanController;
-use App\Http\Controllers\BE\OperatorControllerBE;
-use App\Http\Controllers\BE\QuestionnaireControllerOpe;
-use App\Http\Controllers\BE\SettingsController;
-use App\Http\Controllers\BE\SiswaControllerBE;
-use App\Http\Controllers\BE\SuperAdminController;
 use App\Models\Jurusan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BE\AuthController;
+use App\Http\Controllers\BE\BlogControllerBE;
+use App\Http\Controllers\BE\JurusanController;
+use App\Http\Controllers\BE\SiswaControllerBE;
+use App\Http\Controllers\BE\SettingsController;
+use App\Http\Controllers\BE\DataSiswaController;
+use App\Http\Controllers\BE\OperatorControllerBE;
+use App\Http\Controllers\BE\SuperAdminController;
+use App\Http\Controllers\BE\QuestionnaireControllerOpe;
+use App\Http\Controllers\BE\JobRecommendataionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +54,15 @@ Route::group(['middleware' => ['web', 'auth']], function () {
         Route::put('/operator/{id}', [SuperAdminController::class, 'updateOperator']);
         Route::delete('/operator/{id}', [SuperAdminController::class, 'deleteOperator']);
     });
+
+     Route::group(['prefix' => 'blog'], function () {
+        Route::get('/', [BlogControllerBE::class, 'get']);
+        Route::get('/{id}', [BlogControllerBE::class, 'getById']);
+        Route::post('/', [BlogControllerBE::class, 'store']);
+        Route::put('/{id}', [BlogControllerBE::class, 'update']);
+        Route::delete('/{id}', [BlogControllerBE::class, 'destroy']);   
+    });
+
 
     Route::group(['prefix' => 'profile-operator'], function () {
         Route::post('/', [OperatorControllerBE::class, 'updateProfile']);
@@ -111,4 +121,7 @@ Route::group(['middleware' => ['web', 'auth']], function () {
     // Statistics Routes
     Route::get('/stats/students', [SiswaControllerBE::class, 'getCount'])
         ->name('api.stats.students');
+    
+    // Blog categories
+    Route::get('/blog-categories', [BlogControllerBE::class, 'getCategories']);
 });

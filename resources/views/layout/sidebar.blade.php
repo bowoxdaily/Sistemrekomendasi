@@ -76,21 +76,28 @@
         @if (auth()->user()->role === 'operator')
             <!-- Menu khusus operator -->
             @php
-                $isManagementActive =
-                    request()->routeIs('view.siswa') ||
-                    request()->routeIs('view.jurusan') ||
-                    request()->routeIs('operator.questionnaires.*') ||
-                    request()->routeIs('operator.jobs.*');
+                // For more reliable detection, check the actual URL path
+                $path = request()->path();
+                
+                // Explicitly check for different sections of the site
+                $isBlogSection = strpos($path, 'operator/blog') === 0;
+                $isManagementSection = !$isBlogSection && (
+                    strpos($path, 'operator/siswa') === 0 ||
+                    strpos($path, 'operator/jurusan') === 0 ||
+                    strpos($path, 'operator/questionnaires') === 0 ||
+                    strpos($path, 'operator/jobs') === 0
+                );
+                $isSettingsSection = !$isBlogSection && strpos($path, 'operator/settings') === 0;
             @endphp
 
-            <li class="nav-item {{ $isManagementActive ? 'active' : '' }}">
+            <li class="nav-item {{ $isManagementSection ? 'active' : '' }}">
                 <a class="nav-link" data-toggle="collapse" href="#admin-menu"
-                    aria-expanded="{{ $isManagementActive ? 'true' : 'false' }}">
+                    aria-expanded="{{ $isManagementSection ? 'true' : 'false' }}">
                     <i class="mdi mdi-account-cog menu-icon"></i>
                     <span class="menu-title">Manajemen</span>
                     <i class="menu-arrow"></i>
                 </a>
-                <div class="collapse {{ $isManagementActive ? 'show' : '' }}" id="admin-menu">
+                <div class="collapse {{ $isManagementSection ? 'show' : '' }}" id="admin-menu">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('view.siswa') ? 'active' : '' }}"
@@ -113,27 +120,23 @@
                     </ul>
                 </div>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="{{ route('operator.blog.index') }}"
-                    aria-expanded="false" aria-controls="icons">
+           
+            <!-- Blog/Informasi section with active state detection -->
+            <li class="nav-item {{ $isBlogSection ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('operator.blog.index') }}">
                     <i class="mdi mdi-post-outline menu-icon"></i>
                     <span class="menu-title">Informasi</span>
-
                 </a>
-
             </li>
 
-            @php
-                $isSettingsActive = request()->routeIs('operator.settings.*');
-            @endphp
-            <li class="nav-item {{ $isSettingsActive ? 'active' : '' }}">
+            <li class="nav-item {{ $isSettingsSection ? 'active' : '' }}">
                 <a class="nav-link" data-toggle="collapse" href="#settings-menu"
-                    aria-expanded="{{ $isSettingsActive ? 'true' : 'false' }}">
+                    aria-expanded="{{ $isSettingsSection ? 'true' : 'false' }}">
                     <i class="mdi mdi-cog menu-icon"></i>
                     <span class="menu-title">Pengaturan Sistem</span>
                     <i class="menu-arrow"></i>
                 </a>
-                <div class="collapse {{ $isSettingsActive ? 'show' : '' }}" id="settings-menu">
+                <div class="collapse {{ $isSettingsSection ? 'show' : '' }}" id="settings-menu">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('operator.settings.general') }}">Pengaturan Umum</a>
