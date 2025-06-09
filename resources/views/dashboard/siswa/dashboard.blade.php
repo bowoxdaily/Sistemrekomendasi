@@ -119,13 +119,7 @@
             <div class="card tale-bg">
                 <div class="card-people">
                     <img src="{{ asset('admin/images/dashboard/people.svg') }}" alt="people">
-                    <div class="alumni-info">
-                        <h4 class="location font-weight-normal">Alumni SMKN 1 Terisi</h4>
-                        <h6 class="font-weight-normal mb-0">
-                            Tahun Lulus:
-                            {{ Auth::user()->student->tanggal_lulus ? date('Y', strtotime(Auth::user()->student->tanggal_lulus)) : 'Belum diatur' }}
-                        </h6>
-                    </div>
+                    
                 </div>
             </div>
         </div>
@@ -505,32 +499,36 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <h4 class="card-title">Informasi & Berita</h4>
-                        <a href="#" class="text-info">Lihat Semua</a>
+                        <a href="{{ route('blog.index') }}" class="text-info">Lihat Semua</a>
                     </div>
+                    @php
+                        // Get top 3 blogs that are published
+                        $topBlogs = \App\Models\Blog::where('is_published', true)
+                            ->orderBy('created_at', 'desc')
+                            ->limit(3)
+                            ->get();
+                    @endphp
+                    
                     <div class="list-group">
-                        <a href="#" class="list-group-item list-group-item-action">
+                        @forelse($topBlogs as $blog)
+                        <a href="{{ route('blog.show', $blog->slug) }}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Tips Mencari Kerja</h6>
-                                <small class="text-muted">3 hari yang lalu</small>
+                                <h6 class="mb-1">{{ $blog->title }}</h6>
+                                <small class="text-muted">{{ \Carbon\Carbon::parse($blog->created_at)->locale('id')->diffForHumans() }}</small>
                             </div>
-                            <p class="mb-1 text-muted small">Panduan lengkap untuk lulusan baru dalam mencari pekerjaan
-                                pertama.</p>
+                            <p class="mb-1 text-muted small">{{ Str::limit(strip_tags($blog->content), 100) }}</p>
+                            @if($blog->category)
+                            <span class="badge badge-{{ Str::contains($blog->category, ['beasiswa', 'Beasiswa']) ? 'success' : 'primary' }} mt-1">
+                                {{ $blog->category }}
+                            </span>
+                            @endif
                         </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Info Beasiswa Perguruan Tinggi</h6>
-                                <small class="text-muted">1 minggu yang lalu</small>
-                            </div>
-                            <p class="mb-1 text-muted small">Informasi tentang berbagai program beasiswa untuk melanjutkan
-                                pendidikan.</p>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Workshop Persiapan Karir</h6>
-                                <small class="text-muted">2 minggu yang lalu</small>
-                            </div>
-                            <p class="mb-1 text-muted small">Workshop online untuk mempersiapkan karir setelah lulus.</p>
-                        </a>
+                        @empty
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Belum ada informasi atau berita terbaru.
+                        </div>
+                        @endforelse
                     </div>
                 </div>
             </div>

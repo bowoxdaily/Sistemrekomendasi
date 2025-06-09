@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
             JobRecommendationSeeder::class,
             QuestionnaireQuestionSeeder::class,
             JurusanSeeder::class,
-            superAdminSeeder::class,
+            SuperAdminSeeder::class,
         ]);
     }
 }

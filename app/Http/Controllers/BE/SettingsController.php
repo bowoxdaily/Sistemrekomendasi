@@ -43,12 +43,7 @@ class SettingsController extends Controller
     /**
      * Display the appearance settings page
      */
-    public function appearance()
-    {
-        $settings = Setting::where('group', 'appearance')->get()->pluck('value', 'key');
-        
-        return view('dashboard.operator.settings.appearance', compact('settings'));
-    }
+   
     
     /**
      * Display the school information settings page
@@ -60,15 +55,7 @@ class SettingsController extends Controller
         return view('dashboard.operator.settings.school', compact('settings'));
     }
     
-    /**
-     * Display the mail settings page
-     */
-    public function mail()
-    {
-        $settings = Setting::where('group', 'mail')->get()->pluck('value', 'key');
-        
-        return view('dashboard.operator.settings.mail', compact('settings'));
-    }
+    
     
     /**
      * Display the backup & restore settings page
