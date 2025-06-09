@@ -29,6 +29,19 @@ class Students extends Model
     {
         return $this->belongsTo(Jurusan::class);
     }
+    public function dataKerja()
+    {
+        return $this->hasOne(DataKerja::class, 'student_id', 'id'); // Make sure 'student_id' is used here
+    }
+    public function dataKuliah()
+    {
+        return $this->hasOne(DataKuliah::class, 'student_id', 'id'); // Also check this relationship
+    }
+    public function kuisioner()
+    {
+        return $this->hasMany(Kuisioner::class);
+    }
+    
 
 
     /**

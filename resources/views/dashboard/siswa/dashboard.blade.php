@@ -117,9 +117,16 @@
     <div class="row">
         <div class="col-md-5 grid-margin stretch-card">
             <div class="card tale-bg">
+                <div class="alumni-info">
+                    <h4 class="location font-weight-normal">Alumni SMKN 1 Terisi</h4>
+                    <h6 class="font-weight-normal mb-0">
+                        Tahun Lulus:
+                        {{ Auth::user()->student->tanggal_lulus ? date('Y', strtotime(Auth::user()->student->tanggal_lulus)) : 'Belum diatur' }}
+                    </h6>
+                </div>
                 <div class="card-people">
                     <img src="{{ asset('admin/images/dashboard/people.svg') }}" alt="people">
-                    
+
                 </div>
             </div>
         </div>
@@ -508,26 +515,29 @@
                             ->limit(3)
                             ->get();
                     @endphp
-                    
+
                     <div class="list-group">
                         @forelse($topBlogs as $blog)
-                        <a href="{{ route('blog.show', $blog->slug) }}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ $blog->title }}</h6>
-                                <small class="text-muted">{{ \Carbon\Carbon::parse($blog->created_at)->locale('id')->diffForHumans() }}</small>
-                            </div>
-                            <p class="mb-1 text-muted small">{{ Str::limit(strip_tags($blog->content), 100) }}</p>
-                            @if($blog->category)
-                            <span class="badge badge-{{ Str::contains($blog->category, ['beasiswa', 'Beasiswa']) ? 'success' : 'primary' }} mt-1">
-                                {{ $blog->category }}
-                            </span>
-                            @endif
-                        </a>
+                            <a href="{{ route('blog.show', $blog->slug) }}"
+                                class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ $blog->title }}</h6>
+                                    <small
+                                        class="text-muted">{{ \Carbon\Carbon::parse($blog->created_at)->locale('id')->diffForHumans() }}</small>
+                                </div>
+                                <p class="mb-1 text-muted small">{{ Str::limit(strip_tags($blog->content), 100) }}</p>
+                                @if ($blog->category)
+                                    <span
+                                        class="badge badge-{{ Str::contains($blog->category, ['beasiswa', 'Beasiswa']) ? 'success' : 'primary' }} mt-1">
+                                        {{ $blog->category }}
+                                    </span>
+                                @endif
+                            </a>
                         @empty
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            Belum ada informasi atau berita terbaru.
-                        </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Belum ada informasi atau berita terbaru.
+                            </div>
                         @endforelse
                     </div>
                 </div>

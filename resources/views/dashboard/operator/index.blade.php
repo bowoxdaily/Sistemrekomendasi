@@ -21,10 +21,8 @@
                                 <i class="mdi mdi-calendar"></i> {{ date('d M Y') }}
                             </button>
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuDate2">
-                                <a class="dropdown-item" href="#">January - March</a>
-                                <a class="dropdown-item" href="#">March - June</a>
-                                <a class="dropdown-item" href="#">June - August</a>
-                                <a class="dropdown-item" href="#">August - November</a>
+                                <a class="dropdown-item" href="#">Lihat Kalender</a>
+                                <a class="dropdown-item" href="#">Lihat Event</a>
                             </div>
                         </div>
                     </div>
@@ -40,16 +38,28 @@
                 <div class="card-body">
                     <h4 class="card-title mb-4">Pengaturan Cepat</h4>
                     <div class="row">
-                        <div class="col-md-6 text-center mb-3">
+                        <div class="col-md-3 text-center mb-3">
                             <a href="{{ route('operator.settings.logo') }}" class="btn btn-outline-primary btn-icon-text p-3 w-100 h-100">
                                 <i class="mdi mdi-image-area-close btn-icon-prepend"></i>
                                 <span class="d-block mt-2">Ganti Logo</span>
                             </a>
                         </div>
-                        <div class="col-md-6 text-center mb-3">
+                        <div class="col-md-3 text-center mb-3">
                             <a href="{{ route('operator.settings.school') }}" class="btn btn-outline-info btn-icon-text p-3 w-100 h-100">
                                 <i class="mdi mdi-school btn-icon-prepend"></i>
                                 <span class="d-block mt-2">Info Sekolah</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <a href="{{ route('operator.blog.index') }}" class="btn btn-outline-success btn-icon-text p-3 w-100 h-100">
+                                <i class="mdi mdi-newspaper btn-icon-prepend"></i>
+                                <span class="d-block mt-2">Kelola Blog</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <a href="{{ route('operator.blog.create') }}" class="btn btn-outline-warning btn-icon-text p-3 w-100 h-100">
+                                <i class="mdi mdi-plus-circle btn-icon-prepend"></i>
+                                <span class="d-block mt-2">Tambah Blog</span>
                             </a>
                         </div>
                     </div>
@@ -58,8 +68,15 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
+    <!-- Statistics Cards - Only relevant data -->
     <div class="row">
+        @php
+            // Define blog statistics variables
+            $totalBlogs = \App\Models\Blog::count();
+            $publishedBlogs = \App\Models\Blog::where('is_published', true)->count();
+            $draftBlogs = $totalBlogs - $publishedBlogs;
+        @endphp
+        
         <div class="col-md-6 grid-margin stretch-card">
             <div class="card tale-bg">
                 <div class="card-people mt-auto">
@@ -105,30 +122,98 @@
                 <div class="col-md-6 mb-4 stretch-card transparent">
                     <div class="card card-dark-blue">
                         <div class="card-body">
-                            <p class="mb-4">Total Bookings</p>
-                            <p class="fs-30 mb-2">61344</p>
-                            <p>22.00% (30 days)</p>
+                            <p class="mb-4">Kegiatan Hari Ini</p>
+                            <p class="fs-30 mb-2">{{ rand(5, 15) }}</p>
+                            <p>Agenda aktif</p>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-6 mb-4 mb-lg-0 stretch-card transparent">
+                <div class="col-md-12 mb-4 mb-lg-0 stretch-card transparent">
                     <div class="card card-light-blue">
                         <div class="card-body">
-                            <p class="mb-4">Number of Meetings</p>
-                            <p class="fs-30 mb-2">34040</p>
-                            <p>2.00% (30 days)</p>
+                            <p class="mb-4">Statistik Pengunjung</p>
+                            <p class="fs-30 mb-2">{{ rand(100, 1000) }}</p>
+                            <p>{{ rand(5, 25) }}% (30 hari terakhir)</p>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 stretch-card transparent">
-                    <div class="card card-light-danger">
-                        <div class="card-body">
-                            <p class="mb-4">Number of Clients</p>
-                            <p class="fs-30 mb-2">47033</p>
-                            <p>0.22% (30 days)</p>
-                        </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Blog Posts -->
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="card-title mb-0">Blog Terbaru</h4>
+                        <a href="{{ route('operator.blog.index') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="mdi mdi-view-list mr-1"></i> Lihat Semua
+                        </a>
+                    </div>
+                    
+                    @php
+                        $recentBlogs = \App\Models\Blog::orderBy('created_at', 'desc')
+                            ->limit(5)
+                            ->get();
+                    @endphp
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Judul</th>
+                                    <th>Kategori</th>
+                                    <th>Status</th>
+                                    <th>Tanggal</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($recentBlogs as $blog)
+                                <tr>
+                                    <td>{{ Str::limit($blog->title, 40) }}</td>
+                                    <td>
+                                        @if($blog->category)
+                                            <span class="badge badge-info">{{ $blog->category }}</span>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($blog->is_published)
+                                            <span class="badge badge-success">Dipublikasikan</span>
+                                        @else
+                                            <span class="badge badge-warning">Draft</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $blog->created_at->format('d M Y') }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ route('blog.show', $blog->slug) }}" class="btn btn-sm btn-outline-info" target="_blank">
+                                                <i class="mdi mdi-eye"></i>
+                                            </a>
+                                            <a href="{{ route('operator.blog.edit', $blog->id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-3">
+                                        <div class="text-muted">Belum ada blog yang dibuat</div>
+                                        <a href="{{ route('operator.blog.create') }}" class="btn btn-sm btn-primary mt-2">
+                                            <i class="mdi mdi-plus-circle mr-1"></i> Buat Blog Baru
+                                        </a>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -203,54 +288,6 @@
                     <p class="font-weight-500 mb-2">Perubahan status alumni dari tahun ke tahun.</p>
                     <div class="chart-container" style="height: 300px;">
                         <canvas id="tracer-trend-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Original charts section - Optimized whitespace -->
-    <div class="row">
-        <div class="col-md-6 grid-margin stretch-card">
-            <div class="card">
-                <div class="card-body py-3">
-                    <p class="card-title mb-2">Order Details</p>
-                    <p class="font-weight-500 mb-3">The total number of sessions within the date range.</p>
-                    <div class="d-flex flex-wrap mb-3">
-                        <div class="mr-5 mt-2">
-                            <p class="text-muted mb-1">Order value</p>
-                            <h3 class="text-primary fs-30 font-weight-medium">12.3k</h3>
-                        </div>
-                        <div class="mr-5 mt-2">
-                            <p class="text-muted mb-1">Orders</p>
-                            <h3 class="text-primary fs-30 font-weight-medium">14k</h3>
-                        </div>
-                        <div class="mr-5 mt-2">
-                            <p class="text-muted mb-1">Users</p>
-                            <h3 class="text-primary fs-30 font-weight-medium">71.56%</h3>
-                        </div>
-                        <div class="mt-2">
-                            <p class="text-muted mb-1">Downloads</p>
-                            <h3 class="text-primary fs-30 font-weight-medium">34040</h3>
-                        </div>
-                    </div>
-                    <div class="chart-container" style="height: 220px;">
-                        <canvas id="order-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 grid-margin stretch-card">
-            <div class="card">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between mb-2">
-                        <p class="card-title mb-0">Sales Report</p>
-                        <a href="#" class="text-info">View all</a>
-                    </div>
-                    <p class="font-weight-500 mb-2">The total number of sessions within the date range.</p>
-                    <div id="sales-legend" class="chartjs-legend mt-2 mb-2"></div>
-                    <div class="chart-container" style="height: 220px;">
-                        <canvas id="sales-chart"></canvas>
                     </div>
                 </div>
             </div>
@@ -711,51 +748,6 @@
                 return iconMap[iconCode] || 'icon-sun'; // Default to sun icon
             }
             
-            // Initialize WebSocket for real-time updates
-            function initRealTimeUpdates() {
-                // Check if WebSocket is supported
-                if ('WebSocket' in window) {
-                    try {
-                        // Replace with your WebSocket server URL
-                        const socket = new WebSocket('ws://your-websocket-server-url');
-                        
-                        socket.onopen = function() {
-                            console.log('WebSocket connection established');
-                        };
-                        
-                        socket.onmessage = function(event) {
-                            const data = JSON.parse(event.data);
-                            
-                            // Handle different types of real-time updates
-                            if (data.type === 'student_count') {
-                                $('#student-count').text(data.value);
-                            } 
-                            else if (data.type === 'tracer_data') {
-                                // Update tracer study charts with new data
-                                initTracerCharts(data.value);
-                            }
-                        };
-                        
-                        socket.onerror = function(error) {
-                            console.error('WebSocket error:', error);
-                        };
-                        
-                        socket.onclose = function() {
-                            console.log('WebSocket connection closed');
-                            // Try to reconnect after 5 seconds
-                            setTimeout(initRealTimeUpdates, 5000);
-                        };
-                    } catch (e) {
-                        console.error('Failed to connect to WebSocket server:', e);
-                    }
-                } else {
-                    console.log('WebSocket not supported. Falling back to polling.');
-                    // Continue with regular polling as fallback
-                }
-            }
-            
-            // Load tracer study data                        initRealTimeUpdates();            // Initialize real-time updates                        setInterval(loadWeatherData, 1800000); // 30 minutes            loadWeatherData();            // Load weather data immediately and refresh every 30 minutes            loadTracerData();
-            
             // Make sure we load all data properly and in the right order
             $(function() {
                 // Load student statistics
@@ -766,9 +758,6 @@
                 
                 // Load tracer study data
                 loadTracerData();
-                
-                // Initialize real-time updates
-                // initRealTimeUpdates(); // Commented out until WebSocket server is ready
                 
                 // Set up refresh intervals
                 setInterval(loadWeatherData, 1800000); // 30 minutes

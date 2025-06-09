@@ -141,3 +141,12 @@ Route::prefix('operator/blog')->middleware(['auth', 'role:operator'])->group(fun
 // Public blog routes (accessible to all users)
 Route::get('/blog', 'App\Http\Controllers\BlogController@list')->name('blog.index');
 Route::get('/blog/{slug}', 'App\Http\Controllers\BlogController@show')->name('blog.show');
+
+// Operator Routes
+Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator.')->group(function () {
+    // Reports Routes
+    Route::get('/reports', [App\Http\Controllers\BE\TracerReportController::class, 'index'])->name('reports.index');
+    Route::post('/reports/generate', [App\Http\Controllers\BE\TracerReportController::class, 'generateReport'])->name('reports.generate');
+    Route::get('/reports/export', [App\Http\Controllers\BE\TracerReportController::class, 'exportRawData'])->name('reports.export');
+    Route::get('/reports/data', [App\Http\Controllers\BE\TracerReportController::class, 'getReportData'])->name('reports.data');
+});

@@ -19,7 +19,12 @@
                                     <h5 class="mb-0"><i class="mdi mdi-database-export mr-2"></i> Backup Database</h5>
                                 </div>
                                 <div class="card-body">
-                                    <p>Lakukan backup database untuk menyimpan data sistem. Backup akan disimpan dalam format .zip yang terenkripsi.</p>
+                                    <p>Lakukan backup database untuk menyimpan <strong>semua data sistem</strong>. Backup akan disimpan dalam format .zip yang terenkripsi.</p>
+                                    
+                                    <div class="alert alert-info mb-3">
+                                        <i class="mdi mdi-information-outline mr-2"></i>
+                                        Backup akan menyertakan <strong>semua data dari database</strong> termasuk data siswa, operator, pengaturan, dan seluruh data lainnya.
+                                    </div>
                                     
                                     <form id="backup-form">
                                         @csrf
@@ -32,7 +37,7 @@
                                         
                                         <button type="submit" class="btn btn-primary" id="backup-btn">
                                             <i class="mdi mdi-database-export mr-1" id="backup-icon"></i> 
-                                            <span id="backup-text">Buat Backup</span>
+                                            <span id="backup-text">Buat Backup Lengkap</span>
                                         </button>
                                     </form>
                                 </div>

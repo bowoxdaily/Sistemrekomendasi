@@ -78,15 +78,15 @@
             @php
                 // For more reliable detection, check the actual URL path
                 $path = request()->path();
-                
+
                 // Explicitly check for different sections of the site
                 $isBlogSection = strpos($path, 'operator/blog') === 0;
-                $isManagementSection = !$isBlogSection && (
-                    strpos($path, 'operator/siswa') === 0 ||
-                    strpos($path, 'operator/jurusan') === 0 ||
-                    strpos($path, 'operator/questionnaires') === 0 ||
-                    strpos($path, 'operator/jobs') === 0
-                );
+                $isManagementSection =
+                    !$isBlogSection &&
+                    (strpos($path, 'operator/siswa') === 0 ||
+                        strpos($path, 'operator/jurusan') === 0 ||
+                        strpos($path, 'operator/questionnaires') === 0 ||
+                        strpos($path, 'operator/jobs') === 0);
                 $isSettingsSection = !$isBlogSection && strpos($path, 'operator/settings') === 0;
             @endphp
 
@@ -120,7 +120,14 @@
                     </ul>
                 </div>
             </li>
-           
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('operator.reports.index') }}">
+                    <i class="mdi mdi-chart-box-outline menu-icon"></i>
+                    <span class="menu-title">Tracer Studi</span>
+                </a>
+            </li>
+
+
             <!-- Blog/Informasi section with active state detection -->
             <li class="nav-item {{ $isBlogSection ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('operator.blog.index') }}">
@@ -190,24 +197,10 @@
                 @endif
 
                 <li class="nav-item">
-                    <a class="nav-link" data-toggle="collapse" href="#info-menu" aria-expanded="false">
-                        <i class="mdi mdi-information-outline menu-icon"></i>
+                    <a class="nav-link" href="{{ route('blog.index') }}">
+                        <i class="mdi mdi-post-outline menu-icon"></i>
                         <span class="menu-title">Informasi</span>
-                        <i class="menu-arrow"></i>
                     </a>
-                    <div class="collapse" id="info-menu">
-                        <ul class="nav flex-column sub-menu">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Lowongan Kerja</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Info Beasiswa</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Tips Karir</a>
-                            </li>
-                        </ul>
-                    </div>
                 </li>
 
                 <li class="nav-item">

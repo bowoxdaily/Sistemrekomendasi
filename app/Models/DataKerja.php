@@ -9,8 +9,10 @@ class DataKerja extends Model
 {
     use HasFactory;
 
+    protected $table = 'data_kerjas';
+    
     protected $fillable = [
-        'student_id',
+        'student_id', // Make sure this is 'student_id' not 'students_id'
         'nama_perusahaan',
         'posisi',
         'jenis_pekerjaan',
@@ -22,6 +24,6 @@ class DataKerja extends Model
 
     public function student()
     {
-        return $this->belongsTo(Students::class);
+        return $this->belongsTo(Students::class, 'student_id'); // Use 'student_id' here too
     }
 }

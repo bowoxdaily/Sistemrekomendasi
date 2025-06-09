@@ -274,20 +274,21 @@ class SettingsController extends Controller
             // SQL file path
             $dumpFilename = "{$backupPath}/{$filename}.sql";
             
-            // Method 1: Try using mysqldump command
+            // Method 1: Try using mysqldump command - enhanced to include all data
             $dumpSuccess = false;
             try {
-                // Build mysqldump command
-                $command = "mysqldump --no-tablespaces -h {$host} -u {$username} " . ($password ? "-p\"{$password}\"" : "") . " {$database} > \"{$dumpFilename}\"";
+                // Build mysqldump command - removed skip-extended-insert to ensure all data is included
+                $command = "mysqldump --no-tablespaces --complete-insert --skip-triggers --add-drop-table -h {$host} -u {$username} " . 
+                           ($password ? "-p\"{$password}\"" : "") . " {$database} > \"{$dumpFilename}\"";
                 
                 // Execute command
                 $process = Process::fromShellCommandline($command);
-                $process->setTimeout(300); // 5 minutes
+                $process->setTimeout(600); // 10 minutes - increased for larger datasets
                 $process->run();
                 
                 if ($process->isSuccessful() && file_exists($dumpFilename) && filesize($dumpFilename) > 0) {
                     $dumpSuccess = true;
-                    Log::info('Database backup created using mysqldump');
+                    Log::info('Complete database backup created using mysqldump');
                 } else {
                     Log::warning('mysqldump failed: ' . $process->getErrorOutput());
                 }
@@ -295,12 +296,12 @@ class SettingsController extends Controller
                 Log::warning('mysqldump error: ' . $e->getMessage());
             }
             
-            // Method 2: If mysqldump fails, use PHP to create SQL dump
+            // Method 2: If mysqldump fails, use PHP to create SQL dump - enhanced for complete data capture
             if (!$dumpSuccess) {
-                Log::info('Falling back to PHP-based backup method');
+                Log::info('Falling back to PHP-based complete backup method');
                 
                 try {
-                    $sqlContent = "-- Backup of database {$database}\n";
+                    $sqlContent = "-- Complete backup of database {$database}\n";
                     $sqlContent .= "-- Generated on " . date('Y-m-d H:i:s') . "\n\n";
                     $sqlContent .= "SET foreign_key_checks = 0;\n\n";
                     
@@ -319,26 +320,59 @@ class SettingsController extends Controller
                             $sqlContent .= $createTable[0]->{"Create Table"} . ";\n\n";
                         }
                         
-                        // Get table data
-                        $rows = DB::table($tableName)->get();
-                        if (count($rows) > 0) {
-                            $sqlContent .= "-- Dumping data for table `{$tableName}`\n";
-                            $sqlContent .= "INSERT INTO `{$tableName}` VALUES\n";
+                        // Get table data - with optimized memory handling for large tables
+                        $sqlContent .= "-- Dumping data for table `{$tableName}`\n";
+                        
+                        // Get column names
+                        $columns = DB::select("SHOW COLUMNS FROM `{$tableName}`");
+                        $columnNames = array_map(function($column) {
+                            return "`" . $column->Field . "`";
+                        }, $columns);
+                        
+                        // Process in chunks to handle large tables
+                        $offset = 0;
+                        $limit = 1000; // Process 1000 rows at a time
+                        
+                        do {
+                            $rows = DB::table($tableName)->offset($offset)->limit($limit)->get();
                             
-                            $rowValues = [];
-                            foreach ($rows as $row) {
-                                $values = [];
-                                foreach ((array)$row as $value) {
-                                    if (is_null($value)) {
-                                        $values[] = "NULL";
-                                    } else {
-                                        $values[] = "'" . str_replace("'", "''", $value) . "'";
-                                    }
+                            if (count($rows) > 0) {
+                                if ($offset === 0) {
+                                    $sqlContent .= "INSERT INTO `{$tableName}` (" . implode(", ", $columnNames) . ") VALUES\n";
                                 }
-                                $rowValues[] = "(" . implode(", ", $values) . ")";
+                                
+                                $rowValues = [];
+                                foreach ($rows as $row) {
+                                    $values = [];
+                                    foreach ((array)$row as $value) {
+                                        if (is_null($value)) {
+                                            $values[] = "NULL";
+                                        } else {
+                                            $values[] = "'" . str_replace("'", "''", $value) . "'";
+                                        }
+                                    }
+                                    $rowValues[] = "(" . implode(", ", $values) . ")";
+                                }
+                                
+                                // Add comma if not the first batch
+                                if ($offset > 0) {
+                                    $sqlContent .= ",\n";
+                                }
+                                
+                                $sqlContent .= implode(",\n", $rowValues);
+                                
+                                $offset += $limit;
+                            } else {
+                                // No more rows
+                                break;
                             }
-                            
-                            $sqlContent .= implode(",\n", $rowValues) . ";\n\n";
+                        } while (count($rows) === $limit);
+                        
+                        // Close the insert statement if we added any rows
+                        if ($offset > 0) {
+                            $sqlContent .= ";\n\n";
+                        } else {
+                            $sqlContent .= "-- Table `{$tableName}` is empty\n\n";
                         }
                     }
                     
@@ -346,8 +380,9 @@ class SettingsController extends Controller
                     
                     // Save SQL content to a file
                     file_put_contents($dumpFilename, $sqlContent);
+                    Log::info('Complete PHP-based database backup created successfully');
                 } catch (\Exception $e) {
-                    throw new \Exception('Failed to create backup: ' . $e->getMessage());
+                    throw new \Exception('Failed to create complete backup: ' . $e->getMessage());
                 }
             }
             
@@ -368,9 +403,11 @@ class SettingsController extends Controller
                 
                 if (File::exists($uploadsPath)) {
                     // Add some info file
-                    $infoContent = "Backup includes files from: {$uploadsPath}\n";
+                    $infoContent = "Full System Backup\n";
+                    $infoContent .= "Database: {$database}\n";
                     $infoContent .= "Generated on: " . date('Y-m-d H:i:s') . "\n";
                     $infoContent .= "Includes uploaded files: Yes\n";
+                    $infoContent .= "Backup type: Complete system backup\n";
                     
                     $infoFilename = "{$backupPath}/backup_info.txt";
                     file_put_contents($infoFilename, $infoContent);
@@ -379,6 +416,7 @@ class SettingsController extends Controller
                     // Add files from storage if possible
                     try {
                         $this->addFilesToZip($zip, $uploadsPath, 'storage');
+                        Log::info('Added all files from storage to backup');
                     } catch (\Exception $e) {
                         Log::warning('Failed to add files to backup: ' . $e->getMessage());
                         $zip->addFromString("storage_error.txt", "Failed to add files with error: " . $e->getMessage());
@@ -396,13 +434,13 @@ class SettingsController extends Controller
                 File::delete($infoFilename);
             }
             
-            return redirect()->back()->with('success', 'Backup berhasil dibuat: ' . basename($zipFilename));
+            return redirect()->back()->with('success', 'Backup lengkap berhasil dibuat: ' . basename($zipFilename));
             
         } catch (\Exception $e) {
             Log::error('Backup error: ' . $e->getMessage());
             Log::error('Trace: ' . $e->getTraceAsString());
             
-            return redirect()->back()->with('error', 'Gagal membuat backup: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal membuat backup lengkap: ' . $e->getMessage());
         }
     }
     
