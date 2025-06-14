@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -67,6 +68,14 @@ class User extends Authenticatable
     public function operator()
     {
         return $this->hasOne(Operators::class);
+    }
+    public function teacher()
+    {
+        return $this->hasOne(Guru::class);
+    }
+    public function kepalasekolah()
+    {
+        return $this->hasOne(KepalaSekolah::class);
     }
     public function DataBelumKerja()
     {

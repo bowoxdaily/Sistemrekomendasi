@@ -10,11 +10,11 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h4 class="card-title">Data Operator Sekolah</h4>
+                                <h4 class="card-title">Data Pegawai Sekolah</h4>
                                 <div>
                                     <button class="btn btn-primary btn-icon-text" id="tambah-operator">
                                         <i class="mdi mdi-plus btn-icon-prepend"></i>
-                                        Tambah Operator
+                                        Tambah Pegawai Sekolah
                                     </button>
                                 </div>
                             </div>
@@ -90,6 +90,8 @@
                                 <label for="operator_jabatan">Jabatan</label>
                                 <select class="form-control" id="operator_jabatan" required>
                                     <option value="operator">Operator</option>
+                                    <option value="kepala sekolah">Kepala Sekolah</option>
+                                    <option value="guru">Guru</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -148,14 +150,18 @@
                             </div>
                             <div class="form-group">
                                 <label for="edit-operator-jabatan">Jabatan</label>
-                                <input type="text" class="form-control" id="edit-operator-jabatan">
+                                <select class="form-control" id="edit-operator-jabatan" required>
+                                    <option value="operator">Operator</option>
+                                    <option value="kepalasekolah">Kepala Sekolah</option>
+                                    <option value="guru">Guru</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="edit-operator-jenis-kelamin">Jenis Kelamin</label>
                                 <select class="form-control" id="edit-operator-jenis-kelamin">
                                     <option value="">Pilih Jenis Kelamin</option>
-                                    <option value="L">Laki-laki</option>
-                                    <option value="P">Perempuan</option>
+                                    <option value="Laki-laki">Laki-laki</option>
+                                    <option value="Perempuan">Perempuan</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -239,30 +245,38 @@
                     tbody = '<tr><td colspan="6" class="text-center">Tidak ada data yang ditemukan</td></tr>';
                 } else {
                     pageData.forEach(function(operator) {
+                        // Tentukan endpoint edit/hapus berdasarkan jabatan
+                        let roleEndpoint = 'operator';
+                        if (operator.jabatan && operator.jabatan.toLowerCase() === 'guru') {
+                            roleEndpoint = 'guru';
+                        } else if (operator.jabatan && (operator.jabatan.toLowerCase() ===
+                                'kepala sekolah' || operator.jabatan.toLowerCase() === 'kepalasekolah')) {
+                            roleEndpoint = 'kepalasekolah';
+                        }
                         tbody += `
-                <tr data-id="${operator.id}">
-                    <td>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionMenu${operator.id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="mdi mdi-dots-vertical"></i>
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="actionMenu${operator.id}">
-                                <a class="dropdown-item btn-edit" href="javascript:void(0);" data-id="${operator.id}">
-                                    <i class="mdi mdi-pencil text-info mr-2"></i>Edit
-                                </a>
-                                <a class="dropdown-item btn-hapus" href="javascript:void(0);" data-id="${operator.id}">
-                                    <i class="mdi mdi-delete text-danger mr-2"></i>Hapus
-                                </a>
-                            </div>
-                        </div>
-                    </td>
-                    <td>${operator.nama_lengkap || '-'}</td>
-                    <td>${operator.user ? operator.user.email : '-'}</td>
-                    <td>${operator.nip || '-'}</td>
-                    <td>${operator.jabatan || '-'}</td>
-                    <td>${operator.jenis_kelamin || '-'}</td>
-                </tr>
-                `;
+<tr data-id="${operator.id}" data-role="${roleEndpoint}">
+    <td>
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionMenu${operator.id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="mdi mdi-dots-vertical"></i>
+            </button>
+            <div class="dropdown-menu" aria-labelledby="actionMenu${operator.id}">
+                <a class="dropdown-item btn-edit" href="javascript:void(0);" data-id="${operator.id}" data-role="${roleEndpoint}">
+                    <i class="mdi mdi-pencil text-info mr-2"></i>Edit
+                </a>
+                <a class="dropdown-item btn-hapus" href="javascript:void(0);" data-id="${operator.id}" data-role="${roleEndpoint}">
+                    <i class="mdi mdi-delete text-danger mr-2"></i>Hapus
+                </a>
+            </div>
+        </div>
+    </td>
+    <td>${operator.nama_lengkap || '-'}</td>
+    <td>${operator.user ? operator.user.email : '-'}</td>
+    <td>${operator.nip || '-'}</td>
+    <td>${operator.jabatan || '-'}</td>
+    <td>${operator.jenis_kelamin || '-'}</td>
+</tr>
+`;
                     });
                 }
 
@@ -395,29 +409,24 @@
             $(document).on('click', '.btn-edit', function(e) {
                 e.preventDefault();
                 const id = $(this).data('id');
-
+                const role = $(this).data('role');
                 if (!id) {
-                    toastr.error('ID operator tidak ditemukan');
+                    toastr.error('ID tidak ditemukan');
                     return;
                 }
-
-                // Show loading indicator
                 Swal.fire({
                     title: 'Memuat Data',
-                    html: 'Mohon tunggu, sedang memuat data operator...',
+                    html: 'Mohon tunggu, sedang memuat data...',
                     allowOutsideClick: false,
                     didOpen: () => {
                         Swal.showLoading();
                     }
                 });
-
                 $.ajax({
-                    url: _baseURL + 'api/superadmin/operator/' + id,
+                    url: _baseURL + `api/superadmin/${role}/` + id,
                     method: 'GET',
                     success: function(data) {
-                        // Close loading indicator
                         Swal.close();
-
                         $('#edit-operator-id').val(id);
                         $('#edit-operator-nama-lengkap').val(data.nama_lengkap);
                         $('#edit-operator-email').val(data.user ? data.user.email : '');
@@ -425,13 +434,11 @@
                         $('#edit-operator-nip').val(data.nip || '');
                         $('#edit-operator-jabatan').val(data.jabatan || '');
                         $('#edit-operator-jenis-kelamin').val(data.jenis_kelamin || '');
-
                         $('#editOperatorModal').modal('show');
                     },
                     error: function(xhr) {
-                        // Close loading indicator
                         Swal.close();
-                        toastr.error('Gagal memuat data operator: ' + xhr.responseText);
+                        toastr.error('Gagal memuat data: ' + xhr.responseText);
                     }
                 });
             });
@@ -439,12 +446,14 @@
             // Update operator data
             $('#update-operator').click(function() {
                 const id = $('#edit-operator-id').val();
-
+                const role = $('#edit-operator-jabatan').val().toLowerCase() === 'guru' ? 'guru' :
+                    ($('#edit-operator-jabatan').val().toLowerCase() === 'kepala sekolah' || $(
+                            '#edit-operator-jabatan').val().toLowerCase() === 'kepalasekolah' ?
+                        'kepalasekolah' : 'operator');
                 if (!id) {
-                    toastr.error('ID operator tidak ditemukan');
+                    toastr.error('ID tidak ditemukan');
                     return;
                 }
-
                 const formData = {
                     nama_lengkap: $('#edit-operator-nama-lengkap').val(),
                     email: $('#edit-operator-email').val(),
@@ -454,14 +463,10 @@
                     jenis_kelamin: $('#edit-operator-jenis-kelamin').val(),
                     _method: 'PUT'
                 };
-
-                // Validate form
                 if (!formData.nama_lengkap || !formData.email) {
                     toastr.warning('Harap isi semua field yang diperlukan!');
                     return;
                 }
-
-                // Show loading indicator
                 Swal.fire({
                     title: 'Sedang Memproses',
                     html: 'Mohon tunggu, sedang menyimpan perubahan...',
@@ -470,29 +475,19 @@
                         Swal.showLoading();
                     }
                 });
-
                 $.ajax({
-                    url: _baseURL + 'api/superadmin/operator/' + id,
+                    url: _baseURL + `api/superadmin/${role}/` + id,
                     method: 'POST',
                     data: formData,
                     success: function(response) {
-                        // Close loading indicator
                         Swal.close();
-
-                        // Close modal
                         $('#editOperatorModal').modal('hide');
-
-                        // Show success message
-                        toastr.success('Data operator berhasil diperbarui!');
-
-                        // Reload data
+                        toastr.success('Data berhasil diperbarui!');
                         loadData();
                     },
                     error: function(xhr) {
-                        // Close loading indicator
                         Swal.close();
-
-                        let errorMessage = 'Gagal memperbarui data operator.';
+                        let errorMessage = 'Gagal memperbarui data.';
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMessage = xhr.responseJSON.message;
                         }
@@ -505,15 +500,14 @@
             $(document).on('click', '.btn-hapus', function(e) {
                 e.preventDefault();
                 const id = $(this).data('id');
-
+                const role = $(this).data('role');
                 if (!id) {
-                    toastr.error('ID operator tidak ditemukan');
+                    toastr.error('ID tidak ditemukan');
                     return;
                 }
-
                 Swal.fire({
                     title: 'Apakah Anda yakin?',
-                    text: "Data operator akan dihapus permanen!",
+                    text: 'Data akan dihapus permanen!',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',
@@ -522,7 +516,6 @@
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Show loading indicator
                         Swal.fire({
                             title: 'Sedang Memproses',
                             html: 'Mohon tunggu, sedang menghapus data...',
@@ -531,30 +524,23 @@
                                 Swal.showLoading();
                             }
                         });
-
                         $.ajax({
-                            url: _baseURL + `api/superadmin/operator/${id}`,
+                            url: _baseURL + `api/superadmin/${role}/` + id,
                             method: 'DELETE',
                             success: function(response) {
-                                // Close loading indicator
                                 Swal.close();
-
-                                // Show success message
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Berhasil!',
-                                    text: 'Data operator berhasil dihapus',
+                                    text: 'Data berhasil dihapus',
                                     timer: 1500,
                                     showConfirmButton: false
                                 });
-
                                 loadData();
                             },
                             error: function(xhr) {
-                                // Close loading indicator
                                 Swal.close();
-
-                                let errorMessage = 'Gagal menghapus data operator.';
+                                let errorMessage = 'Gagal menghapus data.';
                                 if (xhr.responseJSON && xhr.responseJSON.message) {
                                     errorMessage = xhr.responseJSON.message;
                                 }

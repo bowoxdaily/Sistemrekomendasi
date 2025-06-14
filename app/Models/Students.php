@@ -44,7 +44,7 @@ class Students extends Model
     {
         return $this->hasMany(Kuisioner::class);
     }
-    
+
 
 
     /**

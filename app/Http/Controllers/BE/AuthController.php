@@ -128,6 +128,10 @@ class AuthController extends Controller
                     $welcomeMessage = 'Login Berhasil! Selamat Datang, Guru!';
                     session()->flash('success', $welcomeMessage);
                     return redirect()->route('dashboard');
+                } elseif ($user->role == 'kepalasekolah') {
+                    $welcomeMessage = 'Login Berhasil! Selamat Datang, Kepala Sekolah!';
+                    session()->flash('success', $welcomeMessage);
+                    return redirect()->route('dashboard');
                 } elseif ($user->role == 'operator') {
                     $welcomeMessage = 'Login Berhasil! Selamat Datang, Operator!';
                     session()->flash('success', $welcomeMessage);

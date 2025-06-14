@@ -1,3 +1,9 @@
+@php
+    // Inisialisasi agar tidak undefined
+    $path = request()->path();
+    $isBlogSection = strpos($path, 'operator/blog') === 0;
+@endphp
+
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
     <ul class="nav">
         <li class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -9,32 +15,23 @@
 
         @if (auth()->user()->role === 'superadmin')
             <!-- Menu khusus superadmin -->
-
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#superadmin-users" aria-expanded="false">
+            <li class="nav-item {{ request()->routeIs('superadmin.operator') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('superadmin.operator') }}">
                     <i class="mdi mdi-account-multiple menu-icon"></i>
-                    <span class="menu-title">Manajemen Pengguna</span>
-                    <i class="menu-arrow"></i>
+                    <span class="menu-title">Pegawai Sekolah</span>
                 </a>
-                <div class="collapse" id="superadmin-users">
-                    <ul class="nav flex-column sub-menu">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('superadmin.operator') }}">Operator Sekolah</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Siswa</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Alumni</a>
-                        </li>
-                    </ul>
-                </div>
             </li>
 
             <li class="nav-item {{ request()->routeIs('superadmin.visualizations.index') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('superadmin.visualizations.index') }}">
                     <i class="mdi mdi-chart-bar menu-icon menu-icon"></i>
                     <span class="menu-title">Tracer Study</span>
+                </a>
+            </li>
+            <li class="nav-item {{ $isBlogSection ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('operator.blog.index') }}">
+                    <i class="mdi mdi-post-outline menu-icon"></i>
+                    <span class="menu-title">Informasi</span>
                 </a>
             </li>
         @endif
@@ -86,10 +83,10 @@
                     </ul>
                 </div>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('operator.reports.index') }}">
-                    <i class="mdi mdi-chart-box-outline menu-icon"></i>
-                    <span class="menu-title">Tracer Studi</span>
+            <li class="nav-item {{ request()->routeIs('superadmin.visualizations.index') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('superadmin.visualizations.index') }}">
+                    <i class="mdi mdi-chart-bar menu-icon menu-icon"></i>
+                    <span class="menu-title">Tracer Study</span>
                 </a>
             </li>
 
@@ -179,41 +176,36 @@
 
             @if (auth()->user()->role === 'guru')
                 <!-- Menu khusus guru -->
-                <li class="nav-item">
-                    <a class="nav-link" data-toggle="collapse" href="#kelas-guru" aria-expanded="false">
-                        <i class="mdi mdi-book-open-page-variant menu-icon"></i>
-                        <span class="menu-title">Manajemen Kelas</span>
-                        <i class="menu-arrow"></i>
+                <li class="nav-item {{ request()->routeIs('superadmin.visualizations.index') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('superadmin.visualizations.index') }}">
+                        <i class="mdi mdi-chart-bar menu-icon menu-icon"></i>
+                        <span class="menu-title">Tracer Study</span>
                     </a>
-                    <div class="collapse" id="kelas-guru">
-                        <ul class="nav flex-column sub-menu">
-                            <li class="nav-item"><a class="nav-link" href="#">Daftar Kelas</a></li>
-                            <li class="nav-item"><a class="nav-link" href="#">Buat Tugas</a></li>
-                        </ul>
-                    </div>
+                </li>
+                <li class="nav-item {{ $isBlogSection ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('operator.blog.index') }}">
+                        <i class="mdi mdi-post-outline menu-icon"></i>
+                        <span class="menu-title">Informasi</span>
+                    </a>
+                </li>
+            @endif
+            @if (auth()->user()->role === 'kepalasekolah')
+                <!-- Menu khusus keplaaseklah -->
+                <li class="nav-item {{ request()->routeIs('superadmin.visualizations.index') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('superadmin.visualizations.index') }}">
+                        <i class="mdi mdi-chart-bar menu-icon menu-icon"></i>
+                        <span class="menu-title">Tracer Study</span>
+                    </a>
+                </li>
+                <li class="nav-item {{ $isBlogSection ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('operator.blog.index') }}">
+                        <i class="mdi mdi-post-outline menu-icon"></i>
+                        <span class="menu-title">Informasi</span>
+                    </a>
                 </li>
             @endif
 
             @if (auth()->user()->role === 'operator')
-            @endif
-
-            <!-- Menu UI Elements hanya untuk guru dan operator -->
-            @if (in_array(auth()->user()->role, ['guru', 'operator']))
-                <li class="nav-item">
-                    <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false">
-                        <i class="mdi mdi-palette menu-icon"></i>
-                        <span class="menu-title">UI Elements</span>
-                        <i class="menu-arrow"></i>
-                    </a>
-                    <div class="collapse" id="ui-basic">
-                        <ul class="nav flex-column sub-menu">
-                            <li class="nav-item"><a class="nav-link"
-                                    href="{{ url('pages/ui-features/buttons') }}">Buttons</a></li>
-                            <li class="nav-item"><a class="nav-link"
-                                    href="{{ url('pages/ui-features/dropdowns') }}">Dropdowns</a></li>
-                        </ul>
-                    </div>
-                </li>
             @endif
         @else
             <!-- Menu untuk guest (belum login) -->

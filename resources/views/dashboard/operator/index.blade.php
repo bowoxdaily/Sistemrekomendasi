@@ -120,34 +120,44 @@
                 <div class="col-md-6 mb-4 stretch-card transparent">
                     <div class="card card-tale">
                         <div class="card-body">
-                            <p class="mb-4">Siswa</p>
-                            <p class="fs-30 mb-2" id="student-count">Loading...</p>
-                            <p id="percentage-change">Loading...</p>
+                            <p class="mb-4">Total Alumni Terdaftar</p>
+                            <p class="fs-30 mb-2" id="total-alumni-registered">Loading...</p>
+                            <p id="alumni-growth-percentage" class="text-white">Loading...</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 mb-4 stretch-card transparent">
                     <div class="card card-dark-blue">
                         <div class="card-body">
-                            <p class="mb-4">Kegiatan Hari Ini</p>
-                            <p class="fs-30 mb-2">{{ rand(5, 15) }}</p>
-                            <p>Agenda aktif</p>
+                            <p class="mb-4">Alumni Sudah Bekerja</p>
+                            <p class="fs-30 mb-2" id="alumni-working">Loading...</p>
+                            <p id="working-percentage">Loading...</p>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-12 mb-4 mb-lg-0 stretch-card transparent">
+                <div class="col-md-6 mb-4 mb-lg-0 stretch-card transparent">
                     <div class="card card-light-blue">
                         <div class="card-body">
-                            <p class="mb-4">Statistik Pengunjung</p>
-                            <p class="fs-30 mb-2">{{ rand(100, 1000) }}</p>
-                            <p>{{ rand(5, 25) }}% (30 hari terakhir)</p>
+                            <p class="mb-4">Alumni Melanjutkan Kuliah</p>
+                            <p class="fs-30 mb-2" id="alumni-studying">Loading...</p>
+                            <p id="studying-percentage">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 stretch-card transparent">
+                    <div class="card card-light-danger">
+                        <div class="card-body">
+                            <p class="mb-4">Alumni Belum Didata</p>
+                            <p class="fs-30 mb-2" id="alumni-unemployed">Loading...</p>
+                            <p id="unemployed-percentage">Loading...</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- Recent Blog Posts -->
@@ -250,7 +260,7 @@
                             <h3 class="text-info fs-30 font-weight-medium" id="study-count">0</h3>
                         </div>
                         <div class="mt-2">
-                            <p class="text-muted mb-1">Belum Bekerja</p>
+                            <p class="text-muted mb-1">Belum Didata</p>
                             <h3 class="text-warning fs-30 font-weight-medium" id="unemployed-count">0</h3>
                         </div>
                     </div>
@@ -346,6 +356,7 @@
 
             // Load student count statistics via AJAX
             function loadStudentStats() {
+                // Load alumni statistics
                 $.ajax({
                     url: '{{ route('api.stats.students') }}',
                     type: 'GET',
@@ -367,6 +378,66 @@
                     error: function(xhr) {
                         $('#student-count').text('N/A');
                         $('#percentage-change').text('Data tidak tersedia');
+                    }
+                });
+
+                // Load alumni statistics for operator
+                $.ajax({
+                    url: '/api/stats/alumni-operator',
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            // Total Alumni
+                            $('#total-alumni-registered').text(response.data.total_alumni);
+
+                            // Alumni Bekerja
+                            $('#alumni-working').text(response.data.alumni_bekerja);
+                            const workingPercentage = response.data.total_alumni > 0 ?
+                                ((response.data.alumni_bekerja / response.data.total_alumni) * 100)
+                                .toFixed(1) : 0;
+                            $('#working-percentage').text(workingPercentage + '% dari total alumni');
+
+                            // Alumni Kuliah
+                            $('#alumni-studying').text(response.data.alumni_kuliah);
+                            const studyingPercentage = response.data.total_alumni > 0 ?
+                                ((response.data.alumni_kuliah / response.data.total_alumni) * 100)
+                                .toFixed(1) : 0;
+                            $('#studying-percentage').text(studyingPercentage + '% dari total alumni');
+
+                            // Alumni Belum Didata (card keempat)
+                            $('#alumni-unemployed').text(response.data.alumni_belum_bekerja);
+                            const unemployedPercentage = response.data.total_alumni > 0 ?
+                                ((response.data.alumni_belum_bekerja / response.data.total_alumni) *
+                                    100).toFixed(1) : 0;
+                            $('#unemployed-percentage').text(unemployedPercentage +
+                                '% dari total alumni');
+
+                            // Growth percentage (comparison with previous period)
+                            if (response.data.growth_percentage !== undefined) {
+                                const growthClass = response.data.growth_percentage >= 0 ?
+                                    'text-success' : 'text-danger';
+                                const growthIcon = response.data.growth_percentage >= 0 ? '↑' : '↓';
+                                $('#alumni-growth-percentage').html(
+                                    `<span class="${growthClass}">${growthIcon} ${Math.abs(response.data.growth_percentage)}% dari bulan lalu</span>`
+                                );
+                            } else {
+                                $('#alumni-growth-percentage').text('Data pertumbuhan tidak tersedia');
+                            }
+                        }
+                    },
+                    error: function() {
+                        // Set error state for alumni stats
+                        $('#total-alumni-registered').text('Error');
+                        $('#alumni-working').text('Error');
+                        $('#alumni-studying').text('Error');
+                        $('#alumni-unemployed').text('Error');
+                        $('#alumni-growth-percentage').text('Gagal memuat data');
+                        $('#working-percentage').text('Gagal memuat data');
+                        $('#studying-percentage').text('Gagal memuat data');
+                        $('#unemployed-percentage').text('Gagal memuat data');
                     }
                 });
             }
@@ -440,7 +511,7 @@
                     window.statusChart = new Chart(statusCtx, {
                         type: 'pie',
                         data: {
-                            labels: ['Bekerja', 'Kuliah', 'Belum Bekerja'],
+                            labels: ['Bekerja', 'Kuliah', 'Belum Didata'],
                             datasets: [{
                                 data: [
                                     data.summary.working || 0,
@@ -527,7 +598,7 @@
                                     tension: 0.4
                                 },
                                 {
-                                    label: 'Belum Bekerja',
+                                    label: 'Belum Didata',
                                     data: data.trends.unemployed || [],
                                     backgroundColor: 'rgba(255, 206, 86, 0.2)',
                                     borderColor: 'rgba(255, 206, 86, 1)',

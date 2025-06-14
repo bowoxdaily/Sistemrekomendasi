@@ -126,25 +126,23 @@
                 </div>
                 <div>
                     <div class="btn-group">
-                        <select id="export-type" class="form-control mr-2" style="width:auto;display:inline-block;">
-                            <option value="general">General</option>
-                            <option value="employment">Data Kerja</option>
-                            <option value="education">Data Kuliah</option>
-                            <option value="unemployment">Belum Kerja</option>
-                        </select>
                         <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"
                             aria-haspopup="true" aria-expanded="false">
-                            <i class="mdi mdi-export"></i> Export Data
+                            <i class="mdi mdi-export"></i> Export Data Mentah
                         </button>
-                        <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" href="#" id="export-pdf">
-                                <i class="mdi mdi-file-pdf text-danger mr-2"></i> Export sebagai PDF
-                            </a>
+                        <div class="dropdown-menu">
                             <a class="dropdown-item" href="#" id="export-excel">
-                                <i class="mdi mdi-file-excel text-success mr-2"></i> Export sebagai Excel
+                                <i class="mdi mdi-file-excel text-success mr-2"></i> Export Excel
+                            </a>
+                            <a class="dropdown-item" href="#" id="export-pdf">
+                                <i class="mdi mdi-file-pdf text-danger mr-2"></i> Export PDF
                             </a>
                         </div>
                     </div>
+                    <button type="button" class="btn btn-outline-primary ml-2" data-toggle="modal"
+                        data-target="#exportSpecificModal">
+                        <i class="mdi mdi-file-chart"></i> Export Spesifik
+                    </button>
                 </div>
             </div>
         </div>
@@ -468,6 +466,86 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Spesifik Modal -->
+    <div class="modal fade" id="exportSpecificModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Export Data Spesifik</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="{{ route('superadmin.visualizations.export.specific') }}" method="GET" target="_blank">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Tipe Laporan</label>
+                            <select class="form-control" name="type" required>
+                                <option value="general">Laporan Umum</option>
+                                <option value="employment">Data Pekerjaan</option>
+                                <option value="education">Data Pendidikan</option>
+                                <option value="unemployment">Data Belum Bekerja</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tahun Kelulusan</label>
+                            <select class="form-control" name="year">
+                                <option value="">Semua Tahun</option>
+                                @foreach ($years ?? [] as $year)
+                                    <option value="{{ $year }}">{{ $year }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Jurusan</label>
+                            <select class="form-control" name="department">
+                                <option value="">Semua Jurusan</option>
+                                @foreach ($departments ?? [] as $id => $name)
+                                    <option value="{{ $id }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select class="form-control" name="status">
+                                <option value="">Semua Status</option>
+                                <option value="kerja">Bekerja</option>
+                                <option value="kuliah">Kuliah</option>
+                                <option value="belum_kerja">Belum Bekerja</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Format Output</label>
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input type="radio" class="form-check-input" name="format" value="web"
+                                        checked>
+                                    Tampilkan di Browser
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input type="radio" class="form-check-input" name="format" value="pdf">
+                                    Download PDF
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input type="radio" class="form-check-input" name="format" value="excel">
+                                    Download Excel
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Export</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -807,18 +885,17 @@
                             }
                         }
                     }
-                });
-
-                // 6. Education level chart
+                }); // 6. Education level chart
                 const educationCtx = document.getElementById('education-chart').getContext('2d');
                 charts.education = new Chart(educationCtx, {
                     type: 'polarArea',
                     data: {
-                        labels: ['D3', 'S1', 'S2', 'Lainnya'],
+                        labels: ['D3', 'D4', 'S1', 'S2', 'Lainnya'],
                         datasets: [{
-                            data: [0, 0, 0, 0],
+                            data: [0, 0, 0, 0, 0],
                             backgroundColor: [
                                 chartColors.working.bg,
+                                '#FF6B6B', // Warna untuk D4
                                 chartColors.studying.bg,
                                 chartColors.unemployed.bg,
                                 chartColors.other.bg
@@ -978,13 +1055,11 @@
                     charts.salary.update();
                     const totalSalary = salaryData.reduce((a, b) => a + b, 0);
                     $('#salary-chart-count').text(totalSalary + ' Data');
-                }
-
-                // --- EDUCATION CHART ---
+                } // --- EDUCATION CHART ---
                 if (charts.education) {
                     // Label urut sesuai chart
-                    const eduLabels = ['D3', 'S1', 'S2', 'Lainnya'];
-                    let eduData = [0, 0, 0, 0];
+                    const eduLabels = ['D3', 'D4', 'S1', 'S2', 'Lainnya'];
+                    let eduData = [0, 0, 0, 0, 0];
                     if (data.education) {
                         eduLabels.forEach((label, idx) => {
                             eduData[idx] = data.education[label] || 0;
@@ -1039,11 +1114,10 @@
                             statusClass = 'secondary';
                             statusText = item.status || 'Tidak Diketahui';
                     }
-
                     row.innerHTML = `
                         <td>${item.nama_lengkap}</td>
                         <td>${item.jurusan}</td>
-                        <td>${item.tahun_lulus}</td>
+                        <td>${item.tahun_lulus || 'Belum Diatur'}</td>
                         <td><span class="badge badge-${statusClass}">${statusText}</span></td>
                     `;
 
@@ -1070,7 +1144,6 @@
                     `{{ route('superadmin.visualizations.export.pdf') }}?year=${year}&department=${department}&status=${status}&type=${type}`,
                     '_blank');
             });
-
             $('#export-excel').click(function(e) {
                 e.preventDefault();
                 const year = $('#year-filter').val();
