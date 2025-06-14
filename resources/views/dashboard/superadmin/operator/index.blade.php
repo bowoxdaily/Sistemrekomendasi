@@ -88,7 +88,9 @@
                             </div>
                             <div class="form-group">
                                 <label for="operator_jabatan">Jabatan</label>
-                                <input type="text" class="form-control" id="operator_jabatan">
+                                <select class="form-control" id="operator_jabatan" required>
+                                    <option value="operator">Operator</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="operator_jenis_kelamin">Jenis Kelamin</label>

@@ -150,3 +150,12 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator
     Route::get('/reports/export', [App\Http\Controllers\BE\TracerReportController::class, 'exportRawData'])->name('reports.export');
     Route::get('/reports/data', [App\Http\Controllers\BE\TracerReportController::class, 'getReportData'])->name('reports.data');
 });
+
+// Add routes for the superadmin visualization feature
+Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+    // Visualization Routes
+    Route::get('/visualizations', [App\Http\Controllers\BE\VisualizationController::class, 'index'])->name('visualizations.index');
+    Route::get('/visualizations/data', [App\Http\Controllers\BE\VisualizationController::class, 'getData'])->name('visualizations.data');
+    Route::get('/visualizations/export/pdf', [App\Http\Controllers\BE\VisualizationController::class, 'exportPdf'])->name('visualizations.export.pdf');
+    Route::get('/visualizations/export/excel', [App\Http\Controllers\BE\VisualizationController::class, 'exportExcel'])->name('visualizations.export.excel');
+});

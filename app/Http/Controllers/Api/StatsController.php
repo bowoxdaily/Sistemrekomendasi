@@ -25,19 +25,46 @@ class StatsController extends Controller
         ]);
     }
     
-    public function getTracerStats()
+    public function getTracerStats(Request $request)
     {
         try {
             // Log the beginning of the function for debugging
             Log::info('Starting tracer stats calculation');
             
+            // Get request parameters
+            $type = $request->input('type', 'overview');
+            $year = $request->input('year');
+            $department = $request->input('department');
+            $status = $request->input('status');
+            
+            // Build base query with filters
+            $query = Students::query();
+            
+            if ($year) {
+                $query->whereYear('tanggal_lulus', $year);
+            }
+            
+            if ($department) {
+                $query->where('jurusan_id', $department);
+            }
+            
+            if ($status) {
+                $query->where('status_setelah_lulus', $status);
+            }
+            
+            // If the request type is 'all', delegate to VisualizationController
+            if ($type === 'all') {
+                $visualizationController = new \App\Http\Controllers\BE\VisualizationController();
+                return $visualizationController->getData($request);
+            }
+            
             // Get basic summary stats
-            $totalStudents = Students::count();
+            $totalStudents = (clone $query)->count();
             Log::info("Total students: $totalStudents");
             
-            $working = Students::where('status_setelah_lulus', 'kerja')->count();
-            $studying = Students::where('status_setelah_lulus', 'kuliah')->count();
-            $unemployed = Students::where('status_setelah_lulus', 'belum_kerja')->count();
+            $working = (clone $query)->where('status_setelah_lulus', 'kerja')->count();
+            $studying = (clone $query)->where('status_setelah_lulus', 'kuliah')->count();
+            $unemployed = (clone $query)->where('status_setelah_lulus', 'belum_kerja')->count();
             
             Log::info("Status counts - Working: $working, Studying: $studying, Unemployed: $unemployed");
             
@@ -149,6 +176,46 @@ class StatsController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to retrieve tracer stats',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function getDashboardStats()
+    {
+        try {
+            // Get counts for the dashboard
+            $operatorCount = \App\Models\Operators::count();
+            $studentCount = \App\Models\Students::count();
+            $alumniCount = \App\Models\Students::where('status_lulus', 'lulus')->count();
+            
+            // Calculate percentages
+            $operatorPercentage = 0;
+            $studentPercentage = 0;
+            $alumniPercentage = 0;
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'operator' => [
+                        'count' => $operatorCount,
+                        'percentage' => $operatorPercentage
+                    ],
+                    'student' => [
+                        'count' => $studentCount,
+                        'percentage' => $studentPercentage
+                    ],
+                    'alumni' => [
+                        'count' => $alumniCount,
+                        'percentage' => $alumniPercentage
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in getDashboardStats: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve dashboard stats',
                 'error' => $e->getMessage()
             ], 500);
         }

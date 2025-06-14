@@ -9,26 +9,6 @@
 
         @if (auth()->user()->role === 'superadmin')
             <!-- Menu khusus superadmin -->
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#superadmin-schools" aria-expanded="false">
-                    <i class="mdi mdi-domain menu-icon"></i>
-                    <span class="menu-title">Manajemen Sekolah</span>
-                    <i class="menu-arrow"></i>
-                </a>
-                <div class="collapse" id="superadmin-schools">
-                    <ul class="nav flex-column sub-menu">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Daftar Sekolah</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{#">Tambah Sekolah Baru</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{#">Verifikasi Sekolah</a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
 
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#superadmin-users" aria-expanded="false">
@@ -51,25 +31,11 @@
                 </div>
             </li>
 
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#superadmin-analytics" aria-expanded="false">
-                    <i class="mdi mdi-chart-bar menu-icon"></i>
-                    <span class="menu-title">Analitik & Laporan</span>
-                    <i class="menu-arrow"></i>
+            <li class="nav-item {{ request()->routeIs('superadmin.visualizations.index') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('superadmin.visualizations.index') }}">
+                    <i class="mdi mdi-chart-bar menu-icon menu-icon"></i>
+                    <span class="menu-title">Tracer Study</span>
                 </a>
-                <div class="collapse" id="superadmin-analytics">
-                    <ul class="nav flex-column sub-menu">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Laporan Tracer Study</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Statistik Karir</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Export Data</a>
-                        </li>
-                    </ul>
-                </div>
             </li>
         @endif
 

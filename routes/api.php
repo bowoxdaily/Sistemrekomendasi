@@ -13,6 +13,7 @@ use App\Http\Controllers\BE\OperatorControllerBE;
 use App\Http\Controllers\BE\SuperAdminController;
 use App\Http\Controllers\BE\QuestionnaireControllerOpe;
 use App\Http\Controllers\BE\JobRecommendataionController;
+use App\Http\Controllers\Api\StatsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -121,6 +122,8 @@ Route::group(['middleware' => ['web', 'auth']], function () {
     // Statistics Routes
     Route::get('/stats/students', [SiswaControllerBE::class, 'getCount'])
         ->name('api.stats.students');
+    Route::get('/stats/tracer', [StatsController::class, 'getTracerStats']);
+    Route::get('/stats/dashboard', [StatsController::class, 'getDashboardStats']);
     
     // Blog categories
     Route::get('/blog-categories', [BlogControllerBE::class, 'getCategories']);
