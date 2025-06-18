@@ -81,7 +81,9 @@ Route::group(['middleware' => ['web', 'auth']], function () {
 
 
     Route::group(['prefix' => 'profile-operator'], function () {
+        Route::get('/', [OperatorControllerBE::class, 'getProfile']);
         Route::post('/', [OperatorControllerBE::class, 'updateProfile']);
+        Route::post('/change-password', [OperatorControllerBE::class, 'changePassword']);
         // Route Siswa
         Route::get('/get/siswa', [OperatorControllerBE::class, 'getSiswaData']);
         Route::get('/get/siswa/{id}', [OperatorControllerBE::class, 'getSiswaById']);

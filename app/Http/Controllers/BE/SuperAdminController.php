@@ -483,7 +483,6 @@ class SuperAdminController extends Controller
             DB::table('users')
                 ->where('id', $user->id)
                 ->update([
-                    'name' => $request->nama_lengkap,
                     'email' => $request->email,
                     'foto' => $fotoPath ? $fotoPath : $user->foto,
                     'updated_at' => now()

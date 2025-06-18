@@ -197,8 +197,23 @@
                                             <label for="jabatan" class="col-md-3 col-form-label text-md-right">Jabatan
                                                 <span class="text-danger">*</span></label>
                                             <div class="col-md-9">
-                                                <input type="text" class="form-control" id="jabatan" name="jabatan"
-                                                    value="{{ $operator->jabatan ?? '' }}" required>
+                                                @if (isset($operator->jabatan) && $operator->jabatan)
+                                                    <input type="text" class="form-control" id="jabatan"
+                                                        name="jabatan"
+                                                        value="{{ ucfirst($operator->user->role ?? $operator->jabatan) }}"
+                                                        readonly>
+                                                    <small class="text-muted">Jabatan diambil dari role user dan tidak
+                                                        dapat diubah</small>
+                                                @else
+                                                    <select class="form-control" id="jabatan" name="jabatan" required>
+                                                        <option value="">-- Pilih Jabatan --</option>
+                                                        <option value="{{ ucfirst(Auth::user()->role) }}" selected>
+                                                            {{ ucfirst(Auth::user()->role) }}
+                                                        </option>
+                                                    </select>
+                                                    <small class="text-muted">Jabatan akan diisi sesuai dengan role user
+                                                        Anda</small>
+                                                @endif
                                             </div>
                                         </div>
 
@@ -361,7 +376,7 @@
                     };
 
                     $.ajax({
-                        url: _baseURL + 'api/student/change-password/',
+                        url: _baseURL + 'api/profile-operator/change-password',
                         method: 'POST',
                         data: formData,
                         success: function(response) {
