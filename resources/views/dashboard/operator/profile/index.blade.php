@@ -144,9 +144,7 @@
                                     @endif
 
                                     <form id="editProfileForm" enctype="multipart/form-data">
-                                        @csrf
-
-                                        <!-- Profile Image -->
+                                        @csrf <!-- Profile Image -->
                                         <div class="form-group row mb-4">
                                             <label class="col-md-3 col-form-label text-md-right">Profile Image</label>
                                             <div class="col-md-9">
@@ -154,15 +152,19 @@
                                                     <div class="profile-image-container mb-3">
                                                         <img id="profilePic"
                                                             src="{{ Auth::user()->foto ? asset('storage/user_photos/' . Auth::user()->foto) : asset('admin/images/faces/face1.jpg') }}"
-                                                            alt="Profile Image"
-                                                            style="width: 120px; height: 120px; object-fit: cover;">
+                                                            alt="Profile Image" class="rounded-circle"
+                                                            style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #e9ecef;">
                                                     </div>
                                                     <button type="button" class="btn btn-primary btn-sm mb-2"
                                                         onclick="document.getElementById('newProfilePhoto').click()">
-                                                        <i class="mdi mdi-upload"></i> Upload
+                                                        <i class="mdi mdi-upload"></i> Upload New Photo
                                                     </button>
                                                     <input type="file" name="foto" id="newProfilePhoto"
-                                                        class="d-none" accept="image/*">
+                                                        class="d-none" accept="image/jpeg,image/jpg,image/png,image/gif">
+                                                    <div class="mt-2">
+                                                        <small class="text-muted">Maksimal 2MB. Format: JPG, PNG,
+                                                            GIF</small>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -306,12 +308,29 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
+                // Handle "Lengkapi Profil" button click
+                $('#completeProfileBtn').on('click', function() {
+                    $('#edit-tab').tab('show');
+                });
+
                 // Submit form dengan AJAX
                 $('#editProfileForm').on('submit', function(e) {
                     e.preventDefault();
 
                     let formData = new FormData(this);
-                    $('#profileUpdateBtn').attr('disabled', true).text('Saving...');
+
+                    // Show loading state
+                    const $btn = $('#profileUpdateBtn');
+                    const originalText = $btn.html();
+                    $btn.attr('disabled', true).html(
+                        '<i class="mdi mdi-loading mdi-spin mr-1"></i> Menyimpan...');
+
+                    // Debug: Check if photo file is included
+                    const photoFile = $('#newProfilePhoto')[0].files[0];
+                    if (photoFile) {
+                        console.log('Photo file detected:', photoFile.name, photoFile.size);
+                        formData.append('foto', photoFile);
+                    }
 
                     $.ajax({
                         url: _baseURL + 'api/profile-operator/',
@@ -319,47 +338,88 @@
                         data: formData,
                         contentType: false,
                         processData: false,
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
                         success: function(res) {
                             toastr.success(res.message || 'Profil berhasil diperbarui');
 
+                            // Update displayed data
                             if (res.updatedData) {
-                                $('[data-field="nama_lengkap"]').text(res.updatedData.nama_lengkap);
+                                $('[data-field="nama_lengkap"]').text(res.updatedData
+                                    .nama_lengkap || 'Belum diisi');
+                                $('[data-field="nip"]').text(res.updatedData.nip || 'Belum diisi');
+                                $('[data-field="jabatan"]').text(res.updatedData.jabatan ||
+                                    'Belum diisi');
                                 $('[data-field="jenis_kelamin"]').text(res.updatedData
-                                    .jenis_kelamin);
-                                $('[data-field="alamat"]').text(res.updatedData.alamat);
+                                    .jenis_kelamin || 'Belum diisi');
+                                $('[data-field="alamat"]').text(res.updatedData.alamat ||
+                                    'Belum diisi');
                             }
 
+                            // Update profile images if new photo was uploaded
                             if (res.foto_url) {
+                                console.log('New photo URL:', res.foto_url);
                                 $('#profilePic').attr('src', res.foto_url);
+                                $('.profile-image-wrapper img').attr('src', res.foto_url);
                             }
 
+                            // Reload page after short delay to ensure all updates are visible
                             setTimeout(function() {
                                 location.reload();
-                            }, 1000);
+                            }, 1500);
                         },
                         error: function(xhr) {
+                            console.error('Upload error:', xhr);
+
                             if (xhr.status === 422) {
                                 let errors = xhr.responseJSON.errors;
                                 for (let key in errors) {
                                     toastr.error(errors[key][0]);
                                 }
+                            } else if (xhr.status === 413) {
+                                toastr.error('File terlalu besar. Maksimal 2MB.');
                             } else {
-                                toastr.error('Terjadi kesalahan saat menyimpan data.');
+                                toastr.error(xhr.responseJSON?.message ||
+                                    'Terjadi kesalahan saat menyimpan data.');
                             }
                         },
                         complete: function() {
-                            $('#profileUpdateBtn').attr('disabled', false).text('Save Changes');
+                            $btn.attr('disabled', false).html(originalText);
                         }
                     });
                 });
 
-                // Preview foto profil sebelum upload
+                // Preview foto profil sebelum upload dengan validasi
                 $('#newProfilePhoto').on('change', function() {
-                    let reader = new FileReader();
-                    reader.onload = function(e) {
-                        $('#profilePic').attr('src', e.target.result);
+                    const file = this.files[0];
+
+                    if (file) {
+                        // Validate file size (2MB = 2 * 1024 * 1024 bytes)
+                        if (file.size > 2 * 1024 * 1024) {
+                            toastr.error('File terlalu besar. Maksimal 2MB.');
+                            this.value = '';
+                            return;
+                        }
+
+                        // Validate file type
+                        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                        if (!allowedTypes.includes(file.type)) {
+                            toastr.error('Format file tidak didukung. Gunakan JPG, PNG, atau GIF.');
+                            this.value = '';
+                            return;
+                        }
+
+                        // Show preview
+                        let reader = new FileReader();
+                        reader.onload = function(e) {
+                            $('#profilePic').attr('src', e.target.result);
+                            $('.profile-image-wrapper img').attr('src', e.target.result);
+                        }
+                        reader.readAsDataURL(file);
+
+                        toastr.info('Foto dipilih. Klik "Simpan Profil" untuk menyimpan perubahan.');
                     }
-                    reader.readAsDataURL(this.files[0]);
                 });
 
                 // Handle change password form submission
