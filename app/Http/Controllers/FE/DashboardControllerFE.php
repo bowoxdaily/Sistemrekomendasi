@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\FE;
 
 use App\Http\Controllers\Controller;
+use App\Models\Students;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -15,11 +16,20 @@ class DashboardControllerFE extends Controller
         $user = Auth::user();
 
         // Log the user role to help debugging
-        Log::info('Dashboard access attempt', [
+        $logData = [
             'user_id' => $user->id,
-            'username' => $user->username,
             'role' => $user->role
-        ]);
+        ];
+
+        // Add NISN for students
+        if ($user->role == 'siswa') {
+            $student = Students::where('user_id', $user->id)->first();
+            if ($student) {
+                $logData['nisn'] = $student->nisn;
+            }
+        }
+
+        Log::info('Dashboard access attempt', $logData);
 
         // Redirect ke view yang sesuai berdasarkan role
         if ($user->role == 'siswa') {

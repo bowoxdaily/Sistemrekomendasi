@@ -12,6 +12,27 @@
     <link rel="stylesheet" href="{{ asset('admin/css/vertical-layout-light/style.css') }}">
     <link rel="shortcut icon" href="{{ asset('admin/images/favicon.png') }}" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        .btn-loading {
+            pointer-events: none;
+        }
+
+        .fa-spin {
+            animation: fa-spin 2s infinite linear;
+        }
+
+        @keyframes fa-spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -30,9 +51,24 @@
                             <form class="pt-3">
                                 @csrf
                                 <div class="form-group">
-                                    <input type="text" name="username" class="form-control form-control-lg"
-                                        id="username" placeholder="Username" required autofocus>
-                                    <div class="invalid-feedback" id="username-error"></div>
+                                    <input type="text" name="nama_lengkap" class="form-control form-control-lg"
+                                        id="nama_lengkap" placeholder="Nama Lengkap" required autofocus>
+                                    <div class="invalid-feedback" id="nama_lengkap-error"></div>
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" name="nisn" class="form-control form-control-lg"
+                                        id="nisn" placeholder="NISN" required>
+                                    <div class="invalid-feedback" id="nisn-error"></div>
+                                </div>
+                                <div class="form-group">
+                                    <select name="jurusan_id" class="form-control form-control-lg" id="jurusan_id"
+                                        required>
+                                        <option value="">Pilih Jurusan</option>
+                                        @foreach ($jurusans as $jurusan)
+                                            <option value="{{ $jurusan->id }}">{{ $jurusan->nama }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="invalid-feedback" id="jurusan_id-error"></div>
                                 </div>
                                 <div class="form-group">
                                     <input type="email" name="email" class="form-control form-control-lg"
@@ -57,14 +93,16 @@
                                 <input type="hidden" name="role" value="siswa">
 
                                 <div class="mt-3">
-                                    <button type="submit"
+                                    <button type="submit" id="registerBtn"
                                         class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn">
-                                        DAFTAR
+                                        <span class="btn-text">DAFTAR</span>
+                                        <span class="btn-loading d-none">
+                                            <i class="fa fa-spinner fa-spin"></i> Mendaftar...
+                                        </span>
                                     </button>
                                 </div>
                                 <div class="text-center mt-4 font-weight-light">
-                                    Sudah memiliki akun? <a href="{{ route('login') }}"
-                                        class="text-primary">Login</a>
+                                    Sudah memiliki akun? <a href="{{ route('login') }}" class="text-primary">Login</a>
                                 </div>
                             </form>
                         </div>
@@ -99,13 +137,24 @@
             $('form').on('submit', function(e) {
                 e.preventDefault();
 
+                // Show loading animation
+                const $btn = $('#registerBtn');
+                const $btnText = $('.btn-text');
+                const $btnLoading = $('.btn-loading');
+
+                $btn.prop('disabled', true);
+                $btnText.addClass('d-none');
+                $btnLoading.removeClass('d-none');
+
                 // Reset previous error messages
                 $('.form-control').removeClass('is-invalid');
                 $('.invalid-feedback').text('');
 
                 // Get form data
                 const formData = {
-                    username: $('#username').val(),
+                    nama_lengkap: $('#nama_lengkap').val(),
+                    nisn: $('#nisn').val(),
+                    jurusan_id: $('#jurusan_id').val(),
                     email: $('#email').val(),
                     no_telp: $('#no_telp').val(),
                     password: $('#password').val(),
@@ -129,6 +178,11 @@
                         }, 2000);
                     },
                     error: function(xhr) {
+                        // Hide loading animation
+                        $btn.prop('disabled', false);
+                        $btnText.removeClass('d-none');
+                        $btnLoading.addClass('d-none');
+
                         if (xhr.status === 422) {
                             // Handle validation errors
                             const errors = xhr.responseJSON.errors;
