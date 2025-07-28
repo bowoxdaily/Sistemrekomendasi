@@ -1,3 +1,12 @@
+@php
+    use App\Models\Setting;
+
+    // Get custom logo with fallback to default
+    $mainLogo = Setting::get('logo_path', asset('admin/images/logo.svg'));
+    $logoAlt = Setting::get('logo_alt_text', 'Logo Sistem');
+    $siteTitle = Setting::get('site_name', 'Sistem Karir Alumni');
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,16 +14,32 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Sistem Karir Alumni</title>
+    <title>{{ $siteTitle }}</title>
     <link rel="stylesheet" href="{{ asset('admin/vendors/feather/feather.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/vendors/ti-icons/css/themify-icons.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/vendors/css/vendor.bundle.base.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/css/vertical-layout-light/style.css') }}">
-    <link rel="shortcut icon" href="{{ asset('admin/images/favicon.png') }}" />
+    <link rel="shortcut icon" href="{{ Setting::get('favicon_path', asset('admin/images/favicon.png')) }}" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <style>
+        .brand-logo {
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-logo img {
+            transition: all 0.3s ease;
+            max-width: 100%;
+            max-height: 120px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
         .btn-loading {
             pointer-events: none;
         }
@@ -42,8 +67,9 @@
                 <div class="row w-100 mx-0">
                     <div class="col-lg-4 mx-auto">
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
-                            <div class="brand-logo">
-                                <img src="{{ asset('admin/images/logo.svg') }}" alt="logo">
+                            <div class="brand-logo text-center mb-4">
+                                <img src="{{ $mainLogo }}" alt="{{ $logoAlt }}" class="img-fluid"
+                                    style="max-height: 120px; max-width: 100%; width: auto; object-fit: contain;">
                             </div>
                             <h4>Daftar Akun Siswa</h4>
                             <h6 class="font-weight-light">Mendaftar sangat mudah. Hanya perlu beberapa langkah</h6>
