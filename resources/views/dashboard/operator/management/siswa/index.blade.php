@@ -342,7 +342,8 @@
 
                 jurusanData.forEach(function(jurusan) {
                     options += `<option value="${jurusan.id}">${jurusan.nama}</option>`;
-                    filterOptions += `<option value="${jurusan.id}">${jurusan.nama}</option>`;
+                    filterOptions +=
+                        `<option value="${jurusan.id}">${jurusan.kode} - ${jurusan.nama}</option>`;
                 });
 
                 $('#jurusan_id').html(options);
@@ -372,10 +373,10 @@
                 tahunLulusOptions = uniqueYears;
             }
 
-            // Helper function to get jurusan name by id
-            function getJurusanNameById(jurusanId) {
+            // Helper function to get jurusan code by id
+            function getJurusanCodeById(jurusanId) {
                 const jurusan = jurusanData.find(j => j.id == jurusanId);
-                return jurusan ? jurusan.nama : '-';
+                return jurusan ? jurusan.kode : '-';
             }
 
             // Load data with loading animation
@@ -397,12 +398,12 @@
                                 siswa.tahun_lulus = null;
                             }
 
-                            // Add jurusan name based on jurusan_id
+                            // Add jurusan code based on jurusan_id
                             if (siswa.jurusan_id) {
                                 const jurusan = jurusanData.find(j => j.id == siswa.jurusan_id);
-                                siswa.jurusan_nama = jurusan ? jurusan.nama : '-';
+                                siswa.jurusan_kode = jurusan ? jurusan.kode : '-';
                             } else {
-                                siswa.jurusan_nama = '-';
+                                siswa.jurusan_kode = '-';
                             }
                         });
 
@@ -439,8 +440,8 @@
                         const tahunLulus = siswa.tanggal_lulus ? new Date(siswa.tanggal_lulus)
                             .getFullYear() : '-';
 
-                        // Get jurusan name
-                        const jurusanNama = siswa.jurusan_id ? getJurusanNameById(siswa.jurusan_id) : '-';
+                        // Get jurusan code
+                        const jurusanKode = siswa.jurusan_id ? getJurusanCodeById(siswa.jurusan_id) : '-';
 
                         tbody += `
                 <tr data-id="${siswa.id}">
@@ -463,7 +464,7 @@
                         <span class="d-inline-block text-truncate" style="max-width: 150px;" title="${siswa.nama_lengkap || '-'}">${siswa.nama_lengkap || '-'}</span>
                     </td>
                     <td>${siswa.nisn || '-'}</td>
-                    <td class="d-none d-md-table-cell">${jurusanNama}</td>
+                    <td class="d-none d-md-table-cell">${jurusanKode}</td>
                     <td class="d-none d-md-table-cell">${siswa.tempat_lahir || '-'}</td>
                     <td class="d-none d-md-table-cell">${siswa.tanggal_lahir || '-'}</td>
                     <td class="d-none d-lg-table-cell">
@@ -485,7 +486,7 @@
                     pageData.forEach(function(siswa) {
                         const tahunLulus = siswa.tanggal_lulus ? new Date(siswa.tanggal_lulus)
                             .getFullYear() : '-';
-                        const jurusanNama = siswa.jurusan_id ? getJurusanNameById(siswa.jurusan_id) : '-';
+                        const jurusanKode = siswa.jurusan_id ? getJurusanCodeById(siswa.jurusan_id) : '-';
 
                         cardHtml += `
                             <div class="card mb-3" data-id="${siswa.id}">
@@ -505,8 +506,8 @@
                                     
                                     <div class="row mb-2">
                                         <div class="col-12">
-                                            <strong class="text-muted">Jurusan:</strong>
-                                            <div>${jurusanNama}</div>
+                                            <strong class="text-muted">Kode Jurusan:</strong>
+                                            <div>${jurusanKode}</div>
                                         </div>
                                     </div>
                                     
@@ -599,7 +600,7 @@
                         (siswa.nama_lengkap && siswa.nama_lengkap.toLowerCase().includes(searchTerm)) ||
                         (siswa.nisn && siswa.nisn.toString().includes(searchTerm)) ||
                         (siswa.tempat_lahir && siswa.tempat_lahir.toLowerCase().includes(searchTerm)) ||
-                        (siswa.jurusan_nama && siswa.jurusan_nama.toLowerCase().includes(searchTerm)) ||
+                        (siswa.jurusan_kode && siswa.jurusan_kode.toLowerCase().includes(searchTerm)) ||
                         (siswa.alamat && siswa.alamat.toLowerCase().includes(searchTerm));
 
                     // Jurusan filter
@@ -990,7 +991,7 @@
                     error: function(xhr) {
                         console.error('Error updating student:', xhr);
                         console.log('Error response:', xhr
-                        .responseText); // Add detailed error logging
+                            .responseText); // Add detailed error logging
 
                         // Close loading indicators
                         Swal.close();

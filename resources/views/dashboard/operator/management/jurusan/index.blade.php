@@ -136,6 +136,68 @@
     </div>
 @endsection
 
+@push('styles')
+    <style>
+        /* Styling untuk description container */
+        .description-container {
+            position: relative;
+        }
+
+        .description-text {
+            display: block;
+            line-height: 1.4;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .btn-expand {
+            font-size: 12px !important;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 2px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .btn-expand:hover {
+            text-decoration: underline;
+            color: #0056b3 !important;
+        }
+
+        .btn-expand i {
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-expand.expanded i {
+            transform: rotate(180deg);
+        }
+
+        /* Table responsive styling */
+        .table td {
+            vertical-align: top;
+            padding: 12px 8px;
+        }
+
+        .table .description-container {
+            min-height: auto;
+        }
+
+        /* Dropdown menu positioning */
+        .dropdown-menu {
+            z-index: 1050;
+        }
+
+        /* Search input styling */
+        .input-group .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+    </style>
+@endpush
+
 @push('scripts')
     <script>
         $(document).ready(function() {
@@ -186,6 +248,30 @@
                     const createdAt = jurusan.created_at ? new Date(jurusan.created_at).toLocaleDateString(
                         'id-ID') : '-';
 
+                    // Truncate description to 50 words (not characters)
+                    const fullDescription = jurusan.deskripsi || '-';
+                    const maxWords = 50;
+                    let truncatedDescription = fullDescription;
+                    let needsExpansion = false;
+
+                    if (fullDescription !== '-') {
+                        const words = fullDescription.trim().split(/\s+/);
+                        if (words.length > maxWords) {
+                            truncatedDescription = words.slice(0, maxWords).join(' ') + '...';
+                            needsExpansion = true;
+                        }
+                    }
+
+                    const descriptionHtml = needsExpansion ?
+                        `<div class="description-container" data-full="${fullDescription.replace(/"/g, '&quot;')}">
+                            <span class="description-text">${truncatedDescription}</span>
+                            <br>
+                            <a href="javascript:void(0)" class="btn-expand text-primary">
+                                <i class="mdi mdi-chevron-down"></i> Lihat Selengkapnya
+                            </a>
+                        </div>` :
+                        `<span class="description-text">${fullDescription}</span>`;
+
                     tbody += `
                     <tr>
                         <td>
@@ -205,7 +291,7 @@
                         </td>
                         <td>${jurusan.kode || '-'}</td>
                         <td>${jurusan.nama || '-'}</td>
-                        <td>${jurusan.deskripsi || '-'}</td>
+                        <td style="max-width: 300px;">${descriptionHtml}</td>
                         <td>${createdAt}</td>
                     </tr>
                 `;
@@ -397,6 +483,30 @@
                         });
                     }
                 });
+            });
+
+            // Event handler for expand/collapse description
+            $(document).on('click', '.btn-expand', function(e) {
+                e.preventDefault();
+                const container = $(this).closest('.description-container');
+                const textElement = container.find('.description-text');
+                const fullText = container.data('full');
+                const button = $(this);
+                const maxWords = 50;
+
+                if (button.hasClass('expanded')) {
+                    // Collapse
+                    const words = fullText.trim().split(/\s+/);
+                    const truncatedText = words.slice(0, maxWords).join(' ') + '...';
+                    textElement.text(truncatedText);
+                    button.html('<i class="mdi mdi-chevron-down"></i> Lihat Selengkapnya');
+                    button.removeClass('expanded');
+                } else {
+                    // Expand
+                    textElement.text(fullText);
+                    button.html('<i class="mdi mdi-chevron-up"></i> Lihat Lebih Sedikit');
+                    button.addClass('expanded');
+                }
             });
 
             // Event listeners

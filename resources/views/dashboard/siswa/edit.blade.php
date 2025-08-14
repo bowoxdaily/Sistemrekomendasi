@@ -63,13 +63,29 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="tempat_lahir">Tempat Lahir <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="tempat_lahir" name="tempat_lahir"
-                                        placeholder="Masukkan tempat lahir"
-                                        value="{{ old('tempat_lahir', $student->tempat_lahir ?? '') }}">
-                                    <div class="invalid-feedback" id="tempat_lahir_error"></div>
+                                    <label for="provinsi">Provinsi <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="provinsi" name="provinsi">
+                                        <option value="">-- Pilih Provinsi --</option>
+                                    </select>
+                                    <div class="invalid-feedback" id="provinsi_error"></div>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="tempat_lahir">Tempat Lahir <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="tempat_lahir" name="tempat_lahir">
+                                        <option value="">-- Pilih Kabupaten/Kota --</option>
+                                    </select>
+                                    <!-- Hidden input to store selected provinsi name -->
+                                    <input type="hidden" id="provinsi_name" name="provinsi_name">
+                                    <div class="invalid-feedback" id="tempat_lahir_error"></div>
+                                    <small class="form-text text-muted">Pilih provinsi terlebih dahulu</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tanggal Lahir -->
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="tanggal_lahir">Tanggal Lahir <span class="text-danger">*</span></label>
@@ -183,6 +199,66 @@
 
 @endsection
 
+@push('styles')
+    <style>
+        /* Custom styles for location dropdowns */
+        .location-dropdown {
+            position: relative;
+        }
+
+        .location-dropdown .form-control:disabled {
+            background-color: #f8f9fa;
+            opacity: 0.7;
+        }
+
+        .location-loading {
+            position: relative;
+        }
+
+        .location-loading::after {
+            content: '';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            border: 2px solid #dee2e6;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: translateY(-50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translateY(-50%) rotate(360deg);
+            }
+        }
+
+        /* Enhanced dropdown styling */
+        .form-control {
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .text-warning {
+            color: #ffc107 !important;
+        }
+
+        .mdi-alert::before {
+            font-size: 14px;
+        }
+    </style>
+@endpush
+
 @push('scripts')
     <script>
         $(document).ready(function() {
@@ -193,6 +269,163 @@
                 timeOut: 3000,
                 positionClass: "toast-top-right"
             };
+
+            // Variables for API data
+            let provinsiData = [];
+            let kabupatenData = [];
+            let currentTempatLahir = '{{ old('tempat_lahir', $student->tempat_lahir ?? '') }}';
+
+            // Load provinsi from API
+            function loadProvinsi() {
+                $.ajax({
+                    url: 'https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        provinsiData = data;
+                        let options = '<option value="">-- Pilih Provinsi --</option>';
+
+                        data.forEach(function(provinsi) {
+                            options +=
+                                `<option value="${provinsi.id}" data-name="${provinsi.name}">${provinsi.name}</option>`;
+                        });
+
+                        $('#provinsi').html(options);
+
+                        // Auto-select provinsi if tempat_lahir exists
+                        if (currentTempatLahir) {
+                            autoSelectProvinsiFromTempatLahir();
+                        }
+                    },
+                    error: function(xhr) {
+                        console.log('Error loading provinsi:', xhr);
+                        // Fallback to text input if API fails
+                        showFallbackInput();
+                    }
+                });
+            }
+
+            // Load kabupaten based on selected provinsi
+            function loadKabupaten(provinsiId) {
+                if (!provinsiId) {
+                    $('#tempat_lahir').html('<option value="">-- Pilih Kabupaten/Kota --</option>');
+                    $('#tempat_lahir').prop('disabled', false);
+                    return;
+                }
+
+                // Show loading in kabupaten dropdown
+                $('#tempat_lahir').html('<option value="">Memuat kabupaten/kota...</option>');
+                $('#tempat_lahir').prop('disabled', true);
+                $('#tempat_lahir').closest('.form-group').addClass('location-loading');
+
+                $.ajax({
+                    url: `https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${provinsiId}.json`,
+                    type: 'GET',
+                    dataType: 'json',
+                    timeout: 10000, // 10 second timeout
+                    success: function(data) {
+                        kabupatenData = data;
+                        let options = '<option value="">-- Pilih Kabupaten/Kota --</option>';
+
+                        data.forEach(function(kabupaten) {
+                            const selected = kabupaten.name === currentTempatLahir ?
+                                'selected' : '';
+                            options +=
+                                `<option value="${kabupaten.name}" ${selected}>${kabupaten.name}</option>`;
+                        });
+
+                        $('#tempat_lahir').html(options);
+                        $('#tempat_lahir').prop('disabled', false);
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error loading kabupaten:', xhr, status, error);
+                        $('#tempat_lahir').html(
+                            '<option value="">Gagal memuat data, coba lagi</option>');
+
+                        // Show retry button
+                        setTimeout(() => {
+                            $('#tempat_lahir').html(
+                                '<option value="">-- Pilih Kabupaten/Kota --</option>');
+                            $('#tempat_lahir').prop('disabled', false);
+                            toastr.warning(
+                                'Gagal memuat data kabupaten/kota. Silakan pilih provinsi lagi.'
+                                );
+                        }, 2000);
+                    },
+                    complete: function() {
+                        $('#tempat_lahir').closest('.form-group').removeClass('location-loading');
+                    }
+                });
+            }
+
+            // Auto-select provinsi based on existing tempat_lahir
+            function autoSelectProvinsiFromTempatLahir() {
+                if (!currentTempatLahir || provinsiData.length === 0) return;
+
+                // Load all kabupaten to find matching provinsi
+                $.ajax({
+                    url: 'https://www.emsifa.com/api-wilayah-indonesia/api/regencies.json',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(allKabupaten) {
+                        const matchingKabupaten = allKabupaten.find(kab =>
+                            kab.name.toLowerCase() === currentTempatLahir.toLowerCase()
+                        );
+
+                        if (matchingKabupaten) {
+                            const provinsiId = matchingKabupaten.province_id;
+                            $('#provinsi').val(provinsiId);
+                            loadKabupaten(provinsiId);
+                        }
+                    },
+                    error: function(xhr) {
+                        console.log('Error auto-selecting provinsi:', xhr);
+                    }
+                });
+            }
+
+            // Fallback to text input if API fails
+            function showFallbackInput() {
+                const fallbackHtml = `
+                    <div class="form-group">
+                        <label for="tempat_lahir_text">Tempat Lahir <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="tempat_lahir_text" name="tempat_lahir"
+                            placeholder="Masukkan tempat lahir" value="${currentTempatLahir}">
+                        <div class="invalid-feedback" id="tempat_lahir_error"></div>
+                        <small class="form-text text-muted text-warning">
+                            <i class="mdi mdi-alert"></i> Koneksi API terganggu, menggunakan input manual
+                        </small>
+                    </div>
+                `;
+
+                $('#tempat_lahir').closest('.form-group').replaceWith(fallbackHtml);
+            }
+
+            // Event handler for provinsi change
+            $('#provinsi').on('change', function() {
+                const selectedProvinsiId = $(this).val();
+                const selectedProvinsiName = $(this).find('option:selected').data('name');
+
+                // Store provinsi name in hidden input
+                $('#provinsi_name').val(selectedProvinsiName || '');
+
+                loadKabupaten(selectedProvinsiId);
+
+                // Clear tempat lahir selection when provinsi changes
+                currentTempatLahir = '';
+            });
+
+            // Add search functionality to tempat lahir dropdown
+            $('#tempat_lahir').on('focus', function() {
+                // Convert to searchable if has many options
+                const optionsCount = $(this).find('option').length;
+                if (optionsCount > 20) {
+                    $(this).attr('data-live-search', 'true');
+                }
+            });
+
+            // Initialize provinsi loading
+            loadProvinsi();
 
             // Handle conditional fields visibility based on status_lulus
             $('#status_lulus').on('change', function() {
@@ -242,10 +475,13 @@
                         if (response.status === 'success' && response.data) {
                             const data = response.data;
                             $('#nama_lengkap').val(data.nama_lengkap);
-                            $('#tempat_lahir').val(data.tempat_lahir);
-                            $('#tanggal_lahir').val(data.tanggal_lahir);
                             $('#alamat').val(data.alamat);
                             $('#nisn').val(data.nisn);
+
+                            // Update currentTempatLahir if available from API
+                            if (data.tempat_lahir) {
+                                currentTempatLahir = data.tempat_lahir;
+                            }
 
                             if (data.jenis_kelamin) {
                                 $('#jenis_kelamin').val(data.jenis_kelamin);
@@ -266,8 +502,7 @@
                             }
 
                             if (data.foto) {
-                                $('#preview-foto').attr('src', '{{ asset('storage/user_photos') }}/' +
-                                    data.foto);
+                                $('#preview-foto').attr('src', '/storage/user_photos/' + data.foto);
                             }
                         }
                     },
@@ -310,6 +545,26 @@
                         isComplete = false;
                         break;
                     }
+                }
+
+                // Additional validation for provinsi (if using dropdown)
+                const provinsiVal = $('#provinsi').val();
+                const tempatLahirVal = $('#tempat_lahir').val();
+
+                if ($('#provinsi').length && !provinsiVal) {
+                    $('#provinsi').addClass('is-invalid');
+                    $('#provinsi_error').text('Provinsi harus dipilih');
+                    $('#submitBtn').html('Simpan');
+                    $('#submitBtn').prop('disabled', false);
+                    return false;
+                }
+
+                if (!tempatLahirVal) {
+                    $('#tempat_lahir').addClass('is-invalid');
+                    $('#tempat_lahir_error').text('Tempat lahir harus dipilih');
+                    $('#submitBtn').html('Simpan');
+                    $('#submitBtn').prop('disabled', false);
+                    return false;
                 }
 
                 // Validation for tanggal_lulus when status is 'lulus'
