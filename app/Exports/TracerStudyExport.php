@@ -351,11 +351,87 @@ class TracerStudyExport implements FromCollection, WithHeadings, WithMapping, Wi
                     }
                 }
 
-                // Header styling
-                $sheet->getStyle('A1:' . $highestColumn . '1')->applyFromArray([
+                // Logo/Header area (first add a title row)
+                $sheet->insertNewRowBefore(1, 3);
+
+                // Main title
+                $sheet->setCellValue('A1', 'LAPORAN TRACER STUDY ALUMNI');
+                $sheet->mergeCells('A1:' . $highestColumn . '1');
+                $sheet->getStyle('A1')->applyFromArray([
                     'font' => [
                         'bold' => true,
-                        'size' => 12,
+                        'size' => 16,
+                        'color' => ['argb' => 'FFFFFFFF'],
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FF2E7D32'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                    ],
+                ]);
+                $sheet->getRowDimension('1')->setRowHeight(30);
+
+                // Subtitle
+                $subtitle = '';
+                switch ($this->reportType) {
+                    case 'employment':
+                        $subtitle = 'LAPORAN DATA PEKERJAAN ALUMNI';
+                        break;
+                    case 'education':
+                        $subtitle = 'LAPORAN DATA PENDIDIKAN ALUMNI';
+                        break;
+                    case 'unemployment':
+                        $subtitle = 'LAPORAN ALUMNI BELUM BEKERJA';
+                        break;
+                    case 'raw':
+                        $subtitle = 'DATA LENGKAP ALUMNI';
+                        break;
+                    default:
+                        $subtitle = 'LAPORAN UMUM ALUMNI';
+                        break;
+                }
+
+                $sheet->setCellValue('A2', $subtitle);
+                $sheet->mergeCells('A2:' . $highestColumn . '2');
+                $sheet->getStyle('A2')->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'size' => 14,
+                        'color' => ['argb' => 'FF2E7D32'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                    ],
+                ]);
+
+                // Info tanggal
+                $sheet->setCellValue('A3', 'Digenerate pada: ' . now()->format('d F Y, H:i:s WIB'));
+                $sheet->mergeCells('A3:' . $highestColumn . '3');
+                $sheet->getStyle('A3')->applyFromArray([
+                    'font' => [
+                        'size' => 10,
+                        'italic' => true,
+                        'color' => ['argb' => 'FF666666'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    ],
+                ]);
+
+                // Adjust row heights
+                $sheet->getRowDimension('2')->setRowHeight(25);
+                $sheet->getRowDimension('3')->setRowHeight(20);
+
+                // Header data styling (now row 4)
+                $headerRow = 4;
+                $sheet->getStyle('A' . $headerRow . ':' . $highestColumn . $headerRow)->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'size' => 11,
                         'color' => ['argb' => 'FFFFFFFF'],
                     ],
                     'fill' => [
@@ -365,75 +441,137 @@ class TracerStudyExport implements FromCollection, WithHeadings, WithMapping, Wi
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
                         'vertical' => Alignment::VERTICAL_CENTER,
+                        'wrapText' => true,
                     ],
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['argb' => 'FF000000'],
+                            'color' => ['argb' => 'FFFFFFFF'],
                         ],
                     ],
                 ]);
+                $sheet->getRowDimension($headerRow)->setRowHeight(25);
 
                 // Data styling
-                if ($highestRow > 1) {
-                    $sheet->getStyle('A2:' . $highestColumn . $highestRow)->applyFromArray([
-                        'borders' => [
-                            'allBorders' => [
-                                'borderStyle' => Border::BORDER_THIN,
-                                'color' => ['argb' => 'FFCCCCCC'],
+                $dataStartRow = $headerRow + 1;
+                if ($highestRow > $headerRow) {
+                    // Zebra striping
+                    for ($row = $dataStartRow; $row <= $highestRow + 3; $row++) {
+                        $fillColor = ($row % 2 == 0) ? 'FFF8F9FA' : 'FFFFFFFF';
+                        $sheet->getStyle('A' . $row . ':' . $highestColumn . $row)->applyFromArray([
+                            'fill' => [
+                                'fillType' => Fill::FILL_SOLID,
+                                'startColor' => ['argb' => $fillColor],
                             ],
-                        ],
-                        'alignment' => [
-                            'vertical' => Alignment::VERTICAL_CENTER,
+                            'borders' => [
+                                'allBorders' => [
+                                    'borderStyle' => Border::BORDER_THIN,
+                                    'color' => ['argb' => 'FFE0E0E0'],
+                                ],
+                            ],
+                            'alignment' => [
+                                'vertical' => Alignment::VERTICAL_CENTER,
+                                'wrapText' => true,
+                            ],
+                        ]);
+                        $sheet->getRowDimension($row)->setRowHeight(20);
+                    }
+
+                    // Nama kolom styling (make names bold)
+                    $sheet->getStyle('B' . $dataStartRow . ':B' . ($highestRow + 3))->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'color' => ['argb' => 'FF2C3E50'],
                         ],
                     ]);
                 }
 
-                // Summary row
-                $summaryRow = $highestRow + 2;
-                $sheet->setCellValue('A' . $summaryRow, 'TOTAL DATA:');
-                $sheet->setCellValue('B' . $summaryRow, $totalAlumni);
-                $sheet->setCellValue('C' . $summaryRow, 'alumni');
+                // Summary section
+                $summaryStartRow = $highestRow + 6;
 
-                // Merge cells untuk summary
-                $sheet->mergeCells('B' . $summaryRow . ':C' . $summaryRow);
-
-                // Summary styling
-                $sheet->getStyle('A' . $summaryRow . ':C' . $summaryRow)->applyFromArray([
+                // Summary header
+                $sheet->setCellValue('A' . $summaryStartRow, 'RINGKASAN LAPORAN');
+                $sheet->mergeCells('A' . $summaryStartRow . ':E' . $summaryStartRow);
+                $sheet->getStyle('A' . $summaryStartRow . ':E' . $summaryStartRow)->applyFromArray([
                     'font' => [
                         'bold' => true,
-                        'size' => 12,
-                        'color' => ['argb' => 'FF3F51B5'],
+                        'size' => 14,
+                        'color' => ['argb' => 'FFFFFFFF'],
                     ],
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['argb' => 'FFE8F0FF'],
-                    ],
-                    'borders' => [
-                        'outline' => [
-                            'borderStyle' => Border::BORDER_MEDIUM,
-                            'color' => ['argb' => 'FF3F51B5'],
-                        ],
+                        'startColor' => ['argb' => 'FF2E7D32'],
                     ],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
                         'vertical' => Alignment::VERTICAL_CENTER,
                     ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_MEDIUM,
+                            'color' => ['argb' => 'FF2E7D32'],
+                        ],
+                    ],
                 ]);
+                $sheet->getRowDimension($summaryStartRow)->setRowHeight(30);
 
-                // Tanggal laporan
-                $dateRow = $summaryRow + 1;
-                $sheet->setCellValue('A' . $dateRow, 'Tanggal Laporan: ' . now()->format('d M Y H:i:s'));
-                $sheet->mergeCells('A' . $dateRow . ':D' . $dateRow);
-                $sheet->getStyle('A' . $dateRow)->applyFromArray([
+                // Summary content
+                $summaryDataRow = $summaryStartRow + 1;
+                $sheet->setCellValue('A' . $summaryDataRow, 'Total Data Alumni:');
+                $sheet->setCellValue('B' . $summaryDataRow, $totalAlumni);
+                $sheet->setCellValue('C' . $summaryDataRow, 'orang');
+
+                $sheet->setCellValue('A' . ($summaryDataRow + 1), 'Jenis Laporan:');
+                $sheet->setCellValue('B' . ($summaryDataRow + 1), ucfirst(str_replace('_', ' ', $this->reportType)));
+
+                $sheet->setCellValue('A' . ($summaryDataRow + 2), 'Tanggal Export:');
+                $sheet->setCellValue('B' . ($summaryDataRow + 2), now()->format('d F Y, H:i:s'));
+
+                // Summary styling
+                $sheet->getStyle('A' . $summaryDataRow . ':C' . ($summaryDataRow + 2))->applyFromArray([
                     'font' => [
-                        'size' => 10,
-                        'italic' => true,
+                        'size' => 11,
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FFF0F8F0'],
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['argb' => 'FF2E7D32'],
+                        ],
                     ],
                     'alignment' => [
-                        'horizontal' => Alignment::HORIZONTAL_LEFT,
+                        'vertical' => Alignment::VERTICAL_CENTER,
                     ],
                 ]);
+
+                // Make summary labels bold
+                $sheet->getStyle('A' . $summaryDataRow . ':A' . ($summaryDataRow + 2))->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'color' => ['argb' => 'FF2E7D32'],
+                    ],
+                ]);
+
+                // Footer
+                $footerRow = $summaryDataRow + 4;
+                $sheet->setCellValue('A' . $footerRow, 'Generated by Sistem Tracer Study Alumni - SMK [Nama Sekolah]');
+                $sheet->mergeCells('A' . $footerRow . ':' . $highestColumn . $footerRow);
+                $sheet->getStyle('A' . $footerRow)->applyFromArray([
+                    'font' => [
+                        'size' => 9,
+                        'italic' => true,
+                        'color' => ['argb' => 'FF999999'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    ],
+                ]);
+
+                // Freeze panes pada header data
+                $sheet->freezePane('A' . ($headerRow + 1));
             },
         ];
     }
