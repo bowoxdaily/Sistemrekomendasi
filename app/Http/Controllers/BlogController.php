@@ -44,14 +44,14 @@ class BlogController extends Controller
             ->where('is_published', true)
             ->with('user')
             ->firstOrFail();
-            
+
         // Get recent posts for sidebar
         $recentPosts = Blog::where('is_published', true)
             ->where('id', '!=', $blog->id)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
-            
+
         // Get related posts by category
         $relatedPosts = Blog::where('is_published', true)
             ->where('id', '!=', $blog->id)
@@ -59,10 +59,10 @@ class BlogController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(3)
             ->get();
-            
+
         return view('blog.show', compact('blog', 'recentPosts', 'relatedPosts'));
     }
-    
+
     /**
      * Display a listing of blog posts to public users
      */
@@ -70,25 +70,68 @@ class BlogController extends Controller
     {
         $category = $request->query('category');
         $search = $request->query('search');
-        
+
         $query = Blog::where('is_published', true)
             ->with('user')
             ->orderBy('created_at', 'desc');
-            
+
         if ($category) {
             $query->where('category', $category);
         }
-        
+
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%");
+                    ->orWhere('content', 'like', "%{$search}%");
             });
         }
-        
+
         $blogs = $query->paginate(9);
         $categories = Blog::distinct()->pluck('category')->filter()->values();
-        
+
         return view('blog.index', compact('blogs', 'categories', 'category', 'search'));
+    }
+
+    /**
+     * Get latest blogs for API
+     */
+    public function getLatestBlogs(Request $request)
+    {
+        try {
+            $limit = $request->input('limit', 5);
+
+            $blogs = Blog::where('is_published', true)
+                ->with('user')
+                ->orderBy('created_at', 'desc')
+                ->limit($limit)
+                ->get();
+
+            // Transform data for API response
+            $blogsData = $blogs->map(function ($blog) {
+                return [
+                    'id' => $blog->id,
+                    'title' => $blog->title,
+                    'content' => strip_tags($blog->content), // Remove HTML tags
+                    'author' => $blog->author ?: ($blog->user ? $blog->user->name : 'Admin'),
+                    'category' => $blog->category,
+                    'image' => $blog->image,
+                    'slug' => $blog->slug,
+                    'is_published' => $blog->is_published,
+                    'created_at' => $blog->created_at,
+                    'formatted_date' => $blog->created_at->format('d M Y')
+                ];
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $blogsData
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve latest blogs',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

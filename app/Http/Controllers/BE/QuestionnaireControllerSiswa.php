@@ -100,7 +100,7 @@ class QuestionnaireControllerSiswa extends Controller
                         // If column doesn't exist, just log it - we'll proceed anyway
                         Log::warning("The 'archived' column does not exist in questionnaire_responses table. Run the migration first.");
                     }
-                    
+
                     // Log that user is retaking the questionnaire
                     Log::info("Student ID {$student->id} is retaking the questionnaire");
                 } catch (\Exception $e) {
@@ -120,12 +120,12 @@ class QuestionnaireControllerSiswa extends Controller
                 'completion_date' => now(),
                 'recommendation_result' => null, // Will be updated after calculation
             ];
-            
+
             // Only add archived field if the column exists
             if (Schema::hasColumn('questionnaire_responses', 'archived')) {
                 $responseData['archived'] = false;
             }
-            
+
             $response = QuestionnaireResponse::create($responseData);
 
             // Save all answers first
@@ -156,7 +156,7 @@ class QuestionnaireControllerSiswa extends Controller
                 'has_completed_questionnaire' => true,
                 'is_profile_complete' => true
             ]);
-            
+
             DB::commit();
 
             // Use absolute URL and ensure session data is saved
@@ -190,6 +190,11 @@ class QuestionnaireControllerSiswa extends Controller
             }
 
             $recommendations = $response->recommendation_result;
+
+            // Get top 3 for main display
+            $topRecommendations = array_slice($recommendations, 0, 3);
+
+            // Get all job IDs for both main and alternative recommendations
             $jobIds = array_column($recommendations, 'job_id');
             $jobDetails = JobRecommendation::whereIn('id', $jobIds)->get()->keyBy('id');
 
@@ -197,7 +202,13 @@ class QuestionnaireControllerSiswa extends Controller
                 throw new \Exception('Data pekerjaan tidak ditemukan.');
             }
 
-            return view('dashboard.siswa.rekomendasi.rekomendasi', compact('student', 'response', 'recommendations', 'jobDetails'));
+            // Pass both main recommendations and all recommendations for alternatives
+            return view('dashboard.siswa.rekomendasi.rekomendasi', compact(
+                'student',
+                'response',
+                'recommendations', // All recommendations for dropdown
+                'jobDetails'
+            ));
         } catch (\Exception $e) {
             Log::error('Show recommendation error: ' . $e->getMessage());
             return redirect()->route('student.kuis')
@@ -224,14 +235,14 @@ class QuestionnaireControllerSiswa extends Controller
                 if (!is_array($question->options)) {
                     return 1; // Default if no options defined
                 }
-                
+
                 foreach ($question->options as $option) {
                     // Match by text (what the user selected)
                     if (is_array($option) && isset($option['text']) && $option['text'] == $answerValue) {
                         return isset($option['value']) ? min(5, max(1, (float)$option['value'])) : 3;
                     }
                 }
-                
+
                 // If no match found (shouldn't happen), return middle value
                 return 3;
 

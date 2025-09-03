@@ -8,7 +8,8 @@
         <div class="col-md-12 grid-margin">
             <div class="row">
                 <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                    <h3 class="font-weight-bold">Selamat Datang, {{ Auth::user()->operator->nama_lengkap ?? Auth::user()->name }}</h3>
+                    <h3 class="font-weight-bold">Selamat Datang,
+                        {{ Auth::user()->operator->nama_lengkap ?? Auth::user()->name }}</h3>
                     <h6 class="font-weight-normal mb-0">
                         <span class="text-primary">Administrator Panel</span> - Sistem Tracer Study & Rekomendasi Karir
                     </h6>
@@ -39,25 +40,29 @@
                     <h4 class="card-title mb-4">Pengaturan Cepat</h4>
                     <div class="row">
                         <div class="col-md-3 text-center mb-3">
-                            <a href="{{ route('operator.settings.logo') }}" class="btn btn-outline-primary btn-icon-text p-3 w-100 h-100">
+                            <a href="{{ route('operator.settings.logo') }}"
+                                class="btn btn-outline-primary btn-icon-text p-3 w-100 h-100">
                                 <i class="mdi mdi-image-area-close btn-icon-prepend"></i>
                                 <span class="d-block mt-2">Ganti Logo</span>
                             </a>
                         </div>
                         <div class="col-md-3 text-center mb-3">
-                            <a href="{{ route('operator.settings.school') }}" class="btn btn-outline-info btn-icon-text p-3 w-100 h-100">
+                            <a href="{{ route('operator.settings.school') }}"
+                                class="btn btn-outline-info btn-icon-text p-3 w-100 h-100">
                                 <i class="mdi mdi-school btn-icon-prepend"></i>
                                 <span class="d-block mt-2">Info Sekolah</span>
                             </a>
                         </div>
                         <div class="col-md-3 text-center mb-3">
-                            <a href="{{ route('operator.blog.index') }}" class="btn btn-outline-success btn-icon-text p-3 w-100 h-100">
+                            <a href="{{ route('operator.blog.index') }}"
+                                class="btn btn-outline-success btn-icon-text p-3 w-100 h-100">
                                 <i class="mdi mdi-newspaper btn-icon-prepend"></i>
                                 <span class="d-block mt-2">Kelola Blog</span>
                             </a>
                         </div>
                         <div class="col-md-3 text-center mb-3">
-                            <a href="{{ route('operator.blog.create') }}" class="btn btn-outline-warning btn-icon-text p-3 w-100 h-100">
+                            <a href="{{ route('operator.blog.create') }}"
+                                class="btn btn-outline-warning btn-icon-text p-3 w-100 h-100">
                                 <i class="mdi mdi-plus-circle btn-icon-prepend"></i>
                                 <span class="d-block mt-2">Tambah Blog</span>
                             </a>
@@ -76,7 +81,7 @@
             $publishedBlogs = \App\Models\Blog::where('is_published', true)->count();
             $draftBlogs = $totalBlogs - $publishedBlogs;
         @endphp
-        
+
         <div class="col-md-6 grid-margin stretch-card">
             <div class="card tale-bg">
                 <div class="card-people mt-auto">
@@ -86,13 +91,15 @@
                             <div>
                                 <h2 class="mb-0 font-weight-normal" id="weather-temp">
                                     <i class="icon-sun mr-2"></i><span id="temperature">--</span><sup>C</sup>
-                                    <span class="spinner-border spinner-border-sm text-primary" role="status" id="weather-loading">
+                                    <span class="spinner-border spinner-border-sm text-primary" role="status"
+                                        id="weather-loading">
                                         <span class="sr-only">Loading...</span>
                                     </span>
                                 </h2>
                                 <div class="weather-details mt-2">
                                     <span id="weather-description" class="badge badge-info mr-1"></span>
-                                    <span id="weather-humidity" class="badge badge-secondary" title="Humidity"><i class="mdi mdi-water"></i> --</span>
+                                    <span id="weather-humidity" class="badge badge-secondary" title="Humidity"><i
+                                            class="mdi mdi-water"></i> --</span>
                                 </div>
                             </div>
                             <div class="ml-2">
@@ -113,34 +120,44 @@
                 <div class="col-md-6 mb-4 stretch-card transparent">
                     <div class="card card-tale">
                         <div class="card-body">
-                            <p class="mb-4">Siswa</p>
-                            <p class="fs-30 mb-2" id="student-count">Loading...</p>
-                            <p id="percentage-change">Loading...</p>
+                            <p class="mb-4">Total Alumni Terdaftar</p>
+                            <p class="fs-30 mb-2" id="total-alumni-registered">Loading...</p>
+                            <p id="alumni-growth-percentage" class="text-white">Loading...</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 mb-4 stretch-card transparent">
                     <div class="card card-dark-blue">
                         <div class="card-body">
-                            <p class="mb-4">Kegiatan Hari Ini</p>
-                            <p class="fs-30 mb-2">{{ rand(5, 15) }}</p>
-                            <p>Agenda aktif</p>
+                            <p class="mb-4">Alumni Sudah Bekerja</p>
+                            <p class="fs-30 mb-2" id="alumni-working">Loading...</p>
+                            <p id="working-percentage">Loading...</p>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-12 mb-4 mb-lg-0 stretch-card transparent">
+                <div class="col-md-6 mb-4 mb-lg-0 stretch-card transparent">
                     <div class="card card-light-blue">
                         <div class="card-body">
-                            <p class="mb-4">Statistik Pengunjung</p>
-                            <p class="fs-30 mb-2">{{ rand(100, 1000) }}</p>
-                            <p>{{ rand(5, 25) }}% (30 hari terakhir)</p>
+                            <p class="mb-4">Alumni Melanjutkan Kuliah</p>
+                            <p class="fs-30 mb-2" id="alumni-studying">Loading...</p>
+                            <p id="studying-percentage">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 stretch-card transparent">
+                    <div class="card card-light-danger">
+                        <div class="card-body">
+                            <p class="mb-4">Alumni Belum Didata</p>
+                            <p class="fs-30 mb-2" id="alumni-unemployed">Loading...</p>
+                            <p id="unemployed-percentage">Loading...</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- Recent Blog Posts -->
@@ -154,13 +171,11 @@
                             <i class="mdi mdi-view-list mr-1"></i> Lihat Semua
                         </a>
                     </div>
-                    
+
                     @php
-                        $recentBlogs = \App\Models\Blog::orderBy('created_at', 'desc')
-                            ->limit(5)
-                            ->get();
+                        $recentBlogs = \App\Models\Blog::orderBy('created_at', 'desc')->limit(3)->get();
                     @endphp
-                    
+
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
@@ -174,43 +189,46 @@
                             </thead>
                             <tbody>
                                 @forelse($recentBlogs as $blog)
-                                <tr>
-                                    <td>{{ Str::limit($blog->title, 40) }}</td>
-                                    <td>
-                                        @if($blog->category)
-                                            <span class="badge badge-info">{{ $blog->category }}</span>
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($blog->is_published)
-                                            <span class="badge badge-success">Dipublikasikan</span>
-                                        @else
-                                            <span class="badge badge-warning">Draft</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $blog->created_at->format('d M Y') }}</td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <a href="{{ route('blog.show', $blog->slug) }}" class="btn btn-sm btn-outline-info" target="_blank">
-                                                <i class="mdi mdi-eye"></i>
-                                            </a>
-                                            <a href="{{ route('operator.blog.edit', $blog->id) }}" class="btn btn-sm btn-outline-primary">
-                                                <i class="mdi mdi-pencil"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
+                                    <tr>
+                                        <td>{{ Str::limit($blog->title, 40) }}</td>
+                                        <td>
+                                            @if ($blog->category)
+                                                <span class="badge badge-info">{{ $blog->category }}</span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($blog->is_published)
+                                                <span class="badge badge-success">Dipublikasikan</span>
+                                            @else
+                                                <span class="badge badge-warning">Draft</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $blog->created_at->format('d M Y') }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{{ route('blog.show', $blog->slug) }}"
+                                                    class="btn btn-sm btn-outline-info" target="_blank">
+                                                    <i class="mdi mdi-eye"></i>
+                                                </a>
+                                                <a href="{{ route('operator.blog.edit', $blog->id) }}"
+                                                    class="btn btn-sm btn-outline-primary">
+                                                    <i class="mdi mdi-pencil"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="5" class="text-center py-3">
-                                        <div class="text-muted">Belum ada blog yang dibuat</div>
-                                        <a href="{{ route('operator.blog.create') }}" class="btn btn-sm btn-primary mt-2">
-                                            <i class="mdi mdi-plus-circle mr-1"></i> Buat Blog Baru
-                                        </a>
-                                    </td>
-                                </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-3">
+                                            <div class="text-muted">Belum ada blog yang dibuat</div>
+                                            <a href="{{ route('operator.blog.create') }}"
+                                                class="btn btn-sm btn-primary mt-2">
+                                                <i class="mdi mdi-plus-circle mr-1"></i> Buat Blog Baru
+                                            </a>
+                                        </td>
+                                    </tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -226,7 +244,8 @@
             <div class="card">
                 <div class="card-body py-3">
                     <p class="card-title mb-2">Tracer Study: Status Setelah Lulus</p>
-                    <p class="font-weight-500 mb-2">Distribusi alumni berdasarkan status setelah lulus dalam 3 tahun terakhir.</p>
+                    <p class="font-weight-500 mb-2">Distribusi alumni berdasarkan status setelah lulus dalam 3 tahun
+                        terakhir.</p>
                     <div class="d-flex flex-wrap mb-3">
                         <div class="mr-5 mt-2">
                             <p class="text-muted mb-1">Total Alumni</p>
@@ -241,7 +260,7 @@
                             <h3 class="text-info fs-30 font-weight-medium" id="study-count">0</h3>
                         </div>
                         <div class="mt-2">
-                            <p class="text-muted mb-1">Belum Bekerja</p>
+                            <p class="text-muted mb-1">Belum Didata</p>
                             <h3 class="text-warning fs-30 font-weight-medium" id="unemployed-count">0</h3>
                         </div>
                     </div>
@@ -257,15 +276,18 @@
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <p class="card-title mb-0">Tracer Study: Detail</p>
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-primary dropdown-toggle py-1 px-2" type="button" id="chartFilterDropdown"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle py-1 px-2" type="button"
+                                id="chartFilterDropdown" data-toggle="dropdown" aria-haspopup="true"
+                                aria-expanded="false">
                                 Tipe Data
                             </button>
                             <div class="dropdown-menu" aria-labelledby="chartFilterDropdown">
-                                <a class="dropdown-item active" href="#" data-chart-type="jobType">Jenis Pekerjaan</a>
+                                <a class="dropdown-item active" href="#" data-chart-type="jobType">Jenis
+                                    Pekerjaan</a>
                                 <a class="dropdown-item" href="#" data-chart-type="eduMajor">Program Studi</a>
                                 <a class="dropdown-item" href="#" data-chart-type="salary">Rentang Gaji</a>
-                                <a class="dropdown-item" href="#" data-chart-type="jobMatch">Kesesuaian Pekerjaan</a>
+                                <a class="dropdown-item" href="#" data-chart-type="jobMatch">Kesesuaian
+                                    Pekerjaan</a>
                             </div>
                         </div>
                     </div>
@@ -298,7 +320,7 @@
 @push('scripts')
     <!-- Include Chart.js if not already included -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    
+
     <script>
         $(document).ready(function() {
             // Check if student profile is complete (only for students)
@@ -334,6 +356,7 @@
 
             // Load student count statistics via AJAX
             function loadStudentStats() {
+                // Load alumni statistics
                 $.ajax({
                     url: '{{ route('api.stats.students') }}',
                     type: 'GET',
@@ -357,6 +380,66 @@
                         $('#percentage-change').text('Data tidak tersedia');
                     }
                 });
+
+                // Load alumni statistics for operator
+                $.ajax({
+                    url: '/api/stats/alumni-operator',
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            // Total Alumni
+                            $('#total-alumni-registered').text(response.data.total_alumni);
+
+                            // Alumni Bekerja
+                            $('#alumni-working').text(response.data.alumni_bekerja);
+                            const workingPercentage = response.data.total_alumni > 0 ?
+                                ((response.data.alumni_bekerja / response.data.total_alumni) * 100)
+                                .toFixed(1) : 0;
+                            $('#working-percentage').text(workingPercentage + '% dari total alumni');
+
+                            // Alumni Kuliah
+                            $('#alumni-studying').text(response.data.alumni_kuliah);
+                            const studyingPercentage = response.data.total_alumni > 0 ?
+                                ((response.data.alumni_kuliah / response.data.total_alumni) * 100)
+                                .toFixed(1) : 0;
+                            $('#studying-percentage').text(studyingPercentage + '% dari total alumni');
+
+                            // Alumni Belum Didata (card keempat)
+                            $('#alumni-unemployed').text(response.data.alumni_belum_bekerja);
+                            const unemployedPercentage = response.data.total_alumni > 0 ?
+                                ((response.data.alumni_belum_bekerja / response.data.total_alumni) *
+                                    100).toFixed(1) : 0;
+                            $('#unemployed-percentage').text(unemployedPercentage +
+                                '% dari total alumni');
+
+                            // Growth percentage (comparison with previous period)
+                            if (response.data.growth_percentage !== undefined) {
+                                const growthClass = response.data.growth_percentage >= 0 ?
+                                    'text-success' : 'text-danger';
+                                const growthIcon = response.data.growth_percentage >= 0 ? '↑' : '↓';
+                                $('#alumni-growth-percentage').html(
+                                    `<span class="${growthClass}">${growthIcon} ${Math.abs(response.data.growth_percentage)}% dari bulan lalu</span>`
+                                );
+                            } else {
+                                $('#alumni-growth-percentage').text('Data pertumbuhan tidak tersedia');
+                            }
+                        }
+                    },
+                    error: function() {
+                        // Set error state for alumni stats
+                        $('#total-alumni-registered').text('Error');
+                        $('#alumni-working').text('Error');
+                        $('#alumni-studying').text('Error');
+                        $('#alumni-unemployed').text('Error');
+                        $('#alumni-growth-percentage').text('Gagal memuat data');
+                        $('#working-percentage').text('Gagal memuat data');
+                        $('#studying-percentage').text('Gagal memuat data');
+                        $('#unemployed-percentage').text('Gagal memuat data');
+                    }
+                });
             }
 
             // Load student statistics
@@ -365,20 +448,21 @@
             // Fetch tracer study data and initialize charts
             function loadTracerData() {
                 console.log('Loading tracer data...');
-                
+
                 // Show loading state
-                $('#total-alumni-count').html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+                $('#total-alumni-count').html(
+                    '<span class="spinner-border spinner-border-sm" role="status"></span>');
                 $('#working-count').html('<span class="spinner-border spinner-border-sm" role="status"></span>');
                 $('#study-count').html('<span class="spinner-border spinner-border-sm" role="status"></span>');
                 $('#unemployed-count').html('<span class="spinner-border spinner-border-sm" role="status"></span>');
-                
+
                 $.ajax({
-                    url: '{{ route("api.stats.tracer") }}',
+                    url: '{{ route('api.stats.tracer') }}',
                     type: 'GET',
                     dataType: 'json',
                     success: function(response) {
                         console.log('Tracer data received:', response);
-                        
+
                         if (response.status === 'success') {
                             initTracerCharts(response.data);
                         } else {
@@ -393,13 +477,13 @@
                     }
                 });
             }
-            
+
             function showErrorState() {
                 $('#total-alumni-count').text('Error');
                 $('#working-count').text('Error');
                 $('#study-count').text('Error');
                 $('#unemployed-count').text('Error');
-                
+
                 // Show error message on chart areas
                 $('#tracer-status-chart').parent().append(
                     '<div class="alert alert-danger mt-3">' +
@@ -408,11 +492,11 @@
                     '</div>'
                 );
             }
-            
+
             // Initialize tracer study charts
             function initTracerCharts(data) {
                 console.log('Initializing charts with data:', data);
-                
+
                 // Update summary counts
                 $('#total-alumni-count').text(data.summary.total || 0);
                 $('#working-count').text(data.summary.working || 0);
@@ -427,7 +511,7 @@
                     window.statusChart = new Chart(statusCtx, {
                         type: 'pie',
                         data: {
-                            labels: ['Bekerja', 'Kuliah', 'Belum Bekerja'],
+                            labels: ['Bekerja', 'Kuliah', 'Belum Didata'],
                             datasets: [{
                                 data: [
                                     data.summary.working || 0,
@@ -454,7 +538,7 @@
                                 padding: {
                                     top: 10,
                                     right: 30,
-                                    bottom: 10, 
+                                    bottom: 10,
                                     left: 10
                                 }
                             },
@@ -474,8 +558,10 @@
                                         label: function(context) {
                                             const label = context.label || '';
                                             const value = context.raw || 0;
-                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                            const total = context.dataset.data.reduce((a, b) => a + b,
+                                                0);
+                                            const percentage = total > 0 ? Math.round((value / total) *
+                                                100) : 0;
                                             return `${label}: ${value} (${percentage}%)`;
                                         }
                                     }
@@ -497,8 +583,7 @@
                         type: 'line',
                         data: {
                             labels: data.trends.years || [],
-                            datasets: [
-                                {
+                            datasets: [{
                                     label: 'Bekerja',
                                     data: data.trends.working || [],
                                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -513,7 +598,7 @@
                                     tension: 0.4
                                 },
                                 {
-                                    label: 'Belum Bekerja',
+                                    label: 'Belum Didata',
                                     data: data.trends.unemployed || [],
                                     backgroundColor: 'rgba(255, 206, 86, 0.2)',
                                     borderColor: 'rgba(255, 206, 86, 1)',
@@ -663,7 +748,7 @@
 
                 // Get the latest data (could also cache this instead of fetching again)
                 $.ajax({
-                    url: '{{ route("api.stats.tracer") }}',
+                    url: '{{ route('api.stats.tracer') }}',
                     type: 'GET',
                     dataType: 'json',
                     success: function(response) {
@@ -679,34 +764,35 @@
                 // Show loading indicator
                 $('#weather-loading').show();
                 $('#temperature').text('--');
-                
+
                 // OpenWeatherMap API call with correct endpoint
                 $.ajax({
                     url: 'https://api.openweathermap.org/data/2.5/weather',
                     data: {
-                        lat: -6.3373, 
+                        lat: -6.3373,
                         lon: 108.3207,
                         units: 'metric',
                         appid: 'a4efb19d624defa1c2c0631d2cc3cf89'
                     },
                     success: function(data) {
                         console.log('Weather data:', data);
-                        
+
                         // Update temperature and location
                         $('#temperature').text(Math.round(data.main.temp));
                         $('#weather-location').text(data.name);
                         $('#weather-loading').hide();
-                        
+
                         // Handle the refresh button click
                         $('#refresh-weather').on('click', function() {
                             loadWeatherData();
                         });
-                        
+
                         // Update additional weather details
                         $('#weather-description').text(data.weather[0].description.toUpperCase());
-                        $('#weather-humidity').html(`<i class="mdi mdi-water"></i> ${data.main.humidity}%`);
+                        $('#weather-humidity').html(
+                            `<i class="mdi mdi-water"></i> ${data.main.humidity}%`);
                         $('#weather-updated').text(`Updated: ${new Date().toLocaleTimeString()}`);
-                        
+
                         // Update weather icon based on condition
                         const iconClass = getWeatherIconClass(data.weather[0].icon);
                         $('#weather-temp i').attr('class', iconClass + ' mr-2');
@@ -721,7 +807,7 @@
                     }
                 });
             }
-            
+
             // Helper function to map OpenWeatherMap icons to our icon classes
             function getWeatherIconClass(iconCode) {
                 const iconMap = {
@@ -730,7 +816,7 @@
                     '02d': 'icon-cloud-sun', // few clouds day
                     '02n': 'icon-cloud-moon', // few clouds night
                     '03d': 'icon-cloud', // scattered clouds
-                    '03n': 'icon-cloud', 
+                    '03n': 'icon-cloud',
                     '04d': 'icon-clouds', // broken clouds
                     '04n': 'icon-clouds',
                     '09d': 'icon-cloud-rain', // shower rain
@@ -744,24 +830,24 @@
                     '50d': 'icon-fog', // mist/fog
                     '50n': 'icon-fog'
                 };
-                
+
                 return iconMap[iconCode] || 'icon-sun'; // Default to sun icon
             }
-            
+
             // Make sure we load all data properly and in the right order
             $(function() {
                 // Load student statistics
                 loadStudentStats();
-                
+
                 // Load weather data immediately 
                 loadWeatherData();
-                
+
                 // Load tracer study data
                 loadTracerData();
-                
+
                 // Set up refresh intervals
                 setInterval(loadWeatherData, 1800000); // 30 minutes
-                setInterval(loadTracerData, 300000);   // 5 minutes
+                setInterval(loadTracerData, 300000); // 5 minutes
             });
         });
     </script>
@@ -773,42 +859,52 @@
             display: flex;
             flex-wrap: wrap;
         }
-        
+
         .text-highlight {
             animation: highlight 1s ease;
         }
-        
+
         @keyframes highlight {
-            0% { color: inherit; }
-            50% { color: #4d83ff; }
-            100% { color: inherit; }
+            0% {
+                color: inherit;
+            }
+
+            50% {
+                color: #4d83ff;
+            }
+
+            100% {
+                color: inherit;
+            }
         }
-        
+
         #weather-description {
             text-transform: capitalize;
         }
-        
+
         .weather-info {
             padding: 10px;
             border-radius: 8px;
-            background-color: rgba(255, 255, 255, 0.4); /* More transparent */
-            backdrop-filter: blur(5px); /* Add blur effect */
+            background-color: rgba(255, 255, 255, 0.4);
+            /* More transparent */
+            backdrop-filter: blur(5px);
+            /* Add blur effect */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border: none;
             position: relative;
             z-index: 2;
         }
-        
+
         /* Make sure the weather-info container blends better with the background image */
         .card-people {
             position: relative;
         }
-        
+
         .card-people img {
             position: relative;
             z-index: 1;
         }
-        
+
         /* Remove any button styling that might add white background */
         #refresh-weather {
             background: transparent;
@@ -817,74 +913,79 @@
             font-size: 0.7rem;
             padding: 3px 8px;
         }
-        
+
         #refresh-weather:hover {
             background-color: rgba(75, 192, 192, 0.2);
         }
-        
+
         /* Make badges more translucent */
         .weather-details .badge {
             background-color: rgba(0, 123, 255, 0.7);
             backdrop-filter: blur(3px);
         }
-        
+
         /* Ensure text is readable */
-        .weather-info h2, .weather-info h4, .weather-info h6 {
+        .weather-info h2,
+        .weather-info h4,
+        .weather-info h6 {
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
         }
-        
+
         /* Fix dashboard width and overflow issues */
         .chart-container {
             width: 100%;
             position: relative;
             margin: 0;
             padding: 0;
-            min-height: 300px; /* Set minimum height */
+            min-height: 300px;
+            /* Set minimum height */
         }
-        
+
         /* Ensure canvas fills container */
         canvas {
             max-width: 100%;
-            height: 100% !important; /* Important to ensure full height */
+            height: 100% !important;
+            /* Important to ensure full height */
         }
-        
+
         /* Fix card overflow issues */
         .card {
             overflow: hidden;
         }
-        
+
         .card-body {
             padding-top: 1rem;
             padding-bottom: 1rem;
         }
-        
+
         /* Reduce margin between cards */
         .grid-margin {
             margin-bottom: 1rem;
         }
-        
+
         /* Reduce text margins */
         .card-title {
             margin-bottom: 0.5rem;
         }
-        
+
         p.font-weight-500 {
             margin-bottom: 0.5rem;
         }
-        
+
         /* Make metrics more compact */
         .d-flex.flex-wrap {
             margin-bottom: 0.5rem;
         }
-        
+
         .d-flex.flex-wrap .mr-5 {
             margin-right: 1rem !important;
         }
-        
+
         /* Adjust responsive styling */
         @media (max-width: 768px) {
             .chart-container {
-                height: 350px !important; /* Taller on mobile */
+                height: 350px !important;
+                /* Taller on mobile */
             }
         }
     </style>

@@ -19,6 +19,9 @@ class Students extends Model
         'is_profile_complete',
         'jurusan_id',
         'has_completed_questionnaire',
+        'status_lulus',
+        'tanggal_lulus',
+        'status_setelah_lulus',
         // Add other fields as needed
     ];
     public function user()
@@ -41,7 +44,7 @@ class Students extends Model
     {
         return $this->hasMany(Kuisioner::class);
     }
-    
+
 
 
     /**

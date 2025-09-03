@@ -84,6 +84,25 @@ class OperatorControllerBE extends Controller
         ]);
     }
 
+    public function getProfile()
+    {
+        try {
+            $user = Auth::user();
+            $operator = Operators::where('user_id', $user->id)->first();
+
+            return response()->json([
+                'success' => true,
+                'data' => $operator,
+                'user' => $user
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data profil: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function getSiswaData()
     {
         $data = Students::select('id', 'nama_lengkap', 'nisn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'jurusan_id', 'alamat', 'created_at', 'tanggal_lulus')->get();
@@ -317,6 +336,48 @@ class OperatorControllerBE extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Gagal menghapus data siswa: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function changePassword(Request $request)
+    {
+        try {
+            // Validate input
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required',
+                'new_password' => 'required|min:6|confirmed',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $user = Auth::user();
+
+            // Check if current password is correct
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Password saat ini tidak benar'
+                ], 422);
+            }
+
+            // Update password
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password berhasil diubah'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengubah password: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

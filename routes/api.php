@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BE\AuthController;
 use App\Http\Controllers\BE\BlogControllerBE;
+use App\Http\Controllers\BE\GuruController;
 use App\Http\Controllers\BE\JurusanController;
 use App\Http\Controllers\BE\SiswaControllerBE;
 use App\Http\Controllers\BE\SettingsController;
@@ -13,6 +14,8 @@ use App\Http\Controllers\BE\OperatorControllerBE;
 use App\Http\Controllers\BE\SuperAdminController;
 use App\Http\Controllers\BE\QuestionnaireControllerOpe;
 use App\Http\Controllers\BE\JobRecommendataionController;
+use App\Http\Controllers\Api\StatsController;
+use App\Http\Controllers\BlogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::group(['middleware' => ['web', 'auth']], function () {
+    // Student Profile Routes
     Route::get('/student/profile/check', [SiswaControllerBE::class, 'checkProfile'])
         ->name('api.student.profile.check');
     Route::get('/student/profile', [SiswaControllerBE::class, 'getProfile'])
@@ -47,25 +51,39 @@ Route::group(['middleware' => ['web', 'auth']], function () {
     Route::post('/student/change-password', [AuthController::class, 'changePassword'])
         ->name('api.student.change-password');
 
+    // Teacher/Guru Profile Routes
+    Route::post('/guru/update/profile', [GuruController::class, 'updateProfile'])
+        ->name('api.guru.profile.update');
+    Route::post('/guru/change-password', [GuruController::class, 'changePassword'])
+        ->name('api.guru.change-password');
+
     Route::group(['prefix' => 'superadmin'], function () {
         Route::get('/operator', [SuperAdminController::class, 'getOperators']);
         Route::get('/operator/{id}', [SuperAdminController::class, 'getOperator']);
         Route::post('/operator', [SuperAdminController::class, 'storeOperator']);
         Route::put('/operator/{id}', [SuperAdminController::class, 'updateOperator']);
         Route::delete('/operator/{id}', [SuperAdminController::class, 'deleteOperator']);
+        Route::get('/guru/{id}', [SuperAdminController::class, 'getGuru']);
+        Route::put('/guru/{id}', [SuperAdminController::class, 'updateGuru']);
+        Route::delete('/guru/{id}', [SuperAdminController::class, 'deleteGuru']);
+        Route::get('/kepalasekolah/{id}', [SuperAdminController::class, 'getKepalaSekolah']);
+        Route::put('/kepalasekolah/{id}', [SuperAdminController::class, 'updateKepalaSekolah']);
+        Route::delete('/kepalasekolah/{id}', [SuperAdminController::class, 'deleteKepalaSekolah']);
     });
 
-     Route::group(['prefix' => 'blog'], function () {
+    Route::group(['prefix' => 'blog'], function () {
         Route::get('/', [BlogControllerBE::class, 'get']);
         Route::get('/{id}', [BlogControllerBE::class, 'getById']);
         Route::post('/', [BlogControllerBE::class, 'store']);
         Route::put('/{id}', [BlogControllerBE::class, 'update']);
-        Route::delete('/{id}', [BlogControllerBE::class, 'destroy']);   
+        Route::delete('/{id}', [BlogControllerBE::class, 'destroy']);
     });
 
 
     Route::group(['prefix' => 'profile-operator'], function () {
+        Route::get('/', [OperatorControllerBE::class, 'getProfile']);
         Route::post('/', [OperatorControllerBE::class, 'updateProfile']);
+        Route::post('/change-password', [OperatorControllerBE::class, 'changePassword']);
         // Route Siswa
         Route::get('/get/siswa', [OperatorControllerBE::class, 'getSiswaData']);
         Route::get('/get/siswa/{id}', [OperatorControllerBE::class, 'getSiswaById']);
@@ -121,7 +139,15 @@ Route::group(['middleware' => ['web', 'auth']], function () {
     // Statistics Routes
     Route::get('/stats/students', [SiswaControllerBE::class, 'getCount'])
         ->name('api.stats.students');
-    
+    Route::get('/stats/tracer', [StatsController::class, 'getTracerStats']);
+    Route::get('/stats/dashboard', [StatsController::class, 'getDashboardStats']);
+    Route::get('/stats/alumni-guru', [StatsController::class, 'getAlumniGuruStats']);
+    Route::get('/stats/alumni-operator', [StatsController::class, 'getAlumniOperatorStats']);
+    Route::get('/stats/alumni-kepalasekolah', [StatsController::class, 'getAlumniKepalaSekolahStats']);
+
+    // Blog Routes
+    Route::get('/blogs/latest', [BlogController::class, 'getLatestBlogs']);
+
     // Blog categories
     Route::get('/blog-categories', [BlogControllerBE::class, 'getCategories']);
 });

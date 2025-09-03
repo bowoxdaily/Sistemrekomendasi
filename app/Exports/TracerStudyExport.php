@@ -24,26 +24,31 @@ class TracerStudyExport implements FromCollection, WithHeadings, WithMapping, Wi
     protected $reportType;
     protected $students;
     protected $reportData;
-    
+
     public function __construct($reportType, $students = null, $reportData = null)
     {
         $this->reportType = $reportType;
         $this->students = $students;
         $this->reportData = $reportData;
     }
-    
+
     /**
      * @return \Illuminate\Support\Collection
      */
     public function collection()
     {
         if ($this->reportType === 'raw') {
-            return Students::with(['dataKerja', 'dataKuliah'])->get();
+            return Students::with(['dataKerja', 'dataKuliah', 'jurusan'])->get();
         }
-        
-        return $this->students ?: collect(); // Fixed typo: student → students
+
+        // Pastikan $this->students adalah collection
+        if ($this->students) {
+            return collect($this->students);
+        }
+
+        return collect(); // Return empty collection jika tidak ada data
     }
-    
+
     /**
      * @return array
      */
@@ -59,7 +64,7 @@ class TracerStudyExport implements FromCollection, WithHeadings, WithMapping, Wi
             'Jenis Kelamin',
             'Tanggal Lahir',
         ];
-        
+
         switch ($this->reportType) {
             case 'employment':
                 return array_merge($baseHeadings, [
@@ -68,21 +73,28 @@ class TracerStudyExport implements FromCollection, WithHeadings, WithMapping, Wi
                     'Jenis Pekerjaan',
                     'Tanggal Mulai',
                     'Gaji',
-                    'Sesuai Jurusan',
+                    'Kesesuaian Jurusan',
                     'Kompetensi Dibutuhkan',
                 ]);
-                
+
             case 'education':
                 return array_merge($baseHeadings, [
                     'Nama Perguruan Tinggi',
-                    'Jurusan Kuliah',
+                    'Program Studi',
                     'Jenjang',
                     'Tahun Masuk',
                     'Status Beasiswa',
                     'Nama Beasiswa',
                     'Prestasi Akademik',
                 ]);
-                
+
+            case 'unemployment':
+                return array_merge($baseHeadings, [
+                    'Alamat',
+                    'Durasi Lulus',
+                    'Kontak',
+                ]);
+
             case 'raw':
                 return array_merge($baseHeadings, [
                     // Employment data
@@ -93,7 +105,7 @@ class TracerStudyExport implements FromCollection, WithHeadings, WithMapping, Wi
                     'Gaji',
                     'Sesuai Jurusan',
                     'Kompetensi Dibutuhkan',
-                    
+
                     // Education data
                     'Nama Perguruan Tinggi',
                     'Jurusan Kuliah',
@@ -103,99 +115,114 @@ class TracerStudyExport implements FromCollection, WithHeadings, WithMapping, Wi
                     'Nama Beasiswa',
                     'Prestasi Akademik',
                 ]);
-                
-            case 'unemployment':
+
             case 'general':
             default:
-                return $baseHeadings;
+                return array_merge($baseHeadings, [
+                    'Alamat',
+                    'Kontak',
+                ]);
         }
     }
-    
+
     /**
      * @param mixed $row
      * @return array
      */
     public function map($row): array
     {
-        // Get jurusan name from relationship instead of just ID
-        $jurusan = '';
-        if (isset($row->jurusan_id)) {
-            $jurusanModel = \App\Models\Jurusan::find($row->jurusan_id);
-            $jurusan = $jurusanModel ? $jurusanModel->nama : '-';
-        } else {
-            $jurusan = $row->jurusan ?? '-';
-        }
-        
+        // Base data yang selalu ada
         $baseData = [
             $row->id,
             $row->nama_lengkap,
-            $row->nisn ?? $row->nis, // Use nisn if available, otherwise use nis
-            // Use the jurusan name retrieved above 
-            $jurusan, // Now using the properly retrieved jurusan name
-            // Make sure we only get the year from tanggal_lulus
+            $row->nisn ?? $row->nis ?? '-',
+            $row->jurusan ? $row->jurusan->nama : '-', // Menggunakan relasi jurusan
             $row->tanggal_lulus ? date('Y', strtotime($row->tanggal_lulus)) : '-',
-            // Convert status to a more readable format 
             ucfirst(str_replace('_', ' ', $row->status_setelah_lulus)),
-            $row->jenis_kelamin,
+            ucfirst($row->jenis_kelamin ?? '-'),
             $row->tanggal_lahir ? date('d-m-Y', strtotime($row->tanggal_lahir)) : '-',
         ];
-        
+
         switch ($this->reportType) {
             case 'employment':
                 $employmentData = $row->dataKerja ?? null;
                 return array_merge($baseData, [
-                    isset($employmentData) ? ($employmentData->nama_perusahaan ?? '-') : '-',
-                    isset($employmentData) ? ($employmentData->posisi ?? '-') : '-',
-                    isset($employmentData) ? ($employmentData->jenis_pekerjaan ?? '-') : '-',
-                    isset($employmentData) && isset($employmentData->tanggal_mulai) ? date('d-m-Y', strtotime($employmentData->tanggal_mulai)) : '-',
-                    isset($employmentData) && isset($employmentData->gaji) ? 'Rp ' . number_format($employmentData->gaji, 0, ',', '.') : '-',
-                    isset($employmentData) ? ($employmentData->sesuai_jurusan ?? '-') : '-',
-                    isset($employmentData) ? ($employmentData->kompetensi_dibutuhkan ?? '-') : '-',
+                    $employmentData->nama_perusahaan ?? '-',
+                    $employmentData->posisi ?? '-',
+                    $employmentData->jenis_pekerjaan ?? '-',
+                    isset($employmentData->tanggal_mulai) ? date('d-m-Y', strtotime($employmentData->tanggal_mulai)) : '-',
+                    isset($employmentData->gaji) ? 'Rp ' . number_format($employmentData->gaji, 0, ',', '.') : '-',
+                    ($employmentData->sesuai_jurusan ?? '-') == 'ya' ? 'Sesuai Jurusan' : 'Tidak Sesuai',
+                    $employmentData->kompetensi_dibutuhkan ?? '-',
                 ]);
-                
+
             case 'education':
                 $educationData = $row->dataKuliah ?? null;
                 return array_merge($baseData, [
-                    isset($educationData) ? ($educationData->nama_pt ?? '-') : '-',
-                    isset($educationData) ? ($educationData->jurusan ?? '-') : '-',
-                    isset($educationData) ? ($educationData->jenjang ?? '-') : '-',
-                    isset($educationData) ? ($educationData->tahun_masuk ?? '-') : '-',
-                    isset($educationData) ? ($educationData->status_beasiswa ?? '-') : '-',
-                    isset($educationData) ? ($educationData->nama_beasiswa ?? '-') : '-',
-                    isset($educationData) ? ($educationData->prestasi_akademik ?? '-') : '-',
+                    $educationData->nama_pt ?? '-',
+                    $educationData->jurusan ?? '-',
+                    $educationData->jenjang ?? '-',
+                    $educationData->tahun_masuk ?? '-',
+                    ($educationData->status_beasiswa ?? '-') == 'ya' ? 'Beasiswa' : 'Non-Beasiswa',
+                    ($educationData->status_beasiswa ?? '-') == 'ya' ? ($educationData->nama_beasiswa ?? '-') : '-',
+                    $educationData->prestasi_akademik ?? '-',
                 ]);
-                
+
+            case 'unemployment':
+                // Untuk unemployment, tambahkan kolom alamat dan durasi lulus
+                $duration = '-';
+                if ($row->tanggal_lulus) {
+                    $graduationDate = \Carbon\Carbon::parse($row->tanggal_lulus);
+                    $now = \Carbon\Carbon::now();
+                    $durationMonths = $graduationDate->diffInMonths($now);
+                    if ($durationMonths < 12) {
+                        $duration = $durationMonths . ' bulan';
+                    } else {
+                        $years = floor($durationMonths / 12);
+                        $months = $durationMonths % 12;
+                        $duration = $years . ' tahun ' . ($months > 0 ? $months . ' bulan' : '');
+                    }
+                }
+                return array_merge($baseData, [
+                    $row->alamat ?? '-',
+                    $duration,
+                    $row->no_hp ?? '-',
+                ]);
+
             case 'raw':
+                // Data lengkap (gabungan semua)
                 $employmentData = $row->dataKerja ?? null;
                 $educationData = $row->dataKuliah ?? null;
-                
-                return array_merge($baseData, [
-                    // Employment data
-                    isset($employmentData) ? ($employmentData->nama_perusahaan ?? '-') : '-',
-                    isset($employmentData) ? ($employmentData->posisi ?? '-') : '-',
-                    isset($employmentData) ? ($employmentData->jenis_pekerjaan ?? '-') : '-',
-                    isset($employmentData) && isset($employmentData->tanggal_mulai) ? date('d-m-Y', strtotime($employmentData->tanggal_mulai)) : '-',
-                    isset($employmentData) && isset($employmentData->gaji) ? 'Rp ' . number_format($employmentData->gaji, 0, ',', '.') : '-',
-                    isset($employmentData) ? ($employmentData->sesuai_jurusan ?? '-') : '-',
-                    isset($employmentData) ? ($employmentData->kompetensi_dibutuhkan ?? '-') : '-',
-                    
-                    // Education data
-                    isset($educationData) ? ($educationData->nama_pt ?? '-') : '-',
-                    isset($educationData) ? ($educationData->jurusan ?? '-') : '-',
-                    isset($educationData) ? ($educationData->jenjang ?? '-') : '-',
-                    isset($educationData) ? ($educationData->tahun_masuk ?? '-') : '-',
-                    isset($educationData) ? ($educationData->status_beasiswa ?? '-') : '-',
-                    isset($educationData) ? ($educationData->nama_beasiswa ?? '-') : '-',
-                    isset($educationData) ? ($educationData->prestasi_akademik ?? '-') : '-',
-                ]);
-                
-            case 'unemployment':
+                $employmentArr = [
+                    $employmentData->nama_perusahaan ?? '-',
+                    $employmentData->posisi ?? '-',
+                    $employmentData->jenis_pekerjaan ?? '-',
+                    isset($employmentData->tanggal_mulai) ? date('d-m-Y', strtotime($employmentData->tanggal_mulai)) : '-',
+                    isset($employmentData->gaji) ? 'Rp ' . number_format($employmentData->gaji, 0, ',', '.') : '-',
+                    $employmentData->sesuai_jurusan ?? '-',
+                    $employmentData->kompetensi_dibutuhkan ?? '-',
+                ];
+                $educationArr = [
+                    $educationData->nama_pt ?? '-',
+                    $educationData->jurusan ?? '-',
+                    $educationData->jenjang ?? '-',
+                    $educationData->tahun_masuk ?? '-',
+                    $educationData->status_beasiswa ?? '-',
+                    $educationData->nama_beasiswa ?? '-',
+                    $educationData->prestasi_akademik ?? '-',
+                ];
+                return array_merge($baseData, $employmentArr, $educationArr);
+
             case 'general':
             default:
-                return $baseData;
+                // Data umum dengan tambahan alamat dan kontak
+                return array_merge($baseData, [
+                    $row->alamat ?? '-',
+                    $row->no_hp ?? '-',
+                ]);
         }
     }
-    
+
     /**
      * @return string
      */
@@ -203,268 +230,360 @@ class TracerStudyExport implements FromCollection, WithHeadings, WithMapping, Wi
     {
         switch ($this->reportType) {
             case 'employment':
-                return 'Data Pekerjaan Alumni';
+                return 'Laporan Data Pekerjaan Alumni';
             case 'education':
-                return 'Data Pendidikan Alumni';
+                return 'Laporan Data Pendidikan Alumni';
             case 'unemployment':
-                return 'Data Alumni Belum Bekerja';
+                return 'Laporan Alumni Belum Bekerja';
             case 'raw':
                 return 'Data Lengkap Alumni';
             case 'general':
             default:
-                return 'Laporan Tracer Study';
+                return 'Laporan Umum Alumni';
         }
     }
-    
+
     /**
      * @return array
      */
     public function columnFormats(): array
     {
         return [
-            // Removed 'E' format since it's now just a year, not a full date
-            'H' => NumberFormat::FORMAT_DATE_DDMMYYYY, // Date format for birth date
-            'L' => '#,##0 "Rp";[Red]-#,##0 "Rp"', // Custom format for Indonesian Rupiah
+            'H' => NumberFormat::FORMAT_DATE_DDMMYYYY, // Tanggal lahir
+            'M' => NumberFormat::FORMAT_CURRENCY_USD_SIMPLE, // Gaji (untuk employment)
         ];
     }
-    
+
     /**
      * @return array
      */
     public function columnWidths(): array
     {
-        // Modified column widths for single column layout
-        return [
-            'A' => 8,      // ID column - smaller
-            'B' => 35,     // Name column - wider
-            'C' => 15,      // NIS/NISN column
-            'D' => 25,      // Department/Major column
-            'E' => 50,     // Information column - much wider for combined data
-            'F' => 15,      // Status - if needed
-            'G' => 15,      // Additional info 1 - if needed
-            'H' => 15,      // Additional info 2 - if needed
+        // Base column widths
+        $baseWidths = [
+            'A' => 8,      // ID
+            'B' => 25,     // Nama
+            'C' => 15,     // NISN
+            'D' => 25,     // Jurusan
+            'E' => 12,     // Tahun Lulus
+            'F' => 18,     // Status
+            'G' => 15,     // Jenis Kelamin
+            'H' => 15,     // Tanggal Lahir
         ];
+
+        switch ($this->reportType) {
+            case 'employment':
+                return array_merge($baseWidths, [
+                    'I' => 25,     // Perusahaan
+                    'J' => 20,     // Posisi
+                    'K' => 18,     // Jenis Pekerjaan
+                    'L' => 15,     // Tanggal Mulai
+                    'M' => 18,     // Gaji
+                    'N' => 18,     // Kesesuaian
+                    'O' => 30,     // Kompetensi
+                ]);
+
+            case 'education':
+                return array_merge($baseWidths, [
+                    'I' => 30,     // Perguruan Tinggi
+                    'J' => 25,     // Program Studi
+                    'K' => 12,     // Jenjang
+                    'L' => 12,     // Tahun Masuk
+                    'M' => 15,     // Status Beasiswa
+                    'N' => 20,     // Nama Beasiswa
+                    'O' => 20,     // Prestasi
+                ]);
+
+            case 'unemployment':
+                return array_merge($baseWidths, [
+                    'I' => 30,     // Alamat
+                    'J' => 15,     // Durasi Lulus
+                    'K' => 15,     // Kontak
+                ]);
+
+            case 'general':
+                return array_merge($baseWidths, [
+                    'I' => 30,     // Alamat
+                    'J' => 15,     // Kontak
+                ]);
+
+            case 'raw':
+            default:
+                return array_merge($baseWidths, [
+                    'I' => 25,     // Perusahaan
+                    'J' => 20,     // Posisi
+                    'K' => 18,     // Jenis Pekerjaan
+                    'L' => 15,     // Tanggal Mulai
+                    'M' => 18,     // Gaji
+                    'N' => 18,     // Sesuai Jurusan
+                    'O' => 30,     // Kompetensi
+                    'P' => 30,     // PT
+                    'Q' => 25,     // Jurusan Kuliah
+                    'R' => 12,     // Jenjang
+                    'S' => 12,     // Tahun Masuk
+                    'T' => 15,     // Status Beasiswa
+                    'U' => 20,     // Nama Beasiswa
+                    'V' => 20,     // Prestasi
+                ]);
+        }
     }
-    
+
     /**
      * @return array
      */
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function(AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                
-                // Get the highest row and column
                 $highestRow = $sheet->getHighestRow();
                 $highestColumn = $sheet->getHighestColumn();
-                
-                // First apply the header styling to the first row (before title insertion)
-                $headerRange = 'A1:' . $highestColumn . '1';
-                $sheet->getStyle($headerRange)->applyFromArray([
-                    'font' => [
-                        'bold' => true,
-                        'color' => ['argb' => 'FFFFFFFF'],
-                    ],
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['argb' => 'FF3F51B5'], // Deep blue color
-                    ],
-                    'alignment' => [
-                        'horizontal' => Alignment::HORIZONTAL_CENTER,
-                        'vertical' => Alignment::VERTICAL_CENTER,
-                    ],
-                    'borders' => [
-                        'bottom' => [
-                            'borderStyle' => Border::BORDER_MEDIUM,
-                            'color' => ['argb' => 'FF000000'],
-                        ],
-                    ],
-                ]);
-                
-                // Add title rows before the header
-                $sheet->insertNewRowBefore(1, 3);
-                
-                // Now the original header row is at row 4
-                // Update the header styling
-                $headerRange = 'A4:' . $highestColumn . '4';
-                $sheet->getStyle($headerRange)->applyFromArray([
-                    'font' => [
-                        'bold' => true,
-                        'color' => ['argb' => 'FFFFFFFF'],
-                    ],
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['argb' => 'FF3F51B5'], // Deep blue color
-                    ],
-                    'alignment' => [
-                        'horizontal' => Alignment::HORIZONTAL_CENTER,
-                        'vertical' => Alignment::VERTICAL_CENTER,
-                    ],
-                    'borders' => [
-                        'bottom' => [
-                            'borderStyle' => Border::BORDER_MEDIUM,
-                            'color' => ['argb' => 'FF000000'],
-                        ],
-                    ],
-                ]);
-                
-                // Determine report title based on report type
-                $reportTitle = match($this->reportType) {
-                    'employment' => 'LAPORAN DATA PEKERJAAN ALUMNI',
-                    'education' => 'LAPORAN DATA PENDIDIKAN ALUMNI', 
-                    'unemployment' => 'LAPORAN DATA ALUMNI BELUM BEKERJA',
-                    'raw' => 'DATA LENGKAP ALUMNI',
-                    default => 'LAPORAN TRACER STUDY',
-                };
-                
-                // Set up report header in the newly inserted rows
-                $sheet->setCellValue('A1', $reportTitle);
-                $sheet->setCellValue('A2', 'SISTEM TRACER STUDY & REKOMENDASI KARIR');
-                $sheet->setCellValue('A3', 'Tanggal: ' . date('d-m-Y H:i'));
-                
-                // Style the title rows
-                $sheet->mergeCells('A1:' . $highestColumn . '1');
-                $sheet->mergeCells('A2:' . $highestColumn . '2');
-                $sheet->mergeCells('A3:' . $highestColumn . '3');
-                
-                $sheet->getStyle('A1:' . $highestColumn . '3')->applyFromArray([
-                    'font' => [
-                        'bold' => true,
-                    ],
-                    'alignment' => [
-                        'horizontal' => Alignment::HORIZONTAL_CENTER,
-                        'vertical' => Alignment::VERTICAL_CENTER,
-                    ],
-                ]);
-                
-                // Make title row 1 stand out with bigger font and background
-                $sheet->getStyle('A1')->getFont()->setSize(16);
-                $sheet->getStyle('A2')->getFont()->setSize(14);
-                
-                // Background color for the title
-                $sheet->getStyle('A1:' . $highestColumn . '1')->applyFromArray([
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['argb' => 'FFDBE1FF'], // Light blue background
-                    ],
-                    'font' => [
-                        'color' => ['argb' => 'FF3F51B5'], // Dark blue text
-                    ],
-                ]);
-                
-                // Apply auto filter to the header row
-                $sheet->setAutoFilter($headerRange);
-                
-                // Freeze the header row for easier navigation
-                $sheet->freezePane('A5');
-                
-                // Apply zebra striping to data rows
-                for ($row = 5; $row <= $highestRow; $row++) {
-                    if ($row % 2 == 0) {
-                        $sheet->getStyle('A' . $row . ':' . $highestColumn . $row)->applyFromArray([
-                            'fill' => [
-                                'fillType' => Fill::FILL_SOLID,
-                                'startColor' => ['argb' => 'FFF5F7FF'], // Light blue for even rows
-                            ],
-                        ]);
+
+                // Hitung total alumni langsung dari data students
+                $totalAlumni = 0;
+                if ($this->students) {
+                    if (is_array($this->students)) {
+                        $totalAlumni = count($this->students);
+                    } elseif (is_object($this->students) && method_exists($this->students, 'count')) {
+                        $totalAlumni = $this->students->count();
+                    } elseif (is_object($this->students) && method_exists($this->students, 'toArray')) {
+                        $totalAlumni = count($this->students->toArray());
                     }
                 }
-                
-                // Apply borders to all cells
-                $tableRange = 'A1:' . $highestColumn . $highestRow;
-                $sheet->getStyle($tableRange)->applyFromArray([
+
+                // Logo/Header area (first add a title row)
+                $sheet->insertNewRowBefore(1, 3);
+
+                // Main title
+                $sheet->setCellValue('A1', 'LAPORAN TRACER STUDY ALUMNI');
+                $sheet->mergeCells('A1:' . $highestColumn . '1');
+                $sheet->getStyle('A1')->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'size' => 16,
+                        'color' => ['argb' => 'FFFFFFFF'],
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FF2E7D32'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                    ],
+                ]);
+                $sheet->getRowDimension('1')->setRowHeight(30);
+
+                // Subtitle
+                $subtitle = '';
+                switch ($this->reportType) {
+                    case 'employment':
+                        $subtitle = 'LAPORAN DATA PEKERJAAN ALUMNI';
+                        break;
+                    case 'education':
+                        $subtitle = 'LAPORAN DATA PENDIDIKAN ALUMNI';
+                        break;
+                    case 'unemployment':
+                        $subtitle = 'LAPORAN ALUMNI BELUM BEKERJA';
+                        break;
+                    case 'raw':
+                        $subtitle = 'DATA LENGKAP ALUMNI';
+                        break;
+                    default:
+                        $subtitle = 'LAPORAN UMUM ALUMNI';
+                        break;
+                }
+
+                $sheet->setCellValue('A2', $subtitle);
+                $sheet->mergeCells('A2:' . $highestColumn . '2');
+                $sheet->getStyle('A2')->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'size' => 14,
+                        'color' => ['argb' => 'FF2E7D32'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                    ],
+                ]);
+
+                // Info tanggal
+                $sheet->setCellValue('A3', 'Digenerate pada: ' . now()->format('d F Y, H:i:s WIB'));
+                $sheet->mergeCells('A3:' . $highestColumn . '3');
+                $sheet->getStyle('A3')->applyFromArray([
+                    'font' => [
+                        'size' => 10,
+                        'italic' => true,
+                        'color' => ['argb' => 'FF666666'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    ],
+                ]);
+
+                // Adjust row heights
+                $sheet->getRowDimension('2')->setRowHeight(25);
+                $sheet->getRowDimension('3')->setRowHeight(20);
+
+                // Header data styling (now row 4)
+                $headerRow = 4;
+                $sheet->getStyle('A' . $headerRow . ':' . $highestColumn . $headerRow)->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'size' => 11,
+                        'color' => ['argb' => 'FFFFFFFF'],
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FF3F51B5'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                        'wrapText' => true,
+                    ],
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['argb' => 'FFD1D1D1'],
+                            'color' => ['argb' => 'FFFFFFFF'],
                         ],
                     ],
                 ]);
-                
-                // Enable text wrapping for data cells
-                $dataRange = 'A5:' . $highestColumn . $highestRow;
-                $sheet->getStyle($dataRange)->applyFromArray([
-                    'alignment' => [
-                        'wrapText' => true,
-                        'vertical' => Alignment::VERTICAL_TOP,
-                    ],
-                ]);
-                
-                // Set column widths for optimal display
-                $sheet->getColumnDimension('A')->setWidth(10); // No column
-                $sheet->getColumnDimension('B')->setWidth(30); // Name
-                $sheet->getColumnDimension('C')->setWidth(15); // NISN
-                $sheet->getColumnDimension('D')->setWidth(25); // Jurusan
-                $sheet->getColumnDimension('E')->setWidth(15); // Year
-                $sheet->getColumnDimension('F')->setWidth(20); // Status
-                
-                // Set row heights
-                $sheet->getRowDimension(1)->setRowHeight(30);
-                $sheet->getRowDimension(2)->setRowHeight(25);
-                $sheet->getRowDimension(3)->setRowHeight(25);
-                $sheet->getRowDimension(4)->setRowHeight(30); // Header row
-                
-                // Auto-height for data rows
-                for ($row = 5; $row <= $highestRow; $row++) {
-                    $sheet->getRowDimension($row)->setRowHeight(-1);
-                }
-                
-                // Make sure we use the correct row counting starting from index 1
-                // Get the actual data row count (excluding header)
-                $dataStartRow = 5; // First row of actual data (after headers and titles)
-                $actualDataCount = ($highestRow - $dataStartRow + 1); // Count from index 1
+                $sheet->getRowDimension($headerRow)->setRowHeight(25);
 
-                // Add summary at the very bottom with fixed calculation
-                if ($actualDataCount > 0) {
-                    // Position summary two rows below the last data row
-                    $summaryRow = $highestRow + 2;
-                    
-                    // Create a bold, highlighted summary row
-                    $sheet->setCellValue('A' . $summaryRow, 'TOTAL DATA:');
-                    $sheet->setCellValue('B' . $summaryRow, $actualDataCount);
-                    $sheet->setCellValue('C' . $summaryRow, 'alumni');
-                    
-                    // Style the summary row to stand out clearly at the bottom
-                    $sheet->getStyle('A' . $summaryRow . ':C' . $summaryRow)->applyFromArray([
+                // Data styling
+                $dataStartRow = $headerRow + 1;
+                if ($highestRow > $headerRow) {
+                    // Zebra striping
+                    for ($row = $dataStartRow; $row <= $highestRow + 3; $row++) {
+                        $fillColor = ($row % 2 == 0) ? 'FFF8F9FA' : 'FFFFFFFF';
+                        $sheet->getStyle('A' . $row . ':' . $highestColumn . $row)->applyFromArray([
+                            'fill' => [
+                                'fillType' => Fill::FILL_SOLID,
+                                'startColor' => ['argb' => $fillColor],
+                            ],
+                            'borders' => [
+                                'allBorders' => [
+                                    'borderStyle' => Border::BORDER_THIN,
+                                    'color' => ['argb' => 'FFE0E0E0'],
+                                ],
+                            ],
+                            'alignment' => [
+                                'vertical' => Alignment::VERTICAL_CENTER,
+                                'wrapText' => true,
+                            ],
+                        ]);
+                        $sheet->getRowDimension($row)->setRowHeight(20);
+                    }
+
+                    // Nama kolom styling (make names bold)
+                    $sheet->getStyle('B' . $dataStartRow . ':B' . ($highestRow + 3))->applyFromArray([
                         'font' => [
                             'bold' => true,
-                            'size' => 12,
-                        ],
-                        'fill' => [
-                            'fillType' => Fill::FILL_SOLID,
-                            'startColor' => ['argb' => 'FFE8F0FF'],
-                        ],
-                        'borders' => [
-                            'outline' => [
-                                'borderStyle' => Border::BORDER_THIN,
-                                'color' => ['argb' => 'FF3F51B5'],
-                            ],
-                        ],
-                        'alignment' => [
-                            'horizontal' => Alignment::HORIZONTAL_LEFT,
-                            'vertical' => Alignment::VERTICAL_CENTER,
+                            'color' => ['argb' => 'FF2C3E50'],
                         ],
                     ]);
-                    
-                    // Set row height for summary and merge cells for a cleaner look
-                    $sheet->getRowDimension($summaryRow)->setRowHeight(25);
-                    $sheet->mergeCells('B' . $summaryRow . ':C' . $summaryRow);
                 }
+
+                // Summary section
+                $summaryStartRow = $highestRow + 6;
+
+                // Summary header
+                $sheet->setCellValue('A' . $summaryStartRow, 'RINGKASAN LAPORAN');
+                $sheet->mergeCells('A' . $summaryStartRow . ':E' . $summaryStartRow);
+                $sheet->getStyle('A' . $summaryStartRow . ':E' . $summaryStartRow)->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'size' => 14,
+                        'color' => ['argb' => 'FFFFFFFF'],
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FF2E7D32'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_MEDIUM,
+                            'color' => ['argb' => 'FF2E7D32'],
+                        ],
+                    ],
+                ]);
+                $sheet->getRowDimension($summaryStartRow)->setRowHeight(30);
+
+                // Summary content
+                $summaryDataRow = $summaryStartRow + 1;
+                $sheet->setCellValue('A' . $summaryDataRow, 'Total Data Alumni:');
+                $sheet->setCellValue('B' . $summaryDataRow, $totalAlumni);
+                $sheet->setCellValue('C' . $summaryDataRow, 'orang');
+
+                $sheet->setCellValue('A' . ($summaryDataRow + 1), 'Jenis Laporan:');
+                $sheet->setCellValue('B' . ($summaryDataRow + 1), ucfirst(str_replace('_', ' ', $this->reportType)));
+
+                $sheet->setCellValue('A' . ($summaryDataRow + 2), 'Tanggal Export:');
+                $sheet->setCellValue('B' . ($summaryDataRow + 2), now()->format('d F Y, H:i:s'));
+
+                // Summary styling
+                $sheet->getStyle('A' . $summaryDataRow . ':C' . ($summaryDataRow + 2))->applyFromArray([
+                    'font' => [
+                        'size' => 11,
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FFF0F8F0'],
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['argb' => 'FF2E7D32'],
+                        ],
+                    ],
+                    'alignment' => [
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                    ],
+                ]);
+
+                // Make summary labels bold
+                $sheet->getStyle('A' . $summaryDataRow . ':A' . ($summaryDataRow + 2))->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'color' => ['argb' => 'FF2E7D32'],
+                    ],
+                ]);
+
+                // Footer
+                $footerRow = $summaryDataRow + 4;
+                $sheet->setCellValue('A' . $footerRow, 'Generated by Sistem Tracer Study Alumni - SMK [Nama Sekolah]');
+                $sheet->mergeCells('A' . $footerRow . ':' . $highestColumn . $footerRow);
+                $sheet->getStyle('A' . $footerRow)->applyFromArray([
+                    'font' => [
+                        'size' => 9,
+                        'italic' => true,
+                        'color' => ['argb' => 'FF999999'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    ],
+                ]);
+
+                // Freeze panes pada header data
+                $sheet->freezePane('A' . ($headerRow + 1));
             },
         ];
     }
-    
+
     /**
      * @param Worksheet $sheet
      * @return array
      */
     public function styles(Worksheet $sheet)
     {
-        // Apply basic styling to the header row
         return [
-            1 => ['font' => ['bold' => true]], // Original header styling
-            4 => ['font' => ['bold' => true]], // New header styling (after row insertions)
+            // Header styling akan ditangani di registerEvents
         ];
     }
 }

@@ -17,7 +17,9 @@ class AuthController extends Controller
     {
         // Validate input data
         $validator = Validator::make($request->all(), [
-            'username' => 'required|string|max:255|unique:users',
+            'nama_lengkap' => 'required|string|max:255',
+            'nisn' => 'required|string|max:255|unique:students',
+            'jurusan_id' => 'required|exists:jurusans,id',
             'email' => 'required|string|email|max:255|unique:users',
             'no_telp' => 'required|string|max:15',
             'password' => 'required|string|min:8|confirmed',
@@ -36,11 +38,18 @@ class AuthController extends Controller
         try {
             // Create new user
             $user = User::create([
-                'username' => $request->username,
                 'email' => $request->email,
                 'no_telp' => $request->no_telp,
                 'password' => Hash::make($request->password),
                 'role' => $request->role,
+            ]);
+
+            // Create student record with NISN
+            Students::create([
+                'user_id' => $user->id,
+                'nama_lengkap' => $request->nama_lengkap,
+                'nisn' => $request->nisn,
+                'jurusan_id' => $request->jurusan_id,
             ]);
 
             // Generate token for the new user (optional)
@@ -126,6 +135,10 @@ class AuthController extends Controller
                     return redirect()->route('dashboard');
                 } elseif ($user->role == 'guru') {
                     $welcomeMessage = 'Login Berhasil! Selamat Datang, Guru!';
+                    session()->flash('success', $welcomeMessage);
+                    return redirect()->route('dashboard');
+                } elseif ($user->role == 'kepalasekolah') {
+                    $welcomeMessage = 'Login Berhasil! Selamat Datang, Kepala Sekolah!';
                     session()->flash('success', $welcomeMessage);
                     return redirect()->route('dashboard');
                 } elseif ($user->role == 'operator') {

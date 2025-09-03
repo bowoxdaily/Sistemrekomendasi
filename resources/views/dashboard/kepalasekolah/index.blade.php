@@ -1,6 +1,6 @@
 @extends('layout.app')
 
-@section('title', 'Dashboard Superadmin')
+@section('title', 'Dashboard Keapla Sekolah')
 
 @section('content')
     <div class="row">
@@ -9,7 +9,7 @@
                 <div class="col-12 col-xl-8 mb-2 mb-xl-0">
                     <h3 class="font-weight-bold">Selamat Datang, {{ Auth::user()->name }}</h3>
                     <h6 class="font-weight-normal mb-0">
-                        <span class="text-primary">Superadmin Panel</span> - Sistem Tracer Study & Rekomendasi Karir
+                        <span class="text-primary">Dashboard Kepala Sekolah</span> - Sistem Tracer Study & Rekomendasi Karir
                     </h6>
                 </div>
                 <div class="col-12 col-xl-4">
@@ -72,7 +72,7 @@
                 <div class="col-md-6 mb-4 stretch-card transparent">
                     <div class="card card-tale">
                         <div class="card-body">
-                            <p class="mb-4">Total Sekolah</p>
+                            <p class="mb-4">Total Alumni Terdaftar</p>
                             <p class="fs-30 mb-2" id="school-count">Loading...</p>
                             <p id="school-percentage-change">Loading...</p>
                         </div>
@@ -81,7 +81,7 @@
                 <div class="col-md-6 mb-4 stretch-card transparent">
                     <div class="card card-dark-blue">
                         <div class="card-body">
-                            <p class="mb-4">Total Operator</p>
+                            <p class="mb-4">Alumni Sudah Bekerja</p>
                             <p class="fs-30 mb-2" id="operator-count">Loading...</p>
                             <p id="operator-percentage">Loading...</p>
                         </div>
@@ -92,7 +92,7 @@
                 <div class="col-md-6 mb-4 mb-lg-0 stretch-card transparent">
                     <div class="card card-light-blue">
                         <div class="card-body">
-                            <p class="mb-4">Total Siswa</p>
+                            <p class="mb-4">Alumni Melanjutkan Kuliah</p>
                             <p class="fs-30 mb-2" id="total-student-count">Loading...</p>
                             <p id="student-percentage">Loading...</p>
                         </div>
@@ -101,7 +101,7 @@
                 <div class="col-md-6 stretch-card transparent">
                     <div class="card card-light-danger">
                         <div class="card-body">
-                            <p class="mb-4">Total Alumni</p>
+                            <p class="mb-4">Alumni Belum Bekerja</p>
                             <p class="fs-30 mb-2" id="total-alumni">Loading...</p>
                             <p id="alumni-percentage">Loading...</p>
                         </div>
@@ -116,9 +116,8 @@
         <div class="col-md-6 grid-margin stretch-card">
             <div class="card">
                 <div class="card-body py-3">
-                    <p class="card-title mb-2">Tracer Study: Status Setelah Lulus</p>
-                    <p class="font-weight-500 mb-2">Distribusi alumni berdasarkan status setelah lulus dalam 3 tahun
-                        terakhir.</p>
+                    <p class="card-title mb-2">Status Alumni Setelah Lulus</p>
+                    <p class="font-weight-500 mb-2">Distribusi status alumni setelah lulus dari sekolah.</p>
                     <div class="d-flex flex-wrap mb-3">
                         <div class="mr-5 mt-2">
                             <p class="text-muted mb-1">Total Alumni</p>
@@ -148,7 +147,7 @@
             <div class="card">
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <p class="card-title mb-0">Tracer Study: Detail</p>
+                        <p class="card-title mb-0">Detail Tracer Study Alumni</p>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-primary dropdown-toggle py-1 px-2" type="button"
                                 id="chartFilterDropdown" data-toggle="dropdown" aria-haspopup="true"
@@ -165,7 +164,7 @@
                             </div>
                         </div>
                     </div>
-                    <p class="font-weight-500 mb-2">Visualisasi data detail dari hasil tracer study alumni.</p>
+                    <p class="font-weight-500 mb-2">Data detail dari hasil tracer study alumni lulusan sekolah.</p>
                     <div id="detail-chart-legend" class="chartjs-legend mt-2 mb-2"></div>
                     <div class="chart-container" style="height: 300px; width: 100%; max-width: 380px; margin: 0 auto;">
                         <canvas id="tracer-detail-chart" width="340" height="300"></canvas>
@@ -179,9 +178,9 @@
         <div class="col-md-12 grid-margin stretch-card">
             <div class="card">
                 <div class="card-body py-3">
-                    <p class="card-title mb-2">Tracer Study: Tren Status Alumni per Tahun</p>
-                    <p class="font-weight-500 mb-2">Visualisasi tren jumlah alumni bekerja, kuliah, dan belum bekerja dalam
-                        beberapa tahun terakhir.</p>
+                    <p class="card-title mb-2">Tren Status Alumni per Tahun Kelulusan</p>
+                    <p class="font-weight-500 mb-2">Visualisasi tren status alumni (bekerja, kuliah, belum bekerja)
+                        berdasarkan tahun kelulusan.</p>
                     <div class="chart-container" style="height: 320px; width: 100%; max-width: 700px; margin: 0 auto;">
                         <canvas id="tracer-trend-chart" width="600" height="300"></canvas>
                     </div>
@@ -272,28 +271,41 @@
             // Auto-refresh weather every 30 minutes
             setInterval(loadWeatherData, 1800000);
 
-            // Fetch dashboard stats
+            // Fetch dashboard stats untuk kepala sekolah - endpoint khusus alumni
             $.ajax({
-                url: _baseURL + 'api/stats/dashboard',
+                url: _baseURL + 'api/stats/alumni-kepalasekolah',
                 method: 'GET',
                 success: function(response) {
                     if (response.status === 'success') {
-                        // Update the dashboard cards
-                        $('#operator-count').text(response.data.operator.count);
-                        $('#operator-percentage').text(response.data.operator.percentage +
-                            '% from last month');
+                        // Update the dashboard cards dengan data alumni
+                        $('#school-count').text(response.data.total_alumni || 0);
+                        $('#school-percentage-change').text((response.data.alumni_growth || 0) +
+                            '% dari bulan lalu');
 
-                        $('#total-student-count').text(response.data.student.count);
-                        $('#student-percentage').text(response.data.student.percentage +
-                            '% from last month');
+                        $('#operator-count').text(response.data.working_alumni || 0);
+                        $('#operator-percentage').text((response.data.working_percentage || 0) +
+                            '% dari total alumni');
 
-                        $('#total-alumni').text(response.data.alumni.count);
-                        $('#alumni-percentage').text(response.data.alumni.percentage +
-                            '% from last month');
+                        $('#total-student-count').text(response.data.studying_alumni || 0);
+                        $('#student-percentage').text((response.data.studying_percentage || 0) +
+                            '% dari total alumni');
+
+                        $('#total-alumni').text(response.data.unemployed_alumni || 0);
+                        $('#alumni-percentage').text((response.data.unemployed_percentage || 0) +
+                            '% dari total alumni');
                     }
                 },
                 error: function() {
-                    console.error('Failed to load dashboard stats');
+                    console.error('Failed to load alumni stats');
+                    // Set default values jika gagal load
+                    $('#school-count').text('0');
+                    $('#school-percentage-change').text('Data tidak tersedia');
+                    $('#operator-count').text('0');
+                    $('#operator-percentage').text('Data tidak tersedia');
+                    $('#total-student-count').text('0');
+                    $('#student-percentage').text('Data tidak tersedia');
+                    $('#total-alumni').text('0');
+                    $('#alumni-percentage').text('Data tidak tersedia');
                 }
             });
 

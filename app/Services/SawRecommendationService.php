@@ -113,11 +113,13 @@ class SawRecommendationService
             return $b['match_percentage'] <=> $a['match_percentage'];
         });
 
-        // Ambil 3 rekomendasi teratas dengan minimal 50% kecocokan
+        // Filter jobs with minimum 30% match for alternatives
         $recommendations = array_filter($jobScores, function ($job) {
-            return $job['match_percentage'] >= 50;
+            return $job['match_percentage'] >= 30;
         });
 
-        return array_slice($recommendations, 0, 3);
+        // Return all recommendations (will be limited in controller as needed)
+        // Top 3 for main display, all for dropdown alternatives
+        return array_values($recommendations);
     }
 }
